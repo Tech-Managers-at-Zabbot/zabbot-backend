@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc -p .",
     "start": "node dist/app.js",
-    "dev": "nodemon src/app.ts"
+    "dev": "nodemon src/app.ts",
+    "compile": "tsc -w"
   },
   "dependencies": {
     "body-parser": "^2.2.0",
