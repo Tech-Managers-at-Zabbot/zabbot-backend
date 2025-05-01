@@ -5,7 +5,7 @@
   "main": "dist/main-server.js",
     "scripts": {
       "build": "tsc && cd waiting-list-service && npm run build",
-      "start": "npm run build && node dist/main-server.js",
+      "start": "node dist/main-server.js",
       "dev": "nodemon main-server.ts",
       "install:all": "npm install && cd waiting-list-service && npm install"
     },
