@@ -4,7 +4,8 @@
   "description": "",
   "main": "dist/main-server.js",
   "scripts": {
-    "build": "tsc -w",
+    "build": "tsc",
+    "build:watch": "tsc -w",
     "build:services": "npm run build && npm run build:waiting-list",
     "build:waiting-list": "cd waiting-list-service && npm run build",
     "start": "node dist/main-server.js",
