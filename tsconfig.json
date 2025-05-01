@@ -19,7 +19,6 @@
   ],
   "exclude": [
     "node_modules",
-    "waiting-list-service/**/*",
-    "dist"
+    "waiting-list-service/**/*"
   ]
 }

@@ -16,7 +16,7 @@ const services = [
         name: 'waiting-list-service',
         path: '/api/waiting-list',
         port: 3001,
-        entryPoint: './dist/app.js' // Assuming compiled JavaScript is in dist folder
+        entryPoint: path_1.default.join(__dirname, '../waiting-list-service/dist/app.js')
     },
     // Add other services as they become available
     // Example:
@@ -41,7 +41,6 @@ function startServices() {
         console.log(`Starting ${service.name} on port ${service.port}...`);
         const serviceDir = path_1.default.join(__dirname, service.name);
         const childProcess = (0, child_process_1.spawn)('node', [service.entryPoint], {
-            cwd: serviceDir,
             env: {
                 ...process.env,
                 PORT: service.port.toString(),
