@@ -4,6 +4,7 @@ import { spawn, ChildProcess } from 'child_process';
 import path from 'path';
 import cors from 'cors';
 import logger from "morgan";
+import dotenv from 'dotenv';
 
 // Configuration for services
 interface ServiceConfig {
@@ -34,10 +35,12 @@ const services: ServiceConfig[] = [
 // Create main Express app
 const app = express();
 
+dotenv.config()
+
 app.use(cors());
 app.use(logger("dev")); 
 
-const MAIN_PORT = 3010;
+const MAIN_PORT = process.env.MAIN_PORT || 3010;
 
 // Map to store child processes
 const serviceProcesses: Map<string, ChildProcess> = new Map();

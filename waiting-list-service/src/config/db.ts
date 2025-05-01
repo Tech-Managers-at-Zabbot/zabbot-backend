@@ -1,9 +1,15 @@
 import { Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
+import path from 'path';
 
-dotenv.config()
 
-const sequelize = new Sequelize(`${process.env.DB_URL}`,
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
+export const config = {
+    dbUrl: process.env.DB_URL,
+};
+
+const sequelize = new Sequelize(`${config.dbUrl}`,
     {
         pool: {
           max: 5,

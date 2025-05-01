@@ -9,6 +9,7 @@ const child_process_1 = require("child_process");
 const path_1 = __importDefault(require("path"));
 const cors_1 = __importDefault(require("cors"));
 const morgan_1 = __importDefault(require("morgan"));
+const dotenv_1 = __importDefault(require("dotenv"));
 // List of all microservices
 const services = [
     {
@@ -28,9 +29,10 @@ const services = [
 ];
 // Create main Express app
 const app = (0, express_1.default)();
+dotenv_1.default.config();
 app.use((0, cors_1.default)());
 app.use((0, morgan_1.default)("dev"));
-const MAIN_PORT = 3010;
+const MAIN_PORT = process.env.MAIN_PORT || 3010;
 // Map to store child processes
 const serviceProcesses = new Map();
 // Start all microservices
