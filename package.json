@@ -3,15 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "dist/main-server.js",
-  "scripts": {
-    "build": "tsc",
-    "build:watch": "tsc -w",
-    "build:services": "npm run build && npm run build:waiting-list",
-    "build:waiting-list": "cd waiting-list-service && npm run build",
-    "start": "node dist/main-server.js",
-    "dev": "nodemon main-server.ts",
-    "install:all": "npm install && cd waiting-list-service && npm install"
-  },
+    "scripts": {
+      "build": "tsc && cd waiting-list-service && npm run build",
+      "start": "npm run build && node dist/main-server.js",
+      "dev": "nodemon main-server.ts",
+      "install:all": "npm install && cd waiting-list-service && npm install"
+    },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Tech-Managers-at-Zabbot/zabbot-backend.git"

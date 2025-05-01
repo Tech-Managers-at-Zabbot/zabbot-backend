@@ -5,6 +5,7 @@ import path from 'path';
 import cors from 'cors';
 import logger from "morgan";
 import dotenv from 'dotenv';
+// import {} from './'
 
 // Configuration for services
 interface ServiceConfig {
@@ -16,12 +17,12 @@ interface ServiceConfig {
 
 // List of all microservices
 const services: ServiceConfig[] = [
-  {
-    name: 'waiting-list-service',
-    path: '/api/waiting-list',
-    port: 3001,
-    entryPoint: './dist/app.js'  // Assuming compiled JavaScript is in dist folder
-  },
+    {
+      name: 'waiting-list-service',
+      path: '/api/waiting-list',
+      port: 3001,
+      entryPoint: path.join(__dirname, '../waiting-list-service/dist/app.js')
+    },
   // Add other services as they become available
   // Example:
   // {
@@ -52,7 +53,6 @@ function startServices() {
     
     const serviceDir = path.join(__dirname, service.name);
     const childProcess = spawn('node', [service.entryPoint], {
-      cwd: serviceDir,
       env: {
         ...process.env,
         PORT: service.port.toString(),
