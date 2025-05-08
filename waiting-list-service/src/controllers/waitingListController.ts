@@ -18,7 +18,7 @@ export const joinWaitingList = async (request: Request, response: Response): Pro
     const existingUser = await WaitingList.findOne({ where: { email } });
 
     if (existingUser) {
-      response.status(409).json({ message: 'Email already exists in waiting list' });
+      response.status(409).json({ message: 'Email already exists in founders list' });
       return;
     }
 
@@ -32,7 +32,7 @@ export const joinWaitingList = async (request: Request, response: Response): Pro
     });
 
     response.status(201).json({
-      message: 'Successfully joined waiting list',
+      message: 'Successfully joined founders list',
       data: newEntry
     });
     return;
