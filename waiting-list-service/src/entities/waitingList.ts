@@ -1,8 +1,8 @@
 import { DataTypes, Model } from 'sequelize';
-import sequelize from '../config/db';
+import database from '../config/db';
 
 interface WaitingListAttributes {
-  id?: number;
+  id: string;
   name: string;
   email: string;
   country: string;
@@ -13,7 +13,7 @@ interface WaitingListAttributes {
 }
 
 class WaitingList extends Model<WaitingListAttributes> implements WaitingListAttributes {
-  public id!: number;
+  public id!: string;
   public name!: string;
   public email!: string;
   public country!: string;
@@ -26,8 +26,7 @@ class WaitingList extends Model<WaitingListAttributes> implements WaitingListAtt
 WaitingList.init(
   {
     id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
+      type: DataTypes.UUID,
       primaryKey: true,
     },
     name: {
@@ -68,7 +67,7 @@ WaitingList.init(
     },
   },
   {
-    sequelize,
+    sequelize: database,
     modelName: 'WaitingList',
     tableName: 'waiting_lists',
     timestamps: false,

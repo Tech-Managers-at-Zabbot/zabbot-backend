@@ -1,6 +1,6 @@
 import { Model } from 'sequelize';
 interface WaitingListAttributes {
-    id?: number;
+    id: string;
     name: string;
     email: string;
     country: string;
@@ -10,7 +10,7 @@ interface WaitingListAttributes {
     createdAt?: Date;
 }
 declare class WaitingList extends Model<WaitingListAttributes> implements WaitingListAttributes {
-    id: number;
+    id: string;
     name: string;
     email: string;
     country: string;

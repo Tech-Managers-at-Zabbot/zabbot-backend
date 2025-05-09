@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import WaitingList from '../entities/waitingList';
+import { v4 } from 'uuid';
 
 export const joinWaitingList = async (request: Request, response: Response): Promise<void> => {
   try {
@@ -23,6 +24,7 @@ export const joinWaitingList = async (request: Request, response: Response): Pro
     }
 
     const newEntry = await WaitingList.create({
+      id: v4(),
       name,
       email,
       country,

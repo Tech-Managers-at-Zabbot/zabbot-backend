@@ -9,7 +9,7 @@ export const config = {
     dbUrl: process.env.DB_URL,
 };
 
-const sequelize = new Sequelize(`${config.dbUrl}`,
+const database = new Sequelize(`${config.dbUrl}`,
     {
         pool: {
           max: 5,
@@ -20,15 +20,13 @@ const sequelize = new Sequelize(`${config.dbUrl}`,
     }
 )
 
-export const connectDB = async () => {
-  try {
-    await sequelize.authenticate();
-    console.log('Connection has been established successfully.');
-    await sequelize.sync();
-    console.log('All models were synchronized successfully.');
-  } catch (error) {
-    console.error('Unable to connect to the database:', error);
-  }
-};
+database.sync({}).then(() => {
+    console.log("Database is connected");
+  })
+  .catch((error: any) => {
+    console.log("No connection:", error);
+  });
 
-export default sequelize;
+
+
+export default database;
