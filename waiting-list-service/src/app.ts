@@ -8,7 +8,8 @@ import logger from "morgan";
 import cookieParser from "cookie-parser";
 import dotenv from 'dotenv';
 import path from 'path';
-import { connectDB } from './config/db';
+// import database from './config/db';
+// import { HttpError } from "http-errors";
 
 const app = express();
 
@@ -45,7 +46,6 @@ app.get('/health', (req, res) => {
 
 const PORT = config.port;
 
-connectDB();
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

@@ -13,7 +13,8 @@ const morgan_1 = __importDefault(require("morgan"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const path_1 = __importDefault(require("path"));
-const db_1 = require("./config/db");
+// import database from './config/db';
+// import { HttpError } from "http-errors";
 const app = (0, express_1.default)();
 dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '../../.env') });
 exports.config = {
@@ -41,7 +42,6 @@ app.get('/health', (req, res) => {
     });
 });
 const PORT = exports.config.port;
-(0, db_1.connectDB)();
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
