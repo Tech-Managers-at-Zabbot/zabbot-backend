@@ -21,7 +21,7 @@ const services: ServiceConfig[] = [
       name: 'waiting-list-service',
       path: '/api/waiting-list',
       port: 3001,
-      entryPoint: path.join(__dirname, './waiting-list-service/dist/app.js')
+      entryPoint: path.join(__dirname, '../waiting-list-service/dist/app.js')
     },
   // Add other services as they become available
   // Example:
