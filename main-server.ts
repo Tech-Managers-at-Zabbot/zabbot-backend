@@ -1,3 +1,13 @@
+process.on('uncaughtException', (err) => {
+  console.error('💥 UNCAUGHT EXCEPTION:', err);
+  shutdown(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('💥 UNHANDLED REJECTION:', reason);
+  shutdown(1);
+});
+
 import express from 'express';
 import { createProxyMiddleware, Options } from 'http-proxy-middleware';
 import { spawn, ChildProcess } from 'child_process';
@@ -5,7 +15,6 @@ import path from 'path';
 import cors from 'cors';
 import logger from "morgan";
 import dotenv from 'dotenv';
-// import {} from './'
 
 // Configuration for services
 interface ServiceConfig {
@@ -17,20 +26,18 @@ interface ServiceConfig {
 
 // List of all microservices
 const services: ServiceConfig[] = [
-    {
-      name: 'waiting-list-service',
-      path: '/api/waiting-list',
-      port: 3001,
-      entryPoint: path.join(__dirname, '../waiting-list-service/dist/app.js')
-    },
-  // Add other services as they become available
-  // Example:
-  // {
-  //   name: 'user-service',
-  //   path: '/users',
-  //   port: 3002,
-  //   entryPoint: './dist/app.js'
-  // },
+  {
+    name: 'founders-list-service',
+    path: '/api/waiting-list',
+    port: 3002,
+    entryPoint: path.resolve(__dirname, '../waiting-list-service/dist/src/app.js')
+  },
+  {
+    name: 'notification-service',
+    path: '/users',
+    port: 3003,
+    entryPoint: path.resolve(__dirname, '../notification-service/dist/src/app.js')
+  }
 ];
 
 // Create main Express app
@@ -44,40 +51,65 @@ app.use(logger("dev"));
 const MAIN_PORT = process.env.MAIN_PORT || 3010;
 
 // Map to store child processes
-const serviceProcesses: Map<string, ChildProcess> = new Map();
+const serviceProcesses = new Map<string, ChildProcess>();
+const restartAttempts = new Map<string, number>();
+const failedServices = new Set<string>();
 
-// Start all microservices
-function startServices() {
-  services.forEach(service => {
-    console.log(`Starting ${service.name} on port ${service.port}...`);
-    
-    const serviceDir = path.join(__dirname, service.name);
-    const childProcess = spawn('node', [service.entryPoint], {
-      env: {
-        ...process.env,
-        PORT: service.port.toString(),
-        SERVICE_NAME: service.name
-      },
-      stdio: 'inherit'
-    });
-    
-    serviceProcesses.set(service.name, childProcess);
-    
-    childProcess.on('error', (error) => {
-      console.error(`Failed to start ${service.name}:`, error);
-    });
-    
-    childProcess.on('exit', (code, signal) => {
-      console.log(`${service.name} exited with code ${code} and signal ${signal}`);
-      serviceProcesses.delete(service.name);
-      
-      // Optional: Restart the service if it crashes
-      if (code !== 0 && signal !== 'SIGTERM') {
-        console.log(`Restarting ${service.name}...`);
-        setTimeout(() => startServices(), 5000);
-      }
-    });
+
+function logServiceStatus() {
+  const running = [...serviceProcesses.keys()];
+  const failed = [...failedServices];
+
+  console.log('\n======= 📊 SERVICE STATUS =======');
+  console.log(`✅ Running services: ${running.length ? running.join(', ') : 'None'}`);
+  console.log(`❌ Failed services: ${failed.length ? failed.join(', ') : 'None'}`);
+  console.log('=================================\n');
+}
+
+
+function startSingleService(service: ServiceConfig) {
+  const attempts = restartAttempts.get(service.name) || 0;
+
+  if (attempts >= 5) {
+     console.error(`❌ ${service.name} has failed too many times. Not restarting.`);
+    failedServices.add(service.name);
+    // logServiceStatus();
+    return;
+  }
+
+  console.log(`Starting ${service.name} on port ${service.port}...`);
+  const childProcess = spawn('node', [service.entryPoint], {
+    env: { ...process.env, PORT: service.port.toString(), SERVICE_NAME: service.name },
+    stdio: 'inherit',
   });
+
+  serviceProcesses.set(service.name, childProcess);
+
+  childProcess.on('error', (error) => {
+    console.error(`Failed to start ${service.name}:`, error);
+  });
+
+  childProcess.on('exit', (code, signal) => {
+    console.log(`${service.name} exited with code ${code} and signal ${signal}`);
+    serviceProcesses.delete(service.name);
+
+    if (code !== 0 && signal !== 'SIGTERM') {
+      const newAttempts = attempts + 1;
+      restartAttempts.set(service.name, newAttempts);
+      console.log(`Restarting ${service.name} in 5 seconds... (attempt ${newAttempts})`);
+      setTimeout(() => startSingleService(service), 5000);
+    }
+  });
+}
+
+
+
+function startServices() {
+services.forEach(service => startSingleService(service));
+ setTimeout(() => {
+    console.log('\n🎯 All services attempted startup. Final status:');
+    logServiceStatus();
+  }, 7000);
 }
 
 // Set up proxy middleware for each service
@@ -127,24 +159,37 @@ app.get('/', (req, res) => {
 process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
 
-function shutdown() {
-  console.log('Shutting down all services...');
-  
-  // Send termination signal to all child processes
+
+function shutdown(code = 0) {
+  console.log('🔻 Shutting down all services...');
+
   serviceProcesses.forEach((process, serviceName) => {
     console.log(`Stopping ${serviceName}...`);
     process.kill('SIGTERM');
+
+    // Optional hard kill after timeout
+    setTimeout(() => {
+      if (!process.killed) process.kill('SIGKILL');
+    }, 1000);
   });
-  
-  // Give processes a chance to clean up
+
   setTimeout(() => {
-    console.log('Main server shutting down');
-    process.exit(0);
+    console.log('✅ Main server shutdown complete');
+    process.exit(code);
   }, 3000);
 }
 
 // Start all services and then the main server
 startServices();
+
+// Error handlers
+app.use((req, res, next) => {
+  const error = new Error(`Not Found: ${req.originalUrl}`);
+  (error as any).status = 404;
+  next(error);
+});
+
+// app.use(errorUtilities.globalErrorHandler);
 
 app.listen(MAIN_PORT, () => {
   console.log(`Main server listening on port ${MAIN_PORT}`);

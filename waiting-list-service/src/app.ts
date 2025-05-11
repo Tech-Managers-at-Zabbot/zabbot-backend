@@ -1,3 +1,5 @@
+
+
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -8,19 +10,18 @@ import logger from "morgan";
 import cookieParser from "cookie-parser";
 import dotenv from 'dotenv';
 import path from 'path';
-// import database from './config/db';
-// import { HttpError } from "http-errors";
 
 const app = express();
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 export const config = {
-    port: process.env.WAITING_LIST_SERVICE_SERVER_PORT || 3001,
+    port: process.env.FOUNDERS_LIST_SERVICE_SERVER_PORT || 3002,
     // dbUrl: process.env.DB_URL,
     //   jwtSecret: process.env.AUTH_SERVICE_JWT_SECRET
 };
-// Set security HTTP headers to disable 'powered by Express' header feature
+
+
 app.disable("x-powered-by");
 
 //Other Middlewares
@@ -37,18 +38,19 @@ app.use('/', waitingListRoutes);
 
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/', (req, res) => {
     res.json({
-      service: 'waiting-list-service',
+      service: 'founders-list-service',
       status: 'ok',
     });
   });
+
 
 const PORT = config.port;
 
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Founders List Server running on port ${PORT}`);
 });
 
 export default app;
