@@ -5,11 +5,13 @@
   "main": "dist/app.js",
   "scripts": {
     "build": "tsc -p .",
-    "start": "node dist/app.js",
+    "buildWatch": "tsc -w",
+    "start": "node dist/src/app.js",
     "dev": "nodemon src/app.ts",
     "compile": "tsc -w"
   },
   "dependencies": {
+    "axios": "^1.9.0",
     "body-parser": "^2.2.0",
     "compression": "^1.8.0",
     "cookie-parser": "^1.4.7",

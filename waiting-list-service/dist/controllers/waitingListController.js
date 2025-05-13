@@ -3,9 +3,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.joinWaitingList = void 0;
+exports.joinWaitingList = exports.config = void 0;
 const waitingList_1 = __importDefault(require("../entities/waitingList"));
 const uuid_1 = require("uuid");
+const axios_1 = __importDefault(require("axios"));
+const dotenv_1 = __importDefault(require("dotenv"));
+const path_1 = __importDefault(require("path"));
+dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '../../../.env') });
+exports.config = {
+    NOTIFICATION_SERVICE_ROUTE: process.env.NOTIFICATION_SERVICE_ROUTE
+};
 const joinWaitingList = async (request, response) => {
     try {
         const { name, email, country, sendUpdates, betaTest, contributeSkills } = request.body;
@@ -35,7 +42,12 @@ const joinWaitingList = async (request, response) => {
             message: 'Successfully joined founders list',
             data: newEntry
         });
-        return;
+        const mailChimpData = {
+            email,
+            firstName: name.split(' ')[0],
+            lastName: name.split(' ')[1] || ""
+        };
+        axios_1.default.post(`${exports.config.NOTIFICATION_SERVICE_ROUTE}/founding-list/welcome`, mailChimpData);
     }
     catch (error) {
         console.error(error);
@@ -50,4 +62,3 @@ const joinWaitingList = async (request, response) => {
     }
 };
 exports.joinWaitingList = joinWaitingList;
-//# sourceMappingURL=waitingListController.js.map

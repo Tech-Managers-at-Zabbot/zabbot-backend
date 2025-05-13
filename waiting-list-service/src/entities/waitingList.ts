@@ -1,5 +1,5 @@
-import { DataTypes, Model } from 'sequelize';
-import database from '../config/db';
+import { DataTypes, Model, Sequelize } from 'sequelize';
+import database from '../../../config/databases';
 
 interface WaitingListAttributes {
   id: string;
@@ -20,7 +20,7 @@ class WaitingList extends Model<WaitingListAttributes> implements WaitingListAtt
   public sendUpdates!: boolean;
   public betaTest!: boolean;
   public contributeSkills!: boolean;
-  public readonly createdAt!: Date;
+  // public readonly createdAt!: Date;
 }
 
 WaitingList.init(
@@ -60,17 +60,12 @@ WaitingList.init(
       allowNull: false,
       defaultValue: false,
     },
-    createdAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
   },
   {
     sequelize: database,
     modelName: 'WaitingList',
     tableName: 'waiting_lists',
-    timestamps: false,
+    timestamps: true,
   }
 );
 
