@@ -1,8 +1,17 @@
 import { Request, Response } from 'express';
 import WaitingList from '../entities/waitingList';
 import { v4 } from 'uuid';
+import axios from 'axios';
+import dotenv from 'dotenv';
+import path from 'path';
 
-export const joinWaitingList = async (request: Request, response: Response): Promise<void> => {
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+
+export const config = {
+NOTIFICATION_SERVICE_ROUTE: process.env.NOTIFICATION_SERVICE_ROUTE
+};
+
+export const joinWaitingList = async (request: Request, response: Response) => {
   try {
     const { name, email, country, sendUpdates, betaTest, contributeSkills } = request.body;
 
@@ -37,7 +46,16 @@ export const joinWaitingList = async (request: Request, response: Response): Pro
       message: 'Successfully joined founders list',
       data: newEntry
     });
-    return;
+
+      const mailChimpData = {
+        email,
+        firstName: name.split(' ')[0],
+        lastName: name.split(' ')[1] || ""
+      }
+
+       axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/welcome`, mailChimpData)
+
+
   } catch (error: any) {
     console.error(error);
     if (error.name === 'SequelizeValidationError') {

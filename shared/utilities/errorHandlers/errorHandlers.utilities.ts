@@ -1,5 +1,10 @@
 import { Request, Response, NextFunction, ErrorRequestHandler } from 'express';
 
+export interface CustomError extends Error {
+  status?: number;
+  code?: string;
+}
+
 const createError = (message: string, statusCode: number) => ({
   message,
   statusCode,
@@ -15,7 +20,7 @@ export const createUnknownError = (error: any) => ({
   isOperational: false,
 });
 
-const withErrorHandling = (fn: (...args: any[]) => Promise<any>) => {
+const withControllerErrorHandling = (fn: (...args: any[]) => Promise<any>) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       await fn(req, res, next);
@@ -25,7 +30,18 @@ const withErrorHandling = (fn: (...args: any[]) => Promise<any>) => {
   };
 };
 
-const globalErrorHandler: ErrorRequestHandler = (err: any, req: Request, res: Response, next: NextFunction): any => {
+const withServiceErrorHandling = (fn: (...args: any[]) => Promise<any>) => {
+  return async (...args: any[]) => {
+    try {
+      return await fn(...args);
+    } catch (error:any) {
+      console.error('Service error:', error.message);
+      throw error;
+    }
+  };
+};
+
+export const globalErrorHandler: ErrorRequestHandler = (err: any, req: Request, res: Response, next: NextFunction): any => {
   const errorResponse = err.isOperational ? err : createUnknownError(err);
 
   console.error('❌ Error:', errorResponse.details || err);
@@ -53,7 +69,8 @@ process.on('unhandledRejection', (reason, promise) => {
 export default {
   createError,
   createUnknownError,
-  withErrorHandling,
+  withServiceErrorHandling,
+  withControllerErrorHandling,
   globalErrorHandler,
   processErrorHandler
 };

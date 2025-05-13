@@ -11,13 +11,15 @@
     "baseUrl": ".",
     "outDir": "./dist",
     "paths": {
-      "@shared/*": ["../shared/*"]
+      "@shared/*": ["./shared/*"],
+      "@config/*": ["./config/*"],
     }
   },
-   "include": [
+  "include": [
     "main-server.ts",
     "buildAll.ts",
-    "installAll.ts"
+    "installAll.ts",
+    "config/**/*",
   ],
   "exclude": [
     "node_modules",

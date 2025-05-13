@@ -1,5 +1,3 @@
-
-
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -10,21 +8,22 @@ import logger from "morgan";
 import cookieParser from "cookie-parser";
 import dotenv from 'dotenv';
 import path from 'path';
+import { errorUtilities } from '../../shared/utilities';
 
 const app = express();
 
+// Load environment variables
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 export const config = {
-    port: process.env.FOUNDERS_LIST_SERVICE_SERVER_PORT || 3002,
-    // dbUrl: process.env.DB_URL,
-    //   jwtSecret: process.env.AUTH_SERVICE_JWT_SECRET
+  port: process.env.FOUNDERS_LIST_SERVICE_SERVER_PORT || 3002,
+  // dbUrl: process.env.DB_URL,
+  // jwtSecret: process.env.AUTH_SERVICE_JWT_SECRET
 };
-
 
 app.disable("x-powered-by");
 
-//Other Middlewares
+// Middlewares
 app.use(helmet());
 app.use(compression());
 app.use(cors());
@@ -36,21 +35,23 @@ app.use(cookieParser());
 // Routes
 app.use('/', waitingListRoutes);
 
-
 // Health check endpoint
 app.get('/', (req, res) => {
-    res.json({
-      service: 'founders-list-service',
-      status: 'ok',
-    });
+  res.json({
+    service: 'founders-list-service',
+    status: 'ok',
   });
-
-
-const PORT = config.port;
-
-
-app.listen(PORT, () => {
-  console.log(`Founders List Server running on port ${PORT}`);
 });
+
+// Error handling
+app.use(errorUtilities.globalErrorHandler as any);
+
+// Start server if not imported as a module
+if (require.main === module) {
+  const PORT = config.port;
+  app.listen(PORT, () => {
+    console.log(`Founders List Server running on port ${PORT}`);
+  });
+}
 
 export default app;

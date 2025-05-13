@@ -2,7 +2,7 @@ import { execSync } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 
-const services = ['./shared','./waiting-list-service', './notification-service'];
+const services = ['./shared','./waiting-list-service', './config', './notification-service'];
 
 function installDependencies(service: string) {
   const servicePath = path.join(__dirname, service);
