@@ -30,6 +30,7 @@
     "fs-extra": "^11.3.0",
     "http-proxy-middleware": "^3.0.5",
     "lodash.merge": "^4.6.2",
+    "mailchimp_transactional": "^0.0.1-security",
     "morgan": "^1.10.0",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",

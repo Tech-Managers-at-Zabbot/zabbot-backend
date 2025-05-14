@@ -9,6 +9,7 @@ const mailchimp_transactional_1 = __importDefault(require("@mailchimp/mailchimp_
 const utilities_1 = require("../../../shared/utilities");
 const dotenv_1 = __importDefault(require("dotenv"));
 const path_1 = __importDefault(require("path"));
+// const mailChimp2 = require('mailchimp_transactional');
 dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '../../../.env') });
 exports.config = {
     MAILCHIMP_API_KEY: process.env.MAILCHIMP_API_KEY,
@@ -18,6 +19,7 @@ exports.config = {
     MAILCHIMP_FROM_EMAIL: process.env.MAILCHIMP_FROM_EMAIL,
     MAILCHIMP_FROM_NAME: process.env.MAILCHIMP_FROM_NAME,
     MAILCHIMP_MANDRILL_API_KEY: process.env.MAILCHIMP_MANDRILL_API_KEY,
+    MAILCHIMP_FOUNDING_LIST_WELCOME_TEMPLATE_NAME: process.env.MAILCHIMP_FOUNDING_LIST_WELCOME_TEMPLATE_NAME
 };
 const checkSubscriberExistsService = utilities_1.errorUtilities.withServiceErrorHandling(async (email) => {
     try {
@@ -48,15 +50,15 @@ const sendWelcomeFoundingListEmailService = utilities_1.errorUtilities.withServi
     }
     const mailchimpClient = (0, mailchimp_transactional_1.default)(`${exports.config.MAILCHIMP_MANDRILL_API_KEY}`);
     const response = await mailchimpClient.messages.sendTemplate({
-        template_name: 'founders-circle-welcome-email', //`${config.MAILCHIMP_FOUNDING_LIST_WELCOME_TEMPLATE_ID}`,
-        template_content: [],
+        template_name: `${exports.config.MAILCHIMP_FOUNDING_LIST_WELCOME_TEMPLATE_NAME}`,
         message: {
-            to: [{ email }],
+            subject: `Ẹ káàbọ̀! (Welcome!) ${firstName}`,
+            to: [{ email, type: 'to' }],
             from_email: exports.config.MAILCHIMP_FROM_EMAIL,
-            from_name: exports.config.MAILCHIMP_FROM_NAME || 'Your Company Name'
-        }
+            from_name: exports.config.MAILCHIMP_FROM_NAME || 'Zabbot'
+        },
+        template_content: []
     });
-    console.log('Welcome email sent:', response, exports.config.MAILCHIMP_MANDRILL_API_KEY, exports.config);
     return response;
 });
 const handleMailingListSubscriptionService = utilities_1.errorUtilities.withServiceErrorHandling(async (email, firstName, lastName) => {
@@ -78,3 +80,24 @@ exports.default = {
     sendWelcomeFoundingListEmailService,
     handleMailingListSubscriptionService
 };
+// const mailchimp = require("mailchimp_transactional")(
+//   "YOUR_API_KEY"
+// );
+// const message = {
+//   from_email: "hello@example.com",
+//   subject: "Hello world",
+//   text: "Welcome to Mailchimp Transactional!",
+//   to: [
+//     {
+//       email: "freddie@example.com",
+//       type: "to"
+//     }
+//   ]
+// };
+// async function run() {
+//   const response = await mailchimp.messages.send({
+//     message
+//   });
+//   console.log(response);
+// }
+// run();

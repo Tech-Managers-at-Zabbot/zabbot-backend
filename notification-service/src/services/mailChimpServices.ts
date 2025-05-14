@@ -4,6 +4,8 @@ import { errorUtilities } from '../../../shared/utilities';
 import dotenv from 'dotenv';
 import path from 'path';
 
+// const mailChimp2 = require('mailchimp_transactional');
+
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 export const config = {
@@ -14,6 +16,7 @@ export const config = {
     MAILCHIMP_FROM_EMAIL: process.env.MAILCHIMP_FROM_EMAIL,
     MAILCHIMP_FROM_NAME: process.env.MAILCHIMP_FROM_NAME,
     MAILCHIMP_MANDRILL_API_KEY: process.env.MAILCHIMP_MANDRILL_API_KEY,
+    MAILCHIMP_FOUNDING_LIST_WELCOME_TEMPLATE_NAME: process.env.MAILCHIMP_FOUNDING_LIST_WELCOME_TEMPLATE_NAME
 };
 
 export interface EmailData {
@@ -63,15 +66,15 @@ const sendWelcomeFoundingListEmailService = errorUtilities.withServiceErrorHandl
         }
         const mailchimpClient = mailchimpTransactional(`${config.MAILCHIMP_MANDRILL_API_KEY}`);
         const response: any = await mailchimpClient.messages.sendTemplate({
-            template_name: 'founders-circle-welcome-email', //`${config.MAILCHIMP_FOUNDING_LIST_WELCOME_TEMPLATE_ID}`,
-            template_content: [],
+            template_name: `${config.MAILCHIMP_FOUNDING_LIST_WELCOME_TEMPLATE_NAME}`,
             message: {
-                to: [{ email }],
+                subject: `Ẹ káàbọ̀! (Welcome!) ${firstName}`,
+                to: [{ email, type: 'to' }],
                 from_email: config.MAILCHIMP_FROM_EMAIL,
-                from_name: config.MAILCHIMP_FROM_NAME || 'Your Company Name'
-            }
+                from_name: config.MAILCHIMP_FROM_NAME || 'Zabbot'
+            },
+            template_content: []
         });
-        // console.log('Welcome email sent:', response, config.MAILCHIMP_MANDRILL_API_KEY, config);
         return response;
     }
 );
@@ -101,3 +104,30 @@ export default {
     sendWelcomeFoundingListEmailService,
     handleMailingListSubscriptionService
 };
+
+
+
+
+// const mailchimp = require("mailchimp_transactional")(
+//   "YOUR_API_KEY"
+// );
+
+// const message = {
+//   from_email: "hello@example.com",
+//   subject: "Hello world",
+//   text: "Welcome to Mailchimp Transactional!",
+//   to: [
+//     {
+//       email: "freddie@example.com",
+//       type: "to"
+//     }
+//   ]
+// };
+
+// async function run() {
+//   const response = await mailchimp.messages.send({
+//     message
+//   });
+//   console.log(response);
+// }
+// run();
