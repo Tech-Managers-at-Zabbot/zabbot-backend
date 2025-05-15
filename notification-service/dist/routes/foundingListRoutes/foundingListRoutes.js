@@ -4,7 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const mailChimpControllers_1 = require("../../controllers/mailChimpControllers");
+const emailControllers_1 = __importDefault(require("../../controllers/emailControllers"));
 const router = express_1.default.Router();
-router.post('/welcome', mailChimpControllers_1.executeFoundingListNotification);
+router.post('/welcome-sendgrid', emailControllers_1.default.sendgridExecuteFoundingListNotification);
+router.post('/welcome-mailchimp', emailControllers_1.default.mailChimpExecuteFoundingListNotification);
 exports.default = router;

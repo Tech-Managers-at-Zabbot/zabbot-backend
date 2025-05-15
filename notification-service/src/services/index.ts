@@ -1,4 +1,8 @@
 import mailChimpServices from "./mailChimpServices";
+import sendgridMailServices from './sendgridServices';
 
 
-export { mailChimpServices };
+export { 
+    mailChimpServices,
+    sendgridMailServices
+ };
