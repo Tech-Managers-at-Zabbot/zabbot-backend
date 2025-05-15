@@ -53,7 +53,7 @@ export const joinWaitingList = async (request: Request, response: Response) => {
         lastName: name.split(' ')[1] || ""
       }
 
-       axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/welcome`, mailChimpData)
+       axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/welcome-sendgrid`, mailChimpData)
 
 
   } catch (error: any) {

@@ -1,11 +1,12 @@
 import express from 'express';
-import { executeFoundingListNotification } from '../../controllers/mailChimpControllers';
+import emailControllers from '../../controllers/emailControllers';
 
 
 const router = express.Router()
 
 
-router.post('/welcome', executeFoundingListNotification)
+router.post('/welcome-sendgrid', emailControllers.sendgridExecuteFoundingListNotification)
+router.post('/welcome-mailchimp', emailControllers.mailChimpExecuteFoundingListNotification)
 
 
 export default router;
