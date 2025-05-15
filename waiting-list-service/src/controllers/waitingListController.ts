@@ -47,13 +47,13 @@ export const joinWaitingList = async (request: Request, response: Response) => {
       data: newEntry
     });
 
-      const mailChimpData = {
+      const emailData = {
         email,
         firstName: name.split(' ')[0],
         lastName: name.split(' ')[1] || ""
       }
 
-       axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/welcome-sendgrid`, mailChimpData)
+       axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/welcome-sendgrid`, emailData)
 
 
   } catch (error: any) {
