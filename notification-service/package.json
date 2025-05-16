@@ -16,6 +16,7 @@
   "dependencies": {
     "@mailchimp/mailchimp_marketing": "^3.0.80",
     "@mailchimp/mailchimp_transactional": "^1.0.59",
+    "@sendgrid/client": "^8.1.5",
     "@types/nodemailer": "^6.4.17",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",

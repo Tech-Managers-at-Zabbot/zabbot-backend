@@ -42,12 +42,12 @@ const joinWaitingList = async (request, response) => {
             message: 'Successfully joined founders list',
             data: newEntry
         });
-        const mailChimpData = {
+        const emailData = {
             email,
             firstName: name.split(' ')[0],
             lastName: name.split(' ')[1] || ""
         };
-        axios_1.default.post(`${exports.config.NOTIFICATION_SERVICE_ROUTE}/founding-list/welcome-sendgrid`, mailChimpData);
+        axios_1.default.post(`${exports.config.NOTIFICATION_SERVICE_ROUTE}/founding-list/welcome-sendgrid`, emailData);
     }
     catch (error) {
         console.error(error);
