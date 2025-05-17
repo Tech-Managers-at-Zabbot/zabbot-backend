@@ -1,27 +1,37 @@
-import { errorUtilities } from '../../../shared/utilities';
+import { errorUtilities, helpersUtilities, responseUtilities } from '../../../shared/utilities';
 import sendgridDetails from "../config/sendgridConfig";
 
 const sendWelcomeFoundingListEmailService = errorUtilities.withServiceErrorHandling(
     async (email: string, firstName: string, lastName: string) => {
-        console.log('Sending email to:', email, firstName, lastName);
-        const fromEmail = process.env.SENDGRID_FROM_EMAIL!;
-        const fromName = process.env.SENDGRID_FROM_NAME!;
-        const templateId = process.env.SENDGRID_FOUNDING_LIST_WELCOME_TEMPLATE_ID!;
+
+        const token = helpersUtilities.generateToken({ email }, '30d')
+        const unsubscribeUrl = `${process.env.PRODUCTION_FRONTEND_URL}/founders-circle/unsubscribe?${token}`;
 
         const messageDetails = {
             to: email,
             from: {
-                email: fromEmail,
-                name: fromName,
+                email: process.env.SENDGRID_FROM_EMAIL!,
+                name: process.env.SENDGRID_FROM_NAME!,
             },
-            templateId,
+            templateId: process.env.SENDGRID_FOUNDING_LIST_WELCOME_TEMPLATE_ID!,
+            dynamic_template_data: {
+                unsubscribe_url: unsubscribeUrl
+            },
             subject: `Ẹ káàbọ̀! (Welcome!) ${firstName}`,
-             trackingSettings: {
-        subscriptionTracking: {
-        enable: true,
-        substitutionTag: "<%asm_group_unsubscribe_raw_url%>",
-    },
-    },
+            trackingSettings: {
+                subscriptionTracking: {
+                    enable: false,
+                    // substitutionTag: "<%asm_group_unsubscribe_raw_url%>",
+                    // substitutionTag: "{{{unsubscribe}}}"
+                },
+                asm: {
+                    group_id: parseInt(process.env.SENDGRID_UNSUBSCRIBE_GROUP_ID || '0'),
+                    groups_to_display: [parseInt(process.env.SENDGRID_UNSUBSCRIBE_GROUP_ID || '0')]
+                },
+                //              customArgs: {
+                //   unsubscribe: unsubscribeUrl
+                // }
+            },
         };
 
         try {
@@ -37,7 +47,7 @@ const sendWelcomeFoundingListEmailService = errorUtilities.withServiceErrorHandl
 );
 
 
-export const addToSendGridFoundersList = errorUtilities.withServiceErrorHandling(async (
+const addToSendGridFoundersList = errorUtilities.withServiceErrorHandling(async (
     email: string,
     firstName: string,
     lastName: string,
@@ -68,7 +78,49 @@ export const addToSendGridFoundersList = errorUtilities.withServiceErrorHandling
     }
 });
 
+
+const removeFromFoundersListService = errorUtilities.withServiceErrorHandling(async (email: string) => {
+
+    // 1. Remove from founders list
+    const deleteResponse = await sendgridDetails.sendgridClient.request({
+        method: 'DELETE',
+        url: `/v3/marketing/lists/${process.env.SENDGRID_FOUNDERS_LIST_ID}/contacts`,
+        body: {
+            contact_ids: [email]
+        },
+    });
+
+    // Successful removal returns 202 or 204
+    if (deleteResponse[0].statusCode !== 202 && deleteResponse[0].statusCode !== 204) {
+        throw errorUtilities.createError('Process failed, please try again later', deleteResponse[0].statusCode);
+    }
+
+    // 2. Add to unsubscribe list
+    const addResponse = await sendgridDetails.sendgridClient.request({
+        method: 'PUT',
+        url: `/v3/marketing/contacts`,
+        body: {
+            contacts: [{ email }],
+            list_ids: [process.env.SENDGRID_UNSUBSCRIBE_GROUP_ID!]
+        },
+    });
+
+    // Successful addition returns 202
+    if (addResponse[0].statusCode !== 202) {
+        throw errorUtilities.createError('Process failed, please try again later', addResponse[0].statusCode);
+    }
+
+    console.log(`Successfully processed unsubscription for ${email}`);
+
+    return responseUtilities.handleServicesResponse(
+        200,
+        'Successfully processed unsubscription',
+    );
+
+});
+
 export default {
     sendWelcomeFoundingListEmailService,
-    addToSendGridFoundersList
+    addToSendGridFoundersList,
+    removeFromFoundersListService
 }
