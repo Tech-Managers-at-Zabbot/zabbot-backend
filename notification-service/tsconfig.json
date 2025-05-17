@@ -10,14 +10,12 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "baseUrl": ".",
-    "paths": {
-      "@shared/*": ["../shared/*"]
-    }
   },
   "include": [
     "src/**/*"
   ],
   "references": [
-    { "path": "../shared" }
+    { "path": "../shared" },
+    { "path": "../config" }
   ]
 }
