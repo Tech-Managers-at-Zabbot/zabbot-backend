@@ -8,4 +8,5 @@ const emailControllers_1 = __importDefault(require("../../controllers/emailContr
 const router = express_1.default.Router();
 router.post('/welcome-sendgrid', emailControllers_1.default.sendgridExecuteFoundingListNotification);
 router.post('/welcome-mailchimp', emailControllers_1.default.mailChimpExecuteFoundingListNotification);
+router.get('/unsubscribe', emailControllers_1.default.sendgridUnsubscribeFoundingListNotification);
 exports.default = router;
