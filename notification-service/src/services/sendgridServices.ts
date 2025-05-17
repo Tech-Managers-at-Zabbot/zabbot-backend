@@ -5,7 +5,7 @@ const sendWelcomeFoundingListEmailService = errorUtilities.withServiceErrorHandl
     async (email: string, firstName: string, lastName: string) => {
 
         const token = helpersUtilities.generateToken({ email }, '30d')
-        const unsubscribeUrl = `${process.env.PRODUCTION_FRONTEND_URL}/founders-circle/unsubscribe?${token}`;
+        const unsubscribeUrl = `${process.env.DEV_FRONTEND_URL}/founders-circle/unsubscribe?token=${token}`;
 
         const messageDetails = {
             to: email,
@@ -81,41 +81,79 @@ const addToSendGridFoundersList = errorUtilities.withServiceErrorHandling(async 
 
 const removeFromFoundersListService = errorUtilities.withServiceErrorHandling(async (email: string) => {
 
+    try{
+    const data = {
+        emails: [email],
+    }
+    const [findContact]: any = await sendgridDetails.sendgridClient.request({
+        method: "POST",
+        url: `/v3/marketing/contacts/search/emails`,
+        body: data,
+    });
+
+    if(findContact?.statusCode !== 200) {
+        throw errorUtilities.createError('Process failed, please try again later', findContact.statusCode);
+    }
+
+    const sendgridUserId = findContact?.body?.result[email]?.contact?.id
+
+    if (!sendgridUserId) {
+        throw errorUtilities.createError('User not found', 404);
+    }
+
+    const userFirstName = findContact?.body?.result[email]?.contact?.first_name;
+    const userLastName = findContact?.body?.result[email]?.contact?.last_name;
+
+    const queryParams = { contact_ids: sendgridUserId }
+
     // 1. Remove from founders list
     const deleteResponse = await sendgridDetails.sendgridClient.request({
         method: 'DELETE',
-        url: `/v3/marketing/lists/${process.env.SENDGRID_FOUNDERS_LIST_ID}/contacts`,
-        body: {
-            contact_ids: [email]
-        },
+        url: `/v3/marketing/lists/${process.env.SENDGRID_FOUNDERS_LIST_ID!}/contacts`,
+        // `/v3/contactdb/lists/${process.env.SENDGRID_FOUNDERS_LIST_ID!}/recipients/${sendgridUserId}`
+        // `/v3/marketing/lists/${process.env.SENDGRID_FOUNDERS_LIST_ID!}/contacts`,
+        // `/v3/contactdb/lists/${list_id}/recipients/${recipient_id}`
+        qs: queryParams,
     });
+
+    // console.log('Delete response:', sendgridUserId, findContact?.body?.result[email]?.contact);
 
     // Successful removal returns 202 or 204
     if (deleteResponse[0].statusCode !== 202 && deleteResponse[0].statusCode !== 204) {
         throw errorUtilities.createError('Process failed, please try again later', deleteResponse[0].statusCode);
     }
 
-    // 2. Add to unsubscribe list
+     const unsubscribeData = {
+        contacts: [
+            {
+                email,
+                first_name: userFirstName,
+                last_name: userLastName,
+            },
+        ],
+        list_ids: [process.env.SENDGRID_FOUNDERS_LIST_ID!],
+    };
+
     const addResponse = await sendgridDetails.sendgridClient.request({
         method: 'PUT',
         url: `/v3/marketing/contacts`,
-        body: {
-            contacts: [{ email }],
-            list_ids: [process.env.SENDGRID_UNSUBSCRIBE_GROUP_ID!]
-        },
+        body: unsubscribeData
     });
 
-    // Successful addition returns 202
+
     if (addResponse[0].statusCode !== 202) {
         throw errorUtilities.createError('Process failed, please try again later', addResponse[0].statusCode);
     }
-
-    console.log(`Successfully processed unsubscription for ${email}`);
 
     return responseUtilities.handleServicesResponse(
         200,
         'Successfully processed unsubscription',
     );
+
+    }catch(error: any) {
+        console.error('Error adding to Unsubscribing:', error.response?.body || error);
+        throw errorUtilities.createError(`Error adding to Unsubscribing: ${error.response?.body || error}`, 500);
+    }
 
 });
 

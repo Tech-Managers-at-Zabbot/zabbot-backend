@@ -29,7 +29,7 @@ export const sendgridUnsubscribeFoundingListNotification = errorUtilities.withCo
     throw errorUtilities.createError('Invalid token', 400);
   }
 
-  const { email } = decodedDetails;
+  const { email } = decodedDetails.data;
 
   const unsubscribe: any = await sendgridMailServices.removeFromFoundersListService(email);
 
