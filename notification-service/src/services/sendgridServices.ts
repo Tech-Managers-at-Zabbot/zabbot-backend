@@ -5,7 +5,7 @@ const sendWelcomeFoundingListEmailService = errorUtilities.withServiceErrorHandl
     async (email: string, firstName: string, lastName: string) => {
 
         const token = helpersUtilities.generateToken({ email }, '30d')
-        const unsubscribeUrl = `${process.env.DEV_FRONTEND_URL}/founders-circle/unsubscribe?token=${token}`;
+        const unsubscribeUrl = `${process.env.UNSUBSCRIBE_URL}/founders-circle/unsubscribe?token=${token}`;
 
         const messageDetails = {
             to: email,
