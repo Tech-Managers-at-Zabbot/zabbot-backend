@@ -19,18 +19,8 @@ exports.sendgridExecuteFoundingListNotification = utilities_1.errorUtilities.wit
     // console.log('New email:', newEmail);
 });
 exports.sendgridUnsubscribeFoundingListNotification = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {
-    const { token } = request.query;
-    console.log('Token:', token);
-    if (!token) {
-        throw utilities_1.errorUtilities.createError('Token is required', 400);
-    }
-    const decodedDetails = utilities_1.helpersUtilities.validateToken(token);
-    console.log('Decoded details:', decodedDetails);
-    if (!decodedDetails) {
-        throw utilities_1.errorUtilities.createError('Invalid token', 400);
-    }
-    const { email } = decodedDetails;
-    const unsubscribe = await services_1.sendgridMailServices.removeFromFoundersListService(email);
+    const { email } = request.body;
+    const unsubscribe = await services_1.sendgridMailServices.removeFromSengridFoundersListService(email);
     return utilities_1.responseUtilities.responseHandler(response, unsubscribe.message, unsubscribe.statusCode, unsubscribe.data);
 });
 exports.default = {
