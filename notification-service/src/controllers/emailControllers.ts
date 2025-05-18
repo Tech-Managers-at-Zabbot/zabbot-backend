@@ -18,20 +18,10 @@ export const sendgridExecuteFoundingListNotification = errorUtilities.withContro
 })
 
 export const sendgridUnsubscribeFoundingListNotification = errorUtilities.withControllerErrorHandling( async (request: Request, response: Response) => {
-  const { token }:any = request.query;
-  // console.log('Token:', token);
-  if (!token) {
-    throw errorUtilities.createError('Token is required', 400);
-  }
-  const decodedDetails:any = helpersUtilities.validateToken(token);
-  // console.log('Decoded details:', decodedDetails);
-  if (!decodedDetails) {
-    throw errorUtilities.createError('Invalid token', 400);
-  }
 
-  const { email } = decodedDetails.data;
+  const { email } = request.body;
 
-  const unsubscribe: any = await sendgridMailServices.removeFromFoundersListService(email);
+  const unsubscribe: any = await sendgridMailServices.removeFromSengridFoundersListService(email);
 
    return responseUtilities.responseHandler(
     response,
