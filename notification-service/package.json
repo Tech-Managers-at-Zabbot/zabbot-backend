@@ -19,6 +19,8 @@
     "@sendgrid/client": "^8.1.5",
     "@types/nodemailer": "^6.4.17",
     "axios": "^1.9.0",
+    "compression": "^1.8.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
@@ -32,6 +34,8 @@
     "pino-pretty": "^13.0.0"
   },
   "devDependencies": {
+    "@types/compression": "^1.8.0",
+    "@types/cookie-parser": "^1.4.8",
     "@types/cors": "^2.8.18",
     "@types/express": "^5.0.1",
     "@types/mailchimp__mailchimp_marketing": "^3.0.21",

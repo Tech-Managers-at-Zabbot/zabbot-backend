@@ -51,11 +51,23 @@ export const joinWaitingList = async (request: Request, response: Response) => {
       const emailData = {
         email,
         firstName: name.split(' ')[0],
-        lastName: name.split(' ')[1] || ""
+        lastName: name.split(' ')[1] || "",
+        country
       }
 
        axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/welcome-sendgrid`, emailData)
 
+       if(sendUpdates){
+        axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-update-list`, emailData)
+       }
+
+       if(betaTest){
+        axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-testers-list`, emailData)
+       }
+
+       if(contributeSkills){
+        axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-contributors-list`, emailData)
+       }
 
   } catch (error: any) {
     console.error(error);
@@ -109,6 +121,124 @@ export const unsubscribeWaitingList = async (request: Request, response: Respons
     return response.status(200).json({
       message: 'Successfully unsubscribed from founders list'
     });
+
+  } catch (error: any) {
+    console.error(error);
+    if (error.name === 'SequelizeValidationError') {
+      response.status(400).json({
+        message: 'Validation error',
+        errors: error.errors.map((err: any) => err.message)
+      });
+      return;
+    }
+    response.status(500).json({ message: 'Server error' });
+  }
+}
+
+export const addUsersToRespectiveLists = async (request: Request, response: Response) => {
+  try {
+    const users = await WaitingList.findAll({});
+    
+    if (!users || users.length === 0) {
+      return response.status(200).json({ 
+        message: 'No users found in waiting list',
+        processed: 0 
+      });
+    }
+
+    let processedCount = 0;
+    let errorCount = 0;
+    const errors: any[] = [];
+
+    // Process each user
+    for (const user of users) {
+      try {
+        // Split name into firstName and lastName (assuming name is full name)
+        const nameParts = user.name.trim().split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+
+        const emailData = {
+          email: user.email,
+          firstName: firstName,
+          lastName: lastName,
+          country: user.country
+        };
+
+        // axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/welcome-sendgrid`, emailData)
+
+        const promises: Promise<any>[] = [];
+
+        if (user.sendUpdates) {
+          promises.push(
+            axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-update-list`, emailData)
+              .catch(err => ({ error: 'update-list', details: err }))
+          );
+        }
+
+        if (user.betaTest) {
+          promises.push(
+            axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-testers-list`, emailData)
+              .catch(err => ({ error: 'testers-list', details: err }))
+          );
+        }
+
+        if (user.contributeSkills) {
+          promises.push(
+            axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-contributors-list`, emailData)
+              .catch(err => ({ error: 'contributors-list', details: err }))
+          );
+        }
+
+        // Wait for all API calls for this user to complete
+        if (promises.length > 0) {
+          const results = await Promise.allSettled(promises);
+          
+          // Check for any failed requests
+          const failedRequests = results.filter(result => 
+            result.status === 'fulfilled' && result.value?.error
+          );
+
+          if (failedRequests.length > 0) {
+            errors.push({
+              userId: user.id,
+              email: user.email,
+              failures: failedRequests.map(req => (req as any).value)
+            });
+            errorCount++;
+          } else {
+            processedCount++;
+          }
+        } else {
+          // User has no preferences selected, still count as processed
+          processedCount++;
+        }
+
+      } catch (userError) {
+        console.error(`Error processing user ${user.id}:`, userError);
+        errors.push({
+          userId: user.id,
+          email: user.email,
+          error: userError
+        });
+        errorCount++;
+      }
+    }
+
+    // Return comprehensive response
+    const responseData = {
+      message: 'User processing completed',
+      totalUsers: users.length,
+      processedSuccessfully: processedCount,
+      errorsEncountered: errorCount,
+      ...(errors.length > 0 && { errors: errors })
+    };
+
+    if (errorCount > 0) {
+      return response.status(207).json(responseData); // 207 Multi-Status
+    }
+
+    return response.status(200).json(responseData);
 
   } catch (error: any) {
     console.error(error);
