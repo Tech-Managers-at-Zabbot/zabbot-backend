@@ -5,7 +5,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const utilities_1 = require("../../../shared/utilities");
 const sendgridConfig_1 = __importDefault(require("../config/sendgridConfig"));
-const sendWelcomeFoundingListEmailService = utilities_1.errorUtilities.withServiceErrorHandling(async (email, firstName, lastName) => {
+const enums_1 = require("../constants/enums");
+const listIdMap = {
+    [enums_1.SendgridListName.FOUNDERS_LIST]: process.env.SENDGRID_FOUNDERS_LIST_ID,
+    [enums_1.SendgridListName.CONTRIBUTORS]: process.env.SENDGRID_CONTRIBUTORS_LIST_ID,
+    [enums_1.SendgridListName.BETA_TESTERS]: process.env.SENDGRID_BETA_TESTERS_LIST_ID,
+    [enums_1.SendgridListName.UPDATES]: process.env.SENDGRID_UPDATES_LIST_ID,
+};
+const sendWelcomeFoundingListEmailService = utilities_1.errorUtilities.withServiceErrorHandling(async (email, firstName, lastName, country) => {
     const token = utilities_1.helpersUtilities.generateToken({ email }, '30d');
     const unsubscribeUrl = `${process.env.UNSUBSCRIBE_URL}/founders-circle/unsubscribe?token=${token}`;
     const messageDetails = {
@@ -36,22 +43,24 @@ const sendWelcomeFoundingListEmailService = utilities_1.errorUtilities.withServi
     };
     try {
         const emailResponse = await sendgridConfig_1.default.sendgridMail.send(messageDetails);
-        await addToSendGridFoundersList(email, firstName, lastName);
+        await addToSendGridFoundersList(email, firstName, lastName, country);
         console.log('Email sent:', emailResponse[0]?.statusCode);
         return emailResponse;
+        return;
     }
     catch (error) {
         console.error('SendGrid error:', error.response?.body || error);
         throw error;
     }
 });
-const addToSendGridFoundersList = utilities_1.errorUtilities.withServiceErrorHandling(async (email, firstName, lastName, listId) => {
+const addToSendGridFoundersList = utilities_1.errorUtilities.withServiceErrorHandling(async (email, firstName, lastName, country) => {
     const data = {
         contacts: [
             {
                 email,
                 first_name: firstName,
                 last_name: lastName,
+                country
             },
         ],
         list_ids: [process.env.SENDGRID_FOUNDERS_LIST_ID],
@@ -70,7 +79,128 @@ const addToSendGridFoundersList = utilities_1.errorUtilities.withServiceErrorHan
         throw error;
     }
 });
+// const removeFromSengridFoundersListService = errorUtilities.withServiceErrorHandling(async (email: string) => {
+//     try {
+//         const data = {
+//             emails: [email],
+//         }
+//         const [findContact]: any = await sendgridDetails.sendgridClient.request({
+//             method: "POST",
+//             url: `/v3/marketing/contacts/search/emails`,
+//             body: data,
+//         });
+//         if (findContact?.statusCode !== 200) {
+//             throw errorUtilities.createError('Process failed, please try again later', findContact.statusCode);
+//         }
+//         const sendgridUserId = findContact?.body?.result[email]?.contact?.id
+//         if (!sendgridUserId) {
+//             throw errorUtilities.createError('User not found', 404);
+//         }
+//         const userFirstName = findContact?.body?.result[email]?.contact?.first_name;
+//         const userLastName = findContact?.body?.result[email]?.contact?.last_name;
+//         const queryParams = { contact_ids: sendgridUserId }
+//         const deleteResponse = await sendgridDetails.sendgridClient.request({
+//             method: 'DELETE',
+//             url: `/v3/marketing/lists/${process.env.SENDGRID_FOUNDERS_LIST_ID!}/contacts`,
+//             qs: queryParams,
+//         });
+//         if (deleteResponse[0].statusCode !== 202 && deleteResponse[0].statusCode !== 204) {
+//             throw errorUtilities.createError('Process failed, please try again later', deleteResponse[0].statusCode);
+//         }
+//         await sendgridDetails.sendgridClient.request({
+//             method: 'DELETE',
+//             url: `/v3/marketing/lists/${process.env.SENDGRID_BETA_TESTERS_LIST_ID!}/contacts`,
+//             qs: queryParams,
+//         });
+//          await sendgridDetails.sendgridClient.request({
+//             method: 'DELETE',
+//             url: `/v3/marketing/lists/${process.env.SENDGRID_CONTRIBUTORS_LIST_ID!}/contacts`,
+//             qs: queryParams,
+//         });
+//           await sendgridDetails.sendgridClient.request({
+//             method: 'DELETE',
+//             url: `/v3/marketing/lists/${process.env.SENDGRID_UPDATES_LIST_ID!}/contacts`,
+//             qs: queryParams,
+//         });
+//         const unsubscribeData = {
+//             contacts: [
+//                 {
+//                     email,
+//                     first_name: userFirstName,
+//                     last_name: userLastName,
+//                 },
+//             ],
+//             list_ids: [process.env.SENDGRID_FOUNDERS_LIST_ID!],
+//         };
+//         const addResponse = await sendgridDetails.sendgridClient.request({
+//             method: 'PUT',
+//             url: `/v3/marketing/contacts`,
+//             body: unsubscribeData
+//         });
+//         if (addResponse[0].statusCode !== 202) {
+//             throw errorUtilities.createError('Process failed, please try again later', addResponse[0].statusCode);
+//         }
+//         return responseUtilities.handleServicesResponse(
+//             200,
+//             'Successfully processed unsubscription',
+//         );
+//     } catch (error: any) {
+//         console.error('Error Unsubscribing:', error.response?.body || error);
+//         throw errorUtilities.createError(`Error Unsubscribing: ${error.response?.body || error}`, 500);
+//     }
+// });
+const rollbackDeleteOperations = async (email, firstName, lastName, userCountry, completedListIds) => {
+    console.log('Starting rollback for completed operations:', completedListIds);
+    if (completedListIds.length === 0)
+        return;
+    try {
+        const rollbackData = {
+            contacts: [
+                {
+                    email,
+                    first_name: firstName,
+                    last_name: lastName,
+                    country: userCountry
+                },
+            ],
+            list_ids: completedListIds,
+        };
+        const rollbackResponse = await sendgridConfig_1.default.sendgridClient.request({
+            method: 'PUT',
+            url: `/v3/marketing/contacts`,
+            body: rollbackData
+        });
+        if (rollbackResponse[0].statusCode === 202) {
+            const data = {
+                contacts: [
+                    {
+                        email,
+                        first_name: firstName,
+                        last_name: lastName,
+                        country: userCountry
+                    },
+                ],
+                list_ids: [process.env.SENDGRID_FOUNDERS_LIST_ID],
+            };
+            const [response] = await sendgridConfig_1.default.sendgridClient.request({
+                method: 'PUT',
+                url: '/v3/marketing/contacts',
+                body: data,
+            });
+            console.log('Rollback successful: User re-added to', completedListIds.length, 'lists');
+        }
+        else {
+            console.error('Rollback failed with status:', rollbackResponse[0].statusCode);
+        }
+    }
+    catch (rollbackError) {
+        console.error('Critical error during rollback:', rollbackError);
+        // You might want to log this to a monitoring system or database
+        // for manual intervention
+    }
+};
 const removeFromSengridFoundersListService = utilities_1.errorUtilities.withServiceErrorHandling(async (email) => {
+    let completedOperations = [];
     try {
         const data = {
             emails: [email],
@@ -89,16 +219,45 @@ const removeFromSengridFoundersListService = utilities_1.errorUtilities.withServ
         }
         const userFirstName = findContact?.body?.result[email]?.contact?.first_name;
         const userLastName = findContact?.body?.result[email]?.contact?.last_name;
+        const userCountry = findContact?.body?.result[email]?.contact?.country;
         const queryParams = { contact_ids: sendgridUserId };
-        // 1. Remove from founders list
-        const deleteResponse = await sendgridConfig_1.default.sendgridClient.request({
-            method: 'DELETE',
-            url: `/v3/marketing/lists/${process.env.SENDGRID_FOUNDERS_LIST_ID}/contacts`,
-            qs: queryParams,
-        });
-        // Successful removal returns 202 or 204
-        if (deleteResponse[0].statusCode !== 202 && deleteResponse[0].statusCode !== 204) {
-            throw utilities_1.errorUtilities.createError('Process failed, please try again later', deleteResponse[0].statusCode);
+        // Define all delete operations
+        const deleteOperations = [
+            {
+                listId: process.env.SENDGRID_FOUNDERS_LIST_ID,
+                name: 'FOUNDERS_LIST'
+            },
+            {
+                listId: process.env.SENDGRID_BETA_TESTERS_LIST_ID,
+                name: 'BETA_TESTERS_LIST'
+            },
+            {
+                listId: process.env.SENDGRID_CONTRIBUTORS_LIST_ID,
+                name: 'CONTRIBUTORS_LIST'
+            },
+            {
+                listId: process.env.SENDGRID_UPDATES_LIST_ID,
+                name: 'UPDATES_LIST'
+            }
+        ];
+        // Execute all delete operations with transaction-like behavior
+        for (const operation of deleteOperations) {
+            try {
+                const deleteResponse = await sendgridConfig_1.default.sendgridClient.request({
+                    method: 'DELETE',
+                    url: `/v3/marketing/lists/${operation.listId}/contacts`,
+                    qs: queryParams,
+                });
+                if (deleteResponse[0].statusCode !== 202 && deleteResponse[0].statusCode !== 204) {
+                    throw new Error(`Delete failed for ${operation.name}: Status ${deleteResponse[0].statusCode}`);
+                }
+                completedOperations.push(operation.listId);
+            }
+            catch (operationError) {
+                console.error(`Error deleting from ${operation.name}:`, operationError);
+                await rollbackDeleteOperations(email, userFirstName, userLastName, userCountry, completedOperations);
+                throw utilities_1.errorUtilities.createError(`Transaction failed during ${operation.name} deletion. All operations rolled back.`, 500);
+            }
         }
         const unsubscribeData = {
             contacts: [
@@ -116,7 +275,8 @@ const removeFromSengridFoundersListService = utilities_1.errorUtilities.withServ
             body: unsubscribeData
         });
         if (addResponse[0].statusCode !== 202) {
-            throw utilities_1.errorUtilities.createError('Process failed, please try again later', addResponse[0].statusCode);
+            await rollbackDeleteOperations(email, userFirstName, userLastName, userCountry, completedOperations);
+            throw utilities_1.errorUtilities.createError('Failed to add to unsubscribe list. All operations rolled back.', addResponse[0].statusCode);
         }
         return utilities_1.responseUtilities.handleServicesResponse(200, 'Successfully processed unsubscription');
     }
@@ -125,8 +285,124 @@ const removeFromSengridFoundersListService = utilities_1.errorUtilities.withServ
         throw utilities_1.errorUtilities.createError(`Error Unsubscribing: ${error.response?.body || error}`, 500);
     }
 });
+const addToSendGridBetaTestersListService = utilities_1.errorUtilities.withServiceErrorHandling(async (userDetails) => {
+    const { email, firstName, lastName, country } = userDetails;
+    const data = {
+        contacts: [
+            {
+                email,
+                first_name: `${firstName}`,
+                last_name: `${lastName}`,
+                country: country
+            },
+        ],
+        list_ids: [process.env.SENDGRID_BETA_TESTERS_LIST_ID],
+    };
+    try {
+        const [response] = await sendgridConfig_1.default.sendgridClient.request({
+            method: 'PUT',
+            url: '/v3/marketing/contacts',
+            body: data,
+        });
+        if (response?.statusCode === 200 || response?.statusCode === 202) {
+            return utilities_1.responseUtilities.handleServicesResponse(200, 'User added successful');
+        }
+        return response;
+    }
+    catch (error) {
+        console.error(`Error adding contact ${firstName} to update list:`, error.response?.body?.errors[0]?.message && error.response?.body);
+        throw utilities_1.errorUtilities.createError(`${error.response?.body?.errors[0]?.message}`, 500);
+    }
+});
+const addToSendGridContributorsListService = utilities_1.errorUtilities.withServiceErrorHandling(async (userDetails) => {
+    const { email, firstName, lastName, country } = userDetails;
+    const data = {
+        contacts: [
+            {
+                email,
+                first_name: `${firstName}`,
+                last_name: `${lastName}`,
+                country: country
+            },
+        ],
+        list_ids: [process.env.SENDGRID_CONTRIBUTORS_LIST_ID],
+    };
+    try {
+        const [response] = await sendgridConfig_1.default.sendgridClient.request({
+            method: 'PUT',
+            url: '/v3/marketing/contacts',
+            body: data,
+        });
+        if (response?.statusCode === 200 || response?.statusCode === 202) {
+            return utilities_1.responseUtilities.handleServicesResponse(200, 'User added successful');
+        }
+        return response;
+    }
+    catch (error) {
+        console.error(`Error adding contact ${firstName} to contributors list:`, error.response?.body?.errors[0]?.message && error.response?.body);
+        throw utilities_1.errorUtilities.createError(`${error.response?.body?.errors[0]?.message}`, 500);
+    }
+});
+const addToSendGridUpdatesListService = utilities_1.errorUtilities.withServiceErrorHandling(async (userDetails) => {
+    const { email, firstName, lastName, country } = userDetails;
+    const data = {
+        contacts: [
+            {
+                email,
+                first_name: `${firstName}`,
+                last_name: `${lastName}`,
+                country: country
+            },
+        ],
+        list_ids: [process.env.SENDGRID_UPDATES_LIST_ID],
+    };
+    try {
+        const [response] = await sendgridConfig_1.default.sendgridClient.request({
+            method: 'PUT',
+            url: '/v3/marketing/contacts',
+            body: data,
+        });
+        if (response?.statusCode === 200 || response?.statusCode === 202) {
+            return utilities_1.responseUtilities.handleServicesResponse(200, 'User added successful');
+        }
+        return response;
+    }
+    catch (error) {
+        console.error(`Error adding contact ${firstName} to update list:`, error.response?.body?.errors[0]?.message && error.response?.body);
+        throw utilities_1.errorUtilities.createError(`${error.response?.body?.errors[0]?.message}`, 500);
+    }
+});
+const addCustomFieldToSendgridList = utilities_1.errorUtilities.withServiceErrorHandling(async (fieldData) => {
+    const { fieldName, fieldType, listName } = fieldData;
+    const listId = listIdMap[listName];
+    if (!listId) {
+        throw utilities_1.errorUtilities.createError(`Missing list ID for list: ${listName}`, 500);
+    }
+    const data = {
+        name: fieldName,
+        field_type: fieldType,
+        list_ids: [listId],
+    };
+    try {
+        const [response] = await sendgridConfig_1.default.sendgridClient.request({
+            method: 'POST',
+            url: '/v3/marketing/field_definitions',
+            body: data,
+        });
+        console.log('Adding Field', response);
+        return response;
+    }
+    catch (error) {
+        console.error(`1 Error adding field to ${listName} list:`, error.response?.body?.errors[0]?.message);
+        throw utilities_1.errorUtilities.createError(`${error.response?.body?.errors[0]?.message}`, 500);
+    }
+});
 exports.default = {
     sendWelcomeFoundingListEmailService,
     addToSendGridFoundersList,
-    removeFromSengridFoundersListService
+    removeFromSengridFoundersListService,
+    addToSendGridBetaTestersListService,
+    addToSendGridContributorsListService,
+    addToSendGridUpdatesListService,
+    addCustomFieldToSendgridList,
 };
