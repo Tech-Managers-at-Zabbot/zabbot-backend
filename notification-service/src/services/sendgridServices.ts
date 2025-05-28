@@ -207,24 +207,6 @@ const rollbackDeleteOperations = async (
         });
 
         if (rollbackResponse[0].statusCode === 202) {
-            const data = {
-                contacts: [
-                    {
-                        email,
-                        first_name: firstName,
-                        last_name: lastName,
-                        country: userCountry
-                    },
-                ],
-                list_ids: [process.env.SENDGRID_FOUNDERS_LIST_ID!],
-            };
-
-            const [response] = await sendgridDetails.sendgridClient.request({
-                method: 'PUT',
-                url: '/v3/marketing/contacts',
-                body: data,
-            });
-
             console.log('Rollback successful: User re-added to', completedListIds.length, 'lists');
         } else {
             console.error('Rollback failed with status:', rollbackResponse[0].statusCode);
