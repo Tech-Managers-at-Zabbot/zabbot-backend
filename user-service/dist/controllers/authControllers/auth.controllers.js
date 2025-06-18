@@ -56,7 +56,6 @@ const userRegistrationController = utilities_1.errorUtilities.withControllerErro
             throw utilities_1.errorUtilities.createError("Beta tester check failed", 500);
         }
     }
-    console.log('👤 Proceeding with user registration...');
     const registerUser = await services_1.authServices.registerUserService(payloadDetails);
     return utilities_1.responseUtilities.responseHandler(response, registerUser.message, registerUser.statusCode, registerUser.data);
 });
@@ -85,7 +84,6 @@ const userPasswordResetRequestController = utilities_1.errorUtilities.withContro
 });
 const userResetPasswordController = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {
     const { token, newPassword, confirmNewPassword } = request.body;
-    console.log(`Reset Password Request: ${JSON.stringify(request.body)}`);
     const requestPasswordReset = await services_1.authServices.resetPasswordService({ token, newPassword, confirmNewPassword });
     return utilities_1.responseUtilities.responseHandler(response, requestPasswordReset.message, requestPasswordReset.statusCode, requestPasswordReset.data);
 });
