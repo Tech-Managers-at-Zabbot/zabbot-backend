@@ -291,10 +291,38 @@ const passwordResetRequestService = errorUtilities.withServiceErrorHandling(asyn
         firstName: user.firstName
     }
     try {
-        await axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/auth-notification/reset-password-link`, emailData);
+        const sendLink = await axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/auth-notification/reset-password-link`, emailData,
+            {
+                timeout: 100000,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        console.log('send', sendLink)
+
+        // if (sendLink.status !== 200) {
+        //     // const errorMessage = sendLink.status === 403
+        //     //     ? "User is not authorized for beta testing"
+        //     //     : sendLink.data.message || "Beta tester check failed";
+        //     throw errorUtilities.createError(errorMessage, sendLink.status);
+        // }
     } catch (error: any) {
-        console.error(`Error Sending Password Reset Mail: ${error}`);
-        throw errorUtilities.createError("Unable to send reset password link, please try again", StatusCodes.InternalServerError);
+        console.log('📊 Error details:', {
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            data: error.response?.data,
+            code: error.code,
+            message: error.message
+        });
+        // if (error.response?.status === 404) {
+        //         throw errorUtilities.createError("User not found in founders circle, please join the founders circle", 404);
+        //     } else if (error.response?.status === 403) {
+        //             throw errorUtilities.createError("User is not authorized for beta testing", 403);
+        //         } else {
+            throw errorUtilities.createError(error?.response?.data?.message, error?.response?.status);
+        // }
     }
     return responseUtilities.handleServicesResponse(StatusCodes.Created, "Password reset link sent successfully", user.email);
 });
@@ -354,11 +382,11 @@ const resetPasswordService = errorUtilities.withServiceErrorHandling(async (rese
 
 
 
-    export default {
-        registerUserService,
-        verifyUserAccountService,
-        resendVerificationOtpService,
-        loginUserService,
-        passwordResetRequestService,
-        resetPasswordService
-    }
+export default {
+    registerUserService,
+    verifyUserAccountService,
+    resendVerificationOtpService,
+    loginUserService,
+    passwordResetRequestService,
+    resetPasswordService
+}

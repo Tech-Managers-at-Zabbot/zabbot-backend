@@ -123,12 +123,13 @@ const userPasswordResetRequestController = errorUtilities.withControllerErrorHan
 
 const userResetPasswordController = errorUtilities.withControllerErrorHandling(async (request: Request, response: Response) => {
     const { token, newPassword, confirmNewPassword } = request.body;
-    const requestPasswordReset = await authServices.resetPasswordService({ token, newPassword, confirmNewPassword })
+    const resetPassword = await authServices.resetPasswordService({ token, newPassword, confirmNewPassword })
+    console.log('resetPass:', resetPassword)
     return responseUtilities.responseHandler(
         response,
-        requestPasswordReset.message,
-        requestPasswordReset.statusCode,
-        requestPasswordReset.data
+        resetPassword.message,
+        resetPassword.statusCode,
+        resetPassword.data
     )
 })
 
