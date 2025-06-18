@@ -1,4 +1,8 @@
-import emailControllers from "./emailControllers";
+import emailControllers from "./foundersListControllers";
+import userAuthNotifications from "./userAuthNotifications";
 
 
-export { emailControllers };
+export { 
+    emailControllers, 
+    userAuthNotifications 
+};

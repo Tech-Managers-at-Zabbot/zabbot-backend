@@ -1,5 +1,5 @@
 import express from 'express';
-import emailControllers from '../../controllers/emailControllers';
+import { emailControllers } from '../../controllers';
 import { joiValidators } from '../../validations';
 
 

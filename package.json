@@ -7,7 +7,7 @@
     "buildAll": "ts-node buildAll.ts",
     "build": "tsc",
     "start": "cross-env NODE_ENV=production node dist/main-server.js",
-    "dev": "cross-env NODE_ENV=development nodemon main-server.ts",
+    "dev": "cross-env NODE_ENV=development nodemon --exec",
     "install:all": "ts-node installAll.ts"
   },
   "repository": {
@@ -34,6 +34,8 @@
     "mailchimp_transactional": "^0.0.1-security",
     "morgan": "^1.10.0",
     "nodemon": "^3.1.10",
+    "pg": "^8.16.0",
+    "sequelize": "^6.37.7",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   },

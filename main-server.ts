@@ -1,5 +1,5 @@
 import process from 'process';
-// Enhanced error handling to ensure proper shutdown on uncaught exceptions
+
 process.on('uncaughtException', (err) => {
   console.error('💥 UNCAUGHT EXCEPTION:', err);
   shutdown(1);
@@ -18,6 +18,8 @@ import cors from 'cors';
 import logger from "morgan";
 import dotenv from 'dotenv';
 import http from 'http';
+import { syncDatabases } from './config/syncDb';
+// import { associateUserModels } from './user-service/src/entities/associations';
 
 // Configuration for services
 interface ServiceConfig {
@@ -29,7 +31,6 @@ interface ServiceConfig {
     prod: string;
   };
 }
-
 // List of all microservices
 const services: ServiceConfig[] = [
   {
@@ -49,16 +50,24 @@ const services: ServiceConfig[] = [
       dev: path.resolve(__dirname, './notification-service/src/app.ts'),
       prod: path.resolve(__dirname, '../notification-service/dist/app.js')
     }
+  },
+  {
+    name: 'users-service',
+    path: '/api/v1/users',
+    port: 3004,
+    entryPoint: {
+      dev: path.resolve(__dirname, './user-service/src/app.ts'),
+      prod: path.resolve(__dirname, '../user-service/dist/app.js')
+    }
   }
 ];
-
 
 const app = express();
 
 dotenv.config();
 
 app.use(cors());
-app.use(logger("dev")); 
+app.use(logger("dev"));
 
 const MAIN_PORT = process.env.MAIN_PORT || 3010;
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -89,14 +98,14 @@ function startSingleService(service: ServiceConfig) {
   }
 
   console.log(`Starting ${service.name} on port ${service.port}...`);
-  
+
   const entryPoint = NODE_ENV === 'production' ? service.entryPoint.prod : service.entryPoint.dev;
-  
+
   // Choose runner based on environment and file extension
   const isTypeScript = entryPoint.endsWith('.ts');
   let command: string;
   let args: string[];
-  
+
   if (NODE_ENV === 'production' || !isTypeScript) {
     // For production or JS files, use node
     command = 'node';
@@ -108,10 +117,10 @@ function startSingleService(service: ServiceConfig) {
   }
 
   const childProcess = spawn(command, args, {
-    env: { 
-      ...process.env, 
-      PORT: service.port.toString(), 
-      SERVICE_NAME: service.name 
+    env: {
+      ...process.env,
+      PORT: service.port.toString(),
+      SERVICE_NAME: service.name
     },
     stdio: 'inherit',
   });
@@ -154,7 +163,7 @@ services.forEach(service => {
     // @ts-ignore - logLevel exists in runtime but not in type definitions
     logLevel: 'warn'
   };
-  
+
   app.use(service.path, createProxyMiddleware(proxyOptions));
 });
 
@@ -166,7 +175,7 @@ app.get('/health', (req, res) => {
       running: serviceProcesses.has(service.name)
     };
   });
-  
+
   res.json({
     status: 'ok',
     uptime: process.uptime(),
@@ -174,6 +183,10 @@ app.get('/health', (req, res) => {
     environment: NODE_ENV
   });
 });
+
+syncDatabases()
+
+// associateUserModels();
 
 // Main app root
 app.get('/', (req, res) => {

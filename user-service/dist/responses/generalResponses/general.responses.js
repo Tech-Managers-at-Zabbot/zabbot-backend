@@ -1,0 +1,20 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.GeneralResponses = void 0;
+var GeneralResponses;
+(function (GeneralResponses) {
+    GeneralResponses["EMAIL_EXISTS_LOGIN"] = "This email already exists, please proceed to login";
+    GeneralResponses["PROCESS_UNSSUCCESSFUL"] = "Process unsuccessful, please try again";
+    GeneralResponses["USER_REGSTRATION_SUCCESSFUL"] = "User registered successfully, a mail has been sent to your email, click on the link in it to verify your account";
+    GeneralResponses["ADMIN_REGISTRATION_SUCCESSFUL"] = "Admin account successfully registered. Please check your mail for an email. Welcome to Zabbot.";
+    GeneralResponses["VERIFICATION_ERROR"] = "Sorry, verification error. Please request for another verification link";
+    GeneralResponses["USER_NOT_FOUND"] = "User not found";
+    GeneralResponses["ALREADY_VERIFIED_ACCOUNT"] = "Account is already verified";
+    GeneralResponses["SUCCESSFUL_VERIFICATION"] = "Account verified successfully, please proceed to login";
+    GeneralResponses["INACTIVE_ACCOUNT"] = "Account is inactive, please contact support";
+    GeneralResponses["BLOCKED_ACCOUNT"] = "Account is blocked, please contact support";
+    GeneralResponses["INVALID_CREDENTIALS"] = "Invalid credentials, please try again";
+    GeneralResponses["UNVERIFIED_ACCOUNT"] = "Your account is not verified, please verify your account";
+    GeneralResponses["SUCCESSFUL_LOGIN"] = "Login successful";
+    GeneralResponses["EMAIL_REQUIRED"] = "Email is required";
+})(GeneralResponses || (exports.GeneralResponses = GeneralResponses = {}));

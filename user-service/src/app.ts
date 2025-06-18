@@ -9,6 +9,8 @@ import cookieParser from "cookie-parser";
 import dotenv from 'dotenv';
 import path from 'path';
 import { errorUtilities } from '../../shared/utilities';
+import userRoutes from './routes'
+// import { associateUserModels } from './entities/associations';
 
 const app = express();
 
@@ -33,7 +35,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Routes
-// app.use('/', waitingListRoutes);
+app.use('/', userRoutes);
 
 // Health check endpoint
 app.get('/', (req, res) => {
@@ -42,6 +44,8 @@ app.get('/', (req, res) => {
     status: 'ok',
   });
 });
+
+// associateUserModels();
 
 // Error handling
 app.use(errorUtilities.globalErrorHandler as any);

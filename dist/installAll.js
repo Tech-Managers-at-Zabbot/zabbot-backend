@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const child_process_1 = require("child_process");
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
-const services = ['./shared', './waiting-list-service', './config', './notification-service'];
+const services = ['./shared', './waiting-list-service', './config', './notification-service', './user-service'];
 function installDependencies(service) {
     const servicePath = path_1.default.join(__dirname, service);
     const packageJsonPath = path_1.default.join(servicePath, 'package.json');

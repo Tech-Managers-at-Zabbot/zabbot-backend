@@ -9,7 +9,7 @@ import { errorUtilities, helpersUtilities } from '../../../shared/utilities';
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 export const config = {
-NOTIFICATION_SERVICE_ROUTE: process.env.NOTIFICATION_SERVICE_ROUTE
+  NOTIFICATION_SERVICE_ROUTE: process.env.NOTIFICATION_SERVICE_ROUTE
 };
 
 export const joinWaitingList = async (request: Request, response: Response) => {
@@ -48,26 +48,26 @@ export const joinWaitingList = async (request: Request, response: Response) => {
       data: newEntry
     });
 
-      const emailData = {
-        email,
-        firstName: name.split(' ')[0],
-        lastName: name.split(' ')[1] || "",
-        country
-      }
+    const emailData = {
+      email,
+      firstName: name.split(' ')[0],
+      lastName: name.split(' ')[1] || "",
+      country
+    }
 
-       axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/welcome-sendgrid`, emailData)
+    axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/welcome-sendgrid`, emailData)
 
-       if(sendUpdates){
-        axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-update-list`, emailData)
-       }
+    if (sendUpdates) {
+      axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-update-list`, emailData)
+    }
 
-       if(betaTest){
-        axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-testers-list`, emailData)
-       }
+    if (betaTest) {
+      axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-testers-list`, emailData)
+    }
 
-       if(contributeSkills){
-        axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-contributors-list`, emailData)
-       }
+    if (contributeSkills) {
+      axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-contributors-list`, emailData)
+    }
 
   } catch (error: any) {
     console.error(error);
@@ -85,22 +85,22 @@ export const joinWaitingList = async (request: Request, response: Response) => {
 
 export const unsubscribeWaitingList = async (request: Request, response: Response) => {
   try {
-    const { token }:any = request.query;
+    const { token }: any = request.query;
 
-  if (!token) {
-    throw errorUtilities.createError('Token is required', 400);
-  }
-  const decodedDetails:any = helpersUtilities.validateToken(token);
+    if (!token) {
+      throw errorUtilities.createError('Token is required', 400);
+    }
+    const decodedDetails: any = helpersUtilities.validateToken(token);
 
-  if (!decodedDetails) {
-    console.error('Invalid token');
-    throw errorUtilities.createError('Error, please try again', 400);
-  }
+    if (!decodedDetails) {
+      console.error('Invalid token');
+      throw errorUtilities.createError('Error, please try again', 400);
+    }
 
-  const { email } = decodedDetails.data;
+    const { email } = decodedDetails.data;
 
     if (!email) {
-     throw errorUtilities.createError('Error, please try again', 400);
+      throw errorUtilities.createError('Error, please try again', 400);
     }
 
     const existingUser = await WaitingList.findOne({ where: { email } });
@@ -138,11 +138,11 @@ export const unsubscribeWaitingList = async (request: Request, response: Respons
 export const addUsersToRespectiveLists = async (request: Request, response: Response) => {
   try {
     const users = await WaitingList.findAll({});
-    
+
     if (!users || users.length === 0) {
-      return response.status(200).json({ 
+      return response.status(200).json({
         message: 'No users found in waiting list',
-        processed: 0 
+        processed: 0
       });
     }
 
@@ -193,9 +193,9 @@ export const addUsersToRespectiveLists = async (request: Request, response: Resp
         // Wait for all API calls for this user to complete
         if (promises.length > 0) {
           const results = await Promise.allSettled(promises);
-          
+
           // Check for any failed requests
-          const failedRequests = results.filter(result => 
+          const failedRequests = results.filter(result =>
             result.status === 'fulfilled' && result.value?.error
           );
 
@@ -250,5 +250,36 @@ export const addUsersToRespectiveLists = async (request: Request, response: Resp
       return;
     }
     response.status(500).json({ message: 'Server error' });
+  }
+}
+
+export const getWaitingListBetaTesterUser = async (request: Request, response: Response) => {
+  
+  try {
+    const { email } = request.query;
+
+    if (!email || typeof email !== 'string') {
+      return response.status(400).json({ error: 'Valid email is required' });
+    }
+
+    const user = await WaitingList.findOne({ where: { email } });
+
+    if (!user) {
+      return response.status(404).json({ message: 'User not found in waiting list' });
+    }
+
+    if (!user.betaTest) {
+      return response.status(403).json({ message: 'User is not part of the beta testers' });
+    }
+
+    return response.status(200).json({
+      message: 'User found',
+      data: user
+    });
+
+  } catch (error: any) {
+    console.error('💥 Beta tester check error:', error);
+    console.error('📚 Error stack:', error.stack);
+    return response.status(500).json({ message: 'Server error', error: error.message });
   }
 }

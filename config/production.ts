@@ -3,11 +3,14 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 const {
-    PRODUCTION_DATABASE_URL
+    USERS_SERVICE_PRODUCTION_DB,
+    USERS_SERVICE_DEV_DB,
+    FOUNDERS_LIST_PRODUCTION_DB
 } = process.env
 
 console.log('Running in production mode')
 
 export default {
-    DB_URL: PRODUCTION_DATABASE_URL
+    FOUNDERS_LIST_DB: FOUNDERS_LIST_PRODUCTION_DB!,
+    USERS_SERVICE_DB: USERS_SERVICE_DEV_DB!
 }

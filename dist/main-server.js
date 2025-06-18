@@ -20,6 +20,7 @@ const cors_1 = __importDefault(require("cors"));
 const morgan_1 = __importDefault(require("morgan"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const http_1 = __importDefault(require("http"));
+const syncDb_1 = require("./config/syncDb");
 const services = [
     {
         name: 'founders-list-service',
@@ -37,6 +38,15 @@ const services = [
         entryPoint: {
             dev: path_1.default.resolve(__dirname, './notification-service/src/app.ts'),
             prod: path_1.default.resolve(__dirname, '../notification-service/dist/app.js')
+        }
+    },
+    {
+        name: 'users-service',
+        path: '/api/v1/users',
+        port: 3004,
+        entryPoint: {
+            dev: path_1.default.resolve(__dirname, './user-service/src/app.ts'),
+            prod: path_1.default.resolve(__dirname, '../user-service/dist/app.js')
         }
     }
 ];
@@ -133,6 +143,7 @@ app.get('/health', (req, res) => {
         environment: NODE_ENV
     });
 });
+(0, syncDb_1.syncDatabases)();
 app.get('/', (req, res) => {
     res.send(`
     <h1>Zabbot Backend Gateway</h1>

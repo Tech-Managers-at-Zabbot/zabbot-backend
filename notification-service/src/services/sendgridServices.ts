@@ -1,6 +1,7 @@
 import { errorUtilities, helpersUtilities, responseUtilities } from '../../../shared/utilities';
 import sendgridDetails from "../config/sendgridConfig";
 import { SendgridListTypes, SendgridListName } from "../constants/enums";
+import { nodemailerService } from '../services'
 
 const listIdMap: Record<SendgridListName, string | undefined> = {
     [SendgridListName.FOUNDERS_LIST]: process.env.SENDGRID_FOUNDERS_LIST_ID,
@@ -47,7 +48,6 @@ const sendWelcomeFoundingListEmailService = errorUtilities.withServiceErrorHandl
             await addToSendGridFoundersList(email, firstName, lastName, country);
             console.log('Email sent:', emailResponse[0]?.statusCode);
             return emailResponse;
-            return;
         } catch (error: any) {
             console.error('SendGrid error:', error.response?.body || error);
             throw error;
@@ -475,6 +475,245 @@ const addCustomFieldToSendgridList = errorUtilities.withServiceErrorHandling(asy
     }
 });
 
+const sendWelcomeEmailWithOtpService = errorUtilities.withServiceErrorHandling(
+    async (email: string, firstName: string, otp: string) => {
+
+        // const messageDetails = {
+        //     to: email,
+        //     from: {
+        //         email: process.env.SENDGRID_FROM_EMAIL!,
+        //         name: process.env.SENDGRID_FROM_NAME!,
+        //     },
+        //     templateId: process.env.SENDGRID_WELCOME_EMAIL_TEMPLATE_ID!,
+        //     dynamic_template_data: {
+        //         otp,
+        //         firstName
+        //     },
+        //     subject: `Ẹ káàbọ̀! (Welcome!) ${firstName}`,
+        //     trackingSettings: {
+        //         subscriptionTracking: {
+        //             enable: false,
+        //             // substitutionTag: "<%asm_group_unsubscribe_raw_url%>",
+        //             // substitutionTag: "{{{unsubscribe}}}"
+        //         },
+        //         // asm: {
+        //         //     group_id: parseInt(process.env.SENDGRID_UNSUBSCRIBE_GROUP_ID || '0'),
+        //         //     groups_to_display: [parseInt(process.env.SENDGRID_UNSUBSCRIBE_GROUP_ID || '0')]
+        //         // },
+        //         //              customArgs: {
+        //         //   unsubscribe: unsubscribeUrl
+        //         // }
+        //     },
+        // };
+
+        // try {
+        //     const emailResponse = await sendgridDetails.sendgridMail.send(messageDetails);
+        //     console.log('Email sent:', emailResponse[0]?.statusCode);
+        //     return emailResponse;
+        // } catch (error: any) {
+        //     console.error('SendGrid error:', error.response?.body || error);
+        //     throw error;
+        // }
+
+        const messageDetails = {
+            to: email,
+            from: process.env.SENDGRID_FROM_EMAIL!,
+            subject: `Ẹ káàbọ̀! (Welcome!) ${firstName}`,
+            text: `Hello ${firstName},\n\nYour OTP is: ${otp}\n\nThank you!`,
+            html: `<p>Hello ${firstName},</p><p>Welcome to Zabbot</p><p>Your OTP is: <strong>${otp}</strong></p><p>Thank you!</p>`,
+        }
+
+        try {
+            const emailResponse = await nodemailerService.sendEmailService(messageDetails);
+            console.log('Email sent:', emailResponse);
+            return responseUtilities.handleServicesResponse(200, 'Email sent successfully', emailResponse);
+        } catch (error: any) {
+            console.error('Nodemailer error:', error);
+            // throw errorUtilities.createError(`Failed to send email: ${error.message}`, 500);
+        }
+
+    }
+);
+
+
+const sendgridResendOtpService = errorUtilities.withServiceErrorHandling(
+    async (email: string, firstName: string, otp: string) => {
+
+        // const messageDetails = {
+        //     to: email,
+        //     from: {
+        //         email: process.env.SENDGRID_FROM_EMAIL!,
+        //         name: process.env.SENDGRID_FROM_NAME!,
+        //     },
+        //     templateId: process.env.SENDGRID_RESEND_OTP_EMAIL_TEMPLATE_ID!,
+        //     dynamic_template_data: {
+        //         otp,
+        //         firstName
+        //     },
+        //     subject: `Ẹ káàbọ̀! (Welcome!) ${firstName}`,
+        //     trackingSettings: {
+        //         subscriptionTracking: {
+        //             enable: false,
+        //             // substitutionTag: "<%asm_group_unsubscribe_raw_url%>",
+        //             // substitutionTag: "{{{unsubscribe}}}"
+        //         },
+        //         // asm: {
+        //         //     group_id: parseInt(process.env.SENDGRID_UNSUBSCRIBE_GROUP_ID || '0'),
+        //         //     groups_to_display: [parseInt(process.env.SENDGRID_UNSUBSCRIBE_GROUP_ID || '0')]
+        //         // },
+        //         //              customArgs: {
+        //         //   unsubscribe: unsubscribeUrl
+        //         // }
+        //     },
+        // };
+
+        // try {
+        //     const emailResponse = await sendgridDetails.sendgridMail.send(messageDetails);
+        //     console.log('Email sent:', emailResponse[0]?.statusCode);
+        //     return emailResponse;
+        // } catch (error: any) {
+        //     console.error('SendGrid error:', error.response?.body || error);
+        //     throw error;
+        // }
+
+         const messageDetails = {
+            to: email,
+            from: process.env.SENDGRID_FROM_EMAIL!,
+            subject: `Ẹ káàbọ̀! (Welcome!) ${firstName}`,
+            text: `Hello ${firstName},\n\nYour new OTP is: ${otp}\n\nThank you!`,
+            html: `<p>Hello ${firstName},</p><p>Welcome to Zabbot</p><p>Your OTP is: <strong>${otp}</strong></p><p>Thank you!</p>`,
+        }
+
+        try {
+            const emailResponse = await nodemailerService.sendEmailService(messageDetails);
+            console.log('Email sent:', emailResponse);
+            return responseUtilities.handleServicesResponse(200, 'Email sent successfully', emailResponse);
+        } catch (error: any) {
+            console.error('Nodemailer error:', error);
+            // throw errorUtilities.createError(`Failed to send email: ${error.message}`, 500);
+        }
+    }
+);
+
+const sendgridSendPasswordResetLinkService = errorUtilities.withServiceErrorHandling(
+    async (email: string, resetUrl: string, firstName:string) => {
+
+        // const messageDetails = {
+        //     to: email,
+        //     from: {
+        //         email: process.env.SENDGRID_FROM_EMAIL!,
+        //         name: process.env.SENDGRID_FROM_NAME!,
+        //     },
+        //     templateId: process.env.SENDGRID_RESEND_OTP_EMAIL_TEMPLATE_ID!,
+        //     dynamic_template_data: {
+        //         otp,
+        //         firstName
+        //     },
+        //     subject: `Ẹ káàbọ̀! (Welcome!) ${firstName}`,
+        //     trackingSettings: {
+        //         subscriptionTracking: {
+        //             enable: false,
+        //             // substitutionTag: "<%asm_group_unsubscribe_raw_url%>",
+        //             // substitutionTag: "{{{unsubscribe}}}"
+        //         },
+        //         // asm: {
+        //         //     group_id: parseInt(process.env.SENDGRID_UNSUBSCRIBE_GROUP_ID || '0'),
+        //         //     groups_to_display: [parseInt(process.env.SENDGRID_UNSUBSCRIBE_GROUP_ID || '0')]
+        //         // },
+        //         //              customArgs: {
+        //         //   unsubscribe: unsubscribeUrl
+        //         // }
+        //     },
+        // };
+
+        // try {
+        //     const emailResponse = await sendgridDetails.sendgridMail.send(messageDetails);
+        //     console.log('Email sent:', emailResponse[0]?.statusCode);
+        //     return emailResponse;
+        // } catch (error: any) {
+        //     console.error('SendGrid error:', error.response?.body || error);
+        //     throw error;
+        // }
+
+         const messageDetails = {
+            to: email,
+            from: process.env.SENDGRID_FROM_EMAIL!,
+            subject: `Ẹ káàbọ̀! (Welcome!) to Zabbot ${firstName}`,
+            // text: `Hello ${firstName},\n\nYou requested to reset your password, please click on the link below to reset your password \n\nThank you!`,
+            html: `<p>Hello ${firstName},</p><p>Click the link to reset your password <a href="${resetUrl}" target="_blank">Reset Password.</a></p><br /><br /><p>The Link expires in Ten (10) minutes.</p><br /><br /><p>Thank you!</p>`,
+        }
+
+        try {
+            const emailResponse = await nodemailerService.sendEmailService(messageDetails);
+            console.log('Email sent:', emailResponse);
+            return responseUtilities.handleServicesResponse(200, 'Email sent successfully', emailResponse);
+        } catch (error: any) {
+            console.error('Nodemailer error:', error);
+            throw errorUtilities.createError(`Failed to send email: ${error.message}, please try again`, 500);
+        }
+    }
+);
+
+const sendgridSendPasswordResetConfirmationService = errorUtilities.withServiceErrorHandling(
+    async (email: string, firstName:string) => {
+
+        // const messageDetails = {
+        //     to: email,
+        //     from: {
+        //         email: process.env.SENDGRID_FROM_EMAIL!,
+        //         name: process.env.SENDGRID_FROM_NAME!,
+        //     },
+        //     templateId: process.env.SENDGRID_RESEND_OTP_EMAIL_TEMPLATE_ID!,
+        //     dynamic_template_data: {
+        //         otp,
+        //         firstName
+        //     },
+        //     subject: `Ẹ káàbọ̀! (Welcome!) ${firstName}`,
+        //     trackingSettings: {
+        //         subscriptionTracking: {
+        //             enable: false,
+        //             // substitutionTag: "<%asm_group_unsubscribe_raw_url%>",
+        //             // substitutionTag: "{{{unsubscribe}}}"
+        //         },
+        //         // asm: {
+        //         //     group_id: parseInt(process.env.SENDGRID_UNSUBSCRIBE_GROUP_ID || '0'),
+        //         //     groups_to_display: [parseInt(process.env.SENDGRID_UNSUBSCRIBE_GROUP_ID || '0')]
+        //         // },
+        //         //              customArgs: {
+        //         //   unsubscribe: unsubscribeUrl
+        //         // }
+        //     },
+        // };
+
+        // try {
+        //     const emailResponse = await sendgridDetails.sendgridMail.send(messageDetails);
+        //     console.log('Email sent:', emailResponse[0]?.statusCode);
+        //     return emailResponse;
+        // } catch (error: any) {
+        //     console.error('SendGrid error:', error.response?.body || error);
+        //     throw error;
+        // }
+
+         const messageDetails = {
+            to: email,
+            from: process.env.SENDGRID_FROM_EMAIL!,
+            subject: `Ẹ káàbọ̀! (Welcome!) to Zabbot ${firstName}`,
+            // text: `Hello ${firstName},\n\nYou requested to reset your password, please click on the link below to reset your password \n\nThank you!`,
+            html: `<p>Hello ${firstName},</p><br />
+            <p>Your password has been reset successfully.</p>
+            <br /><p>Thank you!</p>`,
+        }
+
+        try {
+            const emailResponse = await nodemailerService.sendEmailService(messageDetails);
+            console.log('Email sent:', emailResponse);
+            return responseUtilities.handleServicesResponse(200, 'Email sent successfully', emailResponse);
+        } catch (error: any) {
+            console.error('Nodemailer error:', error);
+            // throw errorUtilities.createError(`Failed to send email: ${error.message}, please try again`, 500);
+        }
+    }
+);
 
 export default {
     sendWelcomeFoundingListEmailService,
@@ -484,4 +723,8 @@ export default {
     addToSendGridContributorsListService,
     addToSendGridUpdatesListService,
     addCustomFieldToSendgridList,
+    sendWelcomeEmailWithOtpService,
+    sendgridResendOtpService,
+    sendgridSendPasswordResetLinkService,
+    sendgridSendPasswordResetConfirmationService
 }

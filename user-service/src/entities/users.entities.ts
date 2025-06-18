@@ -1,5 +1,5 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
-import { usersDatabase } from '../../../config/databases';
+import { users_service_db } from '../../../config/databases';
 import { UserAttributes, UserRoles, ProfileVisibility } from '../types/users.types';
 
 class Users extends Model<UserAttributes> implements UserAttributes {
@@ -159,7 +159,7 @@ Users.init(
         },
     },
     {
-        sequelize: usersDatabase,
+        sequelize: users_service_db,
         modelName: 'Users',
         tableName: 'users',
         timestamps: true,

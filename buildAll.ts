@@ -8,6 +8,7 @@ const services = [
   { name: 'shared', path: './shared' },
   { name: 'founding-list-service', path: './waiting-list-service' },
   { name: 'notification-service', path: './notification-service' },
+  { name: 'user-service', path: './user-service' },
   { name: 'root', path: './' }
 ];
 

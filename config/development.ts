@@ -3,11 +3,14 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 const {
-    DEV_DATABASE_URL
+    USERS_SERVICE_DEV_DB,
+    FOUNDERS_LIST_DEV_DB
 } = process.env
+
 
 console.log('Running in development mode')
 
 export default {
-    DB_URL: DEV_DATABASE_URL
+    FOUNDERS_LIST_DB: FOUNDERS_LIST_DEV_DB!,
+    USERS_SERVICE_DB:USERS_SERVICE_DEV_DB!
 }
