@@ -330,7 +330,6 @@ const passwordResetRequestService = errorUtilities.withServiceErrorHandling(asyn
 
 const resetPasswordService = errorUtilities.withServiceErrorHandling(async (resetPayload: { token: string, newPassword: string, confirmNewPassword: string }) => {
     const { token, newPassword, confirmNewPassword } = resetPayload;
-    console.log('Reset Password Payload:', resetPayload);
     if (newPassword !== confirmNewPassword) {
         throw errorUtilities.createError("Passwords do not match", StatusCodes.BadRequest);
     }
@@ -373,8 +372,8 @@ const resetPasswordService = errorUtilities.withServiceErrorHandling(async (rese
     endpointCallsUtilities.processEmailsInBackground(emailPayload).catch(error => {
         console.error(`Background email processing failed for ${user.email}:`, error.message);
 
-        return responseUtilities.handleServicesResponse(StatusCodes.OK, "Password reset successful", { email: user.email });
     })
+    return responseUtilities.handleServicesResponse(StatusCodes.OK, "Password reset successful", { email: user.email });
 
 })
 
