@@ -26,7 +26,7 @@ const userRegistrationController = errorUtilities.withControllerErrorHandling(
     async (request: Request, response: Response) => {
         const payloadDetails = request.body;
         const { email } = payloadDetails;
-        
+
 
         try {
             const isBetaTester = await axios.get(
@@ -54,7 +54,7 @@ const userRegistrationController = errorUtilities.withControllerErrorHandling(
                 code: error.code
             });
             if (error.response?.status === 404) {
-                throw errorUtilities.createError("User not found in founders circle, please join the founders circle", 404);
+                throw errorUtilities.createError("User not found. Please sign up as a beta tester at https://zabbot.com-founders-circle", 404);
             } else if (error.response?.status === 403) {
                 throw errorUtilities.createError("User is not authorized for beta testing", 403);
             } else {
