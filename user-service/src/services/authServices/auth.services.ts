@@ -74,7 +74,7 @@ const registerUserService = errorUtilities.withServiceErrorHandling(async (regis
 
         const otpCreated = await otpRepositories.create(otpData);
         if (!otpCreated) {
-            console.log('ERROR====> OTP CREATION FAILED:', otpCreated);
+            console.error('ERROR====> OTP CREATION FAILED:', otpCreated);
         }
 
         const emailData = {
@@ -291,7 +291,7 @@ const passwordResetRequestService = errorUtilities.withServiceErrorHandling(asyn
         firstName: user.firstName
     }
     try {
-        const sendLink = await axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/auth-notification/reset-password-link`, emailData,
+        await axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/auth-notification/reset-password-link`, emailData,
             {
                 timeout: 100000,
                 headers: {
@@ -299,8 +299,6 @@ const passwordResetRequestService = errorUtilities.withServiceErrorHandling(asyn
                 }
             }
         );
-
-        console.log('send', sendLink)
 
         // if (sendLink.status !== 200) {
         //     // const errorMessage = sendLink.status === 403
@@ -321,23 +319,23 @@ const passwordResetRequestService = errorUtilities.withServiceErrorHandling(asyn
         //     } else if (error.response?.status === 403) {
         //             throw errorUtilities.createError("User is not authorized for beta testing", 403);
         //         } else {
-            throw errorUtilities.createError(error?.response?.data?.message, error?.response?.status);
+        throw errorUtilities.createError(error?.response?.data?.message, error?.response?.status);
         // }
     }
-    return responseUtilities.handleServicesResponse(StatusCodes.Created, "Password reset link sent successfully", user.email);
+    return responseUtilities.handleServicesResponse(StatusCodes.Created, GeneralResponses.SUCCESSFUL_PASSWORD_RESET_LINK_SENT, user.email);
 });
 
 
 const resetPasswordService = errorUtilities.withServiceErrorHandling(async (resetPayload: { token: string, newPassword: string, confirmNewPassword: string }) => {
     const { token, newPassword, confirmNewPassword } = resetPayload;
     if (newPassword !== confirmNewPassword) {
-        throw errorUtilities.createError("Passwords do not match", StatusCodes.BadRequest);
+        throw errorUtilities.createError(GeneralResponses.MISMATCHED_PASSEORD, StatusCodes.BadRequest);
     }
     const tokenValidation = helperFunctions.validateToken(token);
     const { userId } = tokenValidation as { userId: string };
     if (!userId) {
         console.error('ERROR====> PASSWORD RESET ERROR: Invalid token: Missing user ID');
-        throw errorUtilities.createError("Invalid token: Missing user ID", StatusCodes.BadRequest);
+        throw errorUtilities.createError(GeneralResponses.INVALID_TOKEN, StatusCodes.BadRequest);
     }
     const user = await usersRepositories.getOne({ id: userId }, ['id', 'email', 'password', 'role', 'isVerified', 'isActive', 'isBlocked', 'firstName']);
     if (!user) {
@@ -359,7 +357,7 @@ const resetPasswordService = errorUtilities.withServiceErrorHandling(async (rese
         { password: hashedPassword }
     )
     if (!updatedUser) {
-        throw errorUtilities.createError("Password reset failed, please try again", StatusCodes.InternalServerError);
+        throw errorUtilities.createError(GeneralResponses.FAILED_PASSWORD_RESET, StatusCodes.InternalServerError);
     }
     const emailData = {
         email: user.email,
@@ -373,7 +371,7 @@ const resetPasswordService = errorUtilities.withServiceErrorHandling(async (rese
         console.error(`Background email processing failed for ${user.email}:`, error.message);
 
     })
-    return responseUtilities.handleServicesResponse(StatusCodes.OK, "Password reset successful", { email: user.email });
+    return responseUtilities.handleServicesResponse(StatusCodes.OK, GeneralResponses.SUCCESSFUL_PASSWORD_RESET, { email: user.email });
 
 })
 

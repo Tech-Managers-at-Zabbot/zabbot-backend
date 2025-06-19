@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.config = void 0;
 const services_1 = require("../../services");
 const utilities_1 = require("../../../../shared/utilities");
+const general_responses_1 = require("../../responses/generalResponses/general.responses");
 const statusCodes_responses_1 = require("../../responses/statusCodes/statusCodes.responses");
 const otp_responses_1 = require("../../responses/otpResponses/otp.responses");
 const axios_1 = __importDefault(require("axios"));
@@ -32,10 +33,10 @@ const userRegistrationController = utilities_1.errorUtilities.withControllerErro
                 'Content-Type': 'application/json'
             }
         });
-        if (isBetaTester.status !== 200) {
-            const errorMessage = isBetaTester.status === 403
-                ? "User is not authorized for beta testing"
-                : isBetaTester.data.message || "Beta tester check failed";
+        if (isBetaTester.status !== statusCodes_responses_1.StatusCodes.OK) {
+            const errorMessage = isBetaTester.status === statusCodes_responses_1.StatusCodes.Forbidden
+                ? general_responses_1.GeneralResponses.UNAUTHORIZED_FOR_TESTING
+                : isBetaTester.data.message || general_responses_1.GeneralResponses.FAILED_TESTER_CHECK;
             throw utilities_1.errorUtilities.createError(errorMessage, isBetaTester.status);
         }
     }
@@ -46,14 +47,14 @@ const userRegistrationController = utilities_1.errorUtilities.withControllerErro
             data: error.response?.data,
             code: error.code
         });
-        if (error.response?.status === 404) {
-            throw utilities_1.errorUtilities.createError("User not found in founders circle, please join the founders circle", 404);
+        if (error.response?.status === statusCodes_responses_1.StatusCodes.NotFound) {
+            throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.SIGNUP_AS_TESTER, statusCodes_responses_1.StatusCodes.NotFound);
         }
         else if (error.response?.status === 403) {
-            throw utilities_1.errorUtilities.createError("User is not authorized for beta testing", 403);
+            throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.UNAUTHORIZED_FOR_TESTING, statusCodes_responses_1.StatusCodes.Forbidden);
         }
         else {
-            throw utilities_1.errorUtilities.createError("Beta tester check failed", 500);
+            throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.FAILED_TESTER_CHECK, statusCodes_responses_1.StatusCodes.InternalServerError);
         }
     }
     const registerUser = await services_1.authServices.registerUserService(payloadDetails);
@@ -84,8 +85,8 @@ const userPasswordResetRequestController = utilities_1.errorUtilities.withContro
 });
 const userResetPasswordController = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {
     const { token, newPassword, confirmNewPassword } = request.body;
-    const requestPasswordReset = await services_1.authServices.resetPasswordService({ token, newPassword, confirmNewPassword });
-    return utilities_1.responseUtilities.responseHandler(response, requestPasswordReset.message, requestPasswordReset.statusCode, requestPasswordReset.data);
+    const resetPassword = await services_1.authServices.resetPasswordService({ token, newPassword, confirmNewPassword });
+    return utilities_1.responseUtilities.responseHandler(response, resetPassword.message, resetPassword.statusCode, resetPassword.data);
 });
 exports.default = {
     userRegistrationController,

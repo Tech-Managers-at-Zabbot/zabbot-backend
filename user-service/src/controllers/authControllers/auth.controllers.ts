@@ -39,10 +39,10 @@ const userRegistrationController = errorUtilities.withControllerErrorHandling(
                 }
             );
 
-            if (isBetaTester.status !== 200) {
-                const errorMessage = isBetaTester.status === 403
-                    ? "User is not authorized for beta testing"
-                    : isBetaTester.data.message || "Beta tester check failed";
+            if (isBetaTester.status !== StatusCodes.OK) {
+                const errorMessage = isBetaTester.status === StatusCodes.Forbidden
+                    ? GeneralResponses.UNAUTHORIZED_FOR_TESTING
+                    : isBetaTester.data.message || GeneralResponses.FAILED_TESTER_CHECK;
                 throw errorUtilities.createError(errorMessage, isBetaTester.status);
             }
 
@@ -53,12 +53,12 @@ const userRegistrationController = errorUtilities.withControllerErrorHandling(
                 data: error.response?.data,
                 code: error.code
             });
-            if (error.response?.status === 404) {
-                throw errorUtilities.createError("User not found. Please sign up as a beta tester at https://zabbot.com-founders-circle", 404);
+            if (error.response?.status === StatusCodes.NotFound) {
+                throw errorUtilities.createError(GeneralResponses.SIGNUP_AS_TESTER, StatusCodes.NotFound);
             } else if (error.response?.status === 403) {
-                throw errorUtilities.createError("User is not authorized for beta testing", 403);
+                throw errorUtilities.createError(GeneralResponses.UNAUTHORIZED_FOR_TESTING, StatusCodes.Forbidden);
             } else {
-                throw errorUtilities.createError("Beta tester check failed", 500);
+                throw errorUtilities.createError(GeneralResponses.FAILED_TESTER_CHECK, StatusCodes.InternalServerError);
             }
         }
         const registerUser = await authServices.registerUserService(payloadDetails);

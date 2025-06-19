@@ -62,7 +62,7 @@ const registerUserService = utilities_1.errorUtilities.withServiceErrorHandling(
         };
         const otpCreated = await otp_repositories_1.default.create(otpData);
         if (!otpCreated) {
-            console.log('ERROR====> OTP CREATION FAILED:', otpCreated);
+            console.error('ERROR====> OTP CREATION FAILED:', otpCreated);
         }
         const emailData = {
             email: createUserPayload.email,
@@ -212,25 +212,47 @@ const passwordResetRequestService = utilities_1.errorUtilities.withServiceErrorH
         firstName: user.firstName
     };
     try {
-        await axios_1.default.post(`${exports.config.NOTIFICATION_SERVICE_ROUTE}/auth-notification/reset-password-link`, emailData);
+        await axios_1.default.post(`${exports.config.NOTIFICATION_SERVICE_ROUTE}/auth-notification/reset-password-link`, emailData, {
+            timeout: 100000,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        // if (sendLink.status !== 200) {
+        //     // const errorMessage = sendLink.status === 403
+        //     //     ? "User is not authorized for beta testing"
+        //     //     : sendLink.data.message || "Beta tester check failed";
+        //     throw errorUtilities.createError(errorMessage, sendLink.status);
+        // }
     }
     catch (error) {
-        console.error(`Error Sending Password Reset Mail: ${error}`);
-        throw utilities_1.errorUtilities.createError("Unable to send reset password link, please try again", statusCodes_responses_1.StatusCodes.InternalServerError);
+        console.log('📊 Error details:', {
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            data: error.response?.data,
+            code: error.code,
+            message: error.message
+        });
+        // if (error.response?.status === 404) {
+        //         throw errorUtilities.createError("User not found in founders circle, please join the founders circle", 404);
+        //     } else if (error.response?.status === 403) {
+        //             throw errorUtilities.createError("User is not authorized for beta testing", 403);
+        //         } else {
+        throw utilities_1.errorUtilities.createError(error?.response?.data?.message, error?.response?.status);
+        // }
     }
-    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.Created, "Password reset link sent successfully", user.email);
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.Created, general_responses_1.GeneralResponses.SUCCESSFUL_PASSWORD_RESET_LINK_SENT, user.email);
 });
 const resetPasswordService = utilities_1.errorUtilities.withServiceErrorHandling(async (resetPayload) => {
     const { token, newPassword, confirmNewPassword } = resetPayload;
-    console.log('Reset Password Payload:', resetPayload);
     if (newPassword !== confirmNewPassword) {
-        throw utilities_1.errorUtilities.createError("Passwords do not match", statusCodes_responses_1.StatusCodes.BadRequest);
+        throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.MISMATCHED_PASSEORD, statusCodes_responses_1.StatusCodes.BadRequest);
     }
     const tokenValidation = index_1.helperFunctions.validateToken(token);
     const { userId } = tokenValidation;
     if (!userId) {
         console.error('ERROR====> PASSWORD RESET ERROR: Invalid token: Missing user ID');
-        throw utilities_1.errorUtilities.createError("Invalid token: Missing user ID", statusCodes_responses_1.StatusCodes.BadRequest);
+        throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.INVALID_TOKEN, statusCodes_responses_1.StatusCodes.BadRequest);
     }
     const user = await users_repositories_1.default.getOne({ id: userId }, ['id', 'email', 'password', 'role', 'isVerified', 'isActive', 'isBlocked', 'firstName']);
     if (!user) {
@@ -248,7 +270,7 @@ const resetPasswordService = utilities_1.errorUtilities.withServiceErrorHandling
     const hashedPassword = await index_1.helperFunctions.hashPassword(newPassword);
     const updatedUser = await users_repositories_1.default.updateOne({ id: userId }, { password: hashedPassword });
     if (!updatedUser) {
-        throw utilities_1.errorUtilities.createError("Password reset failed, please try again", statusCodes_responses_1.StatusCodes.InternalServerError);
+        throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.FAILED_PASSWORD_RESET, statusCodes_responses_1.StatusCodes.InternalServerError);
     }
     const emailData = {
         email: user.email,
@@ -260,8 +282,8 @@ const resetPasswordService = utilities_1.errorUtilities.withServiceErrorHandling
     };
     index_1.endpointCallsUtilities.processEmailsInBackground(emailPayload).catch(error => {
         console.error(`Background email processing failed for ${user.email}:`, error.message);
-        return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, "Password reset successful", { email: user.email });
     });
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, general_responses_1.GeneralResponses.SUCCESSFUL_PASSWORD_RESET, { email: user.email });
 });
 exports.default = {
     registerUserService,

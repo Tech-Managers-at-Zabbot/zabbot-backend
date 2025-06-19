@@ -15,4 +15,13 @@ export enum GeneralResponses {
     UNVERIFIED_ACCOUNT = "Your account is not verified, please verify your account",
     SUCCESSFUL_LOGIN = "Login successful",
     EMAIL_REQUIRED = "Email is required",
+    SUCCESSFUL_PASSWORD_RESET_LINK_SENT= "Password reset link sent successfully",
+    MISMATCHED_PASSEORD = "Passwords do not match",
+    INVALID_TOKEN = "Invalid operation, please try again",
+    FAILED_PASSWORD_RESET = "Password reset failed, please try again",
+    SUCCESSFUL_PASSWORD_RESET = "Password reset successful",
+    UNAUTHORIZED_FOR_TESTING = "User is not authorized for beta testing",
+    FAILED_TESTER_CHECK = "Beta tester check failed",
+    SIGNUP_AS_TESTER = "User not found. Please sign up as a beta tester at https://zabbot.com-founders-circle",
+
 }
