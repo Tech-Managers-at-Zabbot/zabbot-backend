@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GeneralResponses = void 0;
 var GeneralResponses;
 (function (GeneralResponses) {
-    GeneralResponses["EMAIL_EXISTS_LOGIN"] = "This email already exists, please proceed to login";
+    GeneralResponses["EMAIL_EXISTS_LOGIN"] = "This email address is already in the Founders Circle - Beta Test group.  Click on SIGN IN instead.";
     GeneralResponses["PROCESS_UNSSUCCESSFUL"] = "Process unsuccessful, please try again";
     GeneralResponses["USER_REGSTRATION_SUCCESSFUL"] = "User registered successfully, a mail has been sent to your email, click on the link in it to verify your account";
     GeneralResponses["ADMIN_REGISTRATION_SUCCESSFUL"] = "Admin account successfully registered. Please check your mail for an email. Welcome to Zabbot.";
@@ -22,7 +22,7 @@ var GeneralResponses;
     GeneralResponses["INVALID_TOKEN"] = "Invalid operation, please try again";
     GeneralResponses["FAILED_PASSWORD_RESET"] = "Password reset failed, please try again";
     GeneralResponses["SUCCESSFUL_PASSWORD_RESET"] = "Password reset successful";
-    GeneralResponses["UNAUTHORIZED_FOR_TESTING"] = "User is not authorized for beta testing";
+    GeneralResponses["UNAUTHORIZED_FOR_TESTING"] = "You are in the Founders Circle; however, you did not sign up to be a Beta Tester.  Changed your mind? That is GREAT! Please send an email to bola@zabbot.com and we will add you the Beta Test group.  Thank you!";
     GeneralResponses["FAILED_TESTER_CHECK"] = "Beta tester check failed";
-    GeneralResponses["SIGNUP_AS_TESTER"] = "User not found. Please sign up as a beta tester at https://zabbot.com-founders-circle";
+    GeneralResponses["SIGNUP_AS_TESTER"] = "User not found. Please sign up as a beta tester at https://zabbot.com/founders-circle";
 })(GeneralResponses || (exports.GeneralResponses = GeneralResponses = {}));

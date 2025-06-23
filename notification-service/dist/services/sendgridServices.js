@@ -526,7 +526,7 @@ const sendgridSendPasswordResetLinkService = utilities_1.errorUtilities.withServ
     const messageDetails = {
         to: email,
         from: process.env.SENDGRID_FROM_EMAIL,
-        subject: `Ẹ káàbọ̀! (Welcome!) to Zabbot ${firstName}`,
+        subject: `Reset your Zabbot password `,
         // text: `Hello ${firstName},\n\nYou requested to reset your password, please click on the link below to reset your password \n\nThank you!`,
         html: `<p>Hello ${firstName},</p><p>Click the link to reset your password <a href="${resetUrl}" target="_blank">Reset Password.</a></p><br /><br /><p>The Link expires in Ten (10) minutes.</p><br /><br /><p>Thank you!</p>`,
     };
@@ -579,7 +579,7 @@ const sendgridSendPasswordResetConfirmationService = utilities_1.errorUtilities.
     const messageDetails = {
         to: email,
         from: process.env.SENDGRID_FROM_EMAIL,
-        subject: `Ẹ káàbọ̀! (Welcome!) to Zabbot ${firstName}`,
+        subject: `Password Reset Successfully`,
         // text: `Hello ${firstName},\n\nYou requested to reset your password, please click on the link below to reset your password \n\nThank you!`,
         html: `<p>Hello ${firstName},</p><br />
             <p>Your password has been reset successfully.</p>

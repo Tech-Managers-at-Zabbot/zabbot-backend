@@ -97,7 +97,9 @@ const loginUserSchema = Joi.object({
     .messages({
       'string.empty': 'Password is required',
       'string.min': 'Password must be at least 8 characters long',
-    })
+    }),
+    stayLoggedIn: Joi.boolean().truthy('true').falsy('false').optional()
+
 });
 
 const resendVerificationLinkSchema = Joi.object({

@@ -87,7 +87,8 @@ const loginUserSchema = joi_1.default.object({
         .messages({
         'string.empty': 'Password is required',
         'string.min': 'Password must be at least 8 characters long',
-    })
+    }),
+    stayLoggedIn: joi_1.default.boolean().truthy('true').falsy('false').optional()
 });
 const resendVerificationLinkSchema = joi_1.default.object({
     email: joi_1.default.string()
