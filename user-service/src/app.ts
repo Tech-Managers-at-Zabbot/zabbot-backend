@@ -10,6 +10,11 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { errorUtilities } from '../../shared/utilities';
 import userRoutes from './routes'
+import passport from 'passport';
+import { googleAuthUtilities } from './utilities';
+import Users from './entities/users.entities';
+import { googleAuthServices } from './services';
+
 // import { associateUserModels } from './entities/associations';
 
 const app = express();
@@ -49,6 +54,19 @@ app.get('/', (req, res) => {
 
 // Error handling
 app.use(errorUtilities.globalErrorHandler as any);
+
+googleAuthUtilities.setupGoogleStrategy(googleAuthServices.googleOAuthVerify);
+
+passport.serializeUser((user: any, done) => done(null, user.id));
+passport.deserializeUser(async (id: string, done) => {
+  try {
+    const user = await Users.findByPk(id);
+    done(null, user);
+  } catch (error) {
+    done(error as any, null);
+  }
+});
+
 
 // Start server if not imported as a module
 if (require.main === module) {

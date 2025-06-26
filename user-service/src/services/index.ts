@@ -1,8 +1,9 @@
-import authServices from "./authServices/auth.services";
-
+import emailAuthServices from "./authServices/emailAuth.services";
+import googleAuthServices from "./authServices/googleAuth.services";
 
 
 
 export {
-    authServices
+    emailAuthServices,
+    googleAuthServices
 }

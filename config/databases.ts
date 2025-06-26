@@ -30,12 +30,12 @@ const founders_list_db = new Sequelize(`${FOUNDERS_LIST_DB}`,
     }
 )
 
-founders_list_db.sync({}).then(() => {
-    console.log(`Stage is: ${config.stage}`, "Founders list database connected");
-  })
-  .catch((error: any) => {
-    console.log("No connection:", error);
-  });
+// founders_list_db.sync({}).then(() => {
+//     console.log(`Stage is: ${config.stage}`, "Founders list database connected");
+//   })
+//   .catch((error: any) => {
+//     console.log("No connection:", error);
+//   });
 
   const users_service_db = new Sequelize(`${USERS_SERVICE_DB}`,
     {
@@ -56,12 +56,12 @@ founders_list_db.sync({}).then(() => {
     }
 )
 
-users_service_db.sync({}).then(() => {
-    console.log(`Stage is: ${config.stage}`, "Users database connected");
-  })
-  .catch((error: any) => {
-    console.log("No connection:", error);
-  });
+// users_service_db.sync({}).then(() => {
+//     console.log(`Stage is: ${config.stage}`, "Users database connected");
+//   })
+//   .catch((error: any) => {
+//     console.log("No connection:", error);
+//   });
 
 
 

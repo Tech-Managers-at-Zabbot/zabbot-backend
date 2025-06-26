@@ -11,7 +11,7 @@ const listIdMap: Record<SendgridListName, string | undefined> = {
 };
 
 const sendWelcomeFoundingListEmailService = errorUtilities.withServiceErrorHandling(
-    async (email: string, firstName: string, lastName: string, country:string) => {
+    async (email: string, firstName: string, lastName: string, country: string) => {
 
         const token = helpersUtilities.generateToken({ email }, '30d')
         const unsubscribeUrl = `${process.env.UNSUBSCRIBE_URL}/founders-circle/unsubscribe?token=${token}`;
@@ -514,13 +514,24 @@ const sendWelcomeEmailWithOtpService = errorUtilities.withServiceErrorHandling(
         //     console.error('SendGrid error:', error.response?.body || error);
         //     throw error;
         // }
+        let messageDetails;
 
-        const messageDetails = {
-            to: email,
-            from: process.env.SENDGRID_FROM_EMAIL!,
-            subject: `Ẹ káàbọ̀! (Welcome!) ${firstName}`,
-            text: `Hello ${firstName},\n\nYour OTP is: ${otp}\n\nThank you!`,
-            html: `<p>Hello ${firstName},</p><p>Welcome to Zabbot</p><p>Your OTP is: <strong>${otp}</strong></p><p>Thank you!</p>`,
+        if (otp) {
+            messageDetails = {
+                to: email,
+                from: process.env.SENDGRID_FROM_EMAIL!,
+                subject: `Ẹ káàbọ̀! (Welcome!) ${firstName}`,
+                text: `Hello ${firstName},\n\nYour OTP is: ${otp}\n\nThank you!`,
+                html: `<p>Hello ${firstName},</p><p>Welcome to Zabbot</p><p>Your OTP is: <strong>${otp}</strong></p><p>Thank you!</p>`,
+            };
+        } else {
+            messageDetails = {
+                to: email,
+                from: process.env.SENDGRID_FROM_EMAIL!,
+                subject: `Ẹ káàbọ̀! (Welcome!) ${firstName}`,
+                text: `Hello ${firstName},\n\nWelcome to Zabbot!\n\nThank you!`,
+                html: `<p>Hello ${firstName},</p><p>Welcome to Zabbot!</p><p>Thank you!</p>`,
+            };
         }
 
         try {
@@ -576,7 +587,7 @@ const sendgridResendOtpService = errorUtilities.withServiceErrorHandling(
         //     throw error;
         // }
 
-         const messageDetails = {
+        const messageDetails = {
             to: email,
             from: process.env.SENDGRID_FROM_EMAIL!,
             subject: `Ẹ káàbọ̀! (Welcome!) ${firstName}`,
@@ -596,7 +607,7 @@ const sendgridResendOtpService = errorUtilities.withServiceErrorHandling(
 );
 
 const sendgridSendPasswordResetLinkService = errorUtilities.withServiceErrorHandling(
-    async (email: string, resetUrl: string, firstName:string) => {
+    async (email: string, resetUrl: string, firstName: string) => {
 
         // const messageDetails = {
         //     to: email,
@@ -635,7 +646,7 @@ const sendgridSendPasswordResetLinkService = errorUtilities.withServiceErrorHand
         //     throw error;
         // }
 
-         const messageDetails = {
+        const messageDetails = {
             to: email,
             from: process.env.SENDGRID_FROM_EMAIL!,
             subject: `Reset your Zabbot password `,
@@ -655,7 +666,7 @@ const sendgridSendPasswordResetLinkService = errorUtilities.withServiceErrorHand
 );
 
 const sendgridSendPasswordResetConfirmationService = errorUtilities.withServiceErrorHandling(
-    async (email: string, firstName:string) => {
+    async (email: string, firstName: string) => {
 
         // const messageDetails = {
         //     to: email,
@@ -694,7 +705,7 @@ const sendgridSendPasswordResetConfirmationService = errorUtilities.withServiceE
         //     throw error;
         // }
 
-         const messageDetails = {
+        const messageDetails = {
             to: email,
             from: process.env.SENDGRID_FROM_EMAIL!,
             subject: `Password Reset Successfully`,

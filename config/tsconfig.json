@@ -11,5 +11,8 @@
     "rootDir": ".",
     "baseUrl": "."
   },
-  "include": ["./**/*"]
+  "include": ["./**/*"],
+  "references": [
+    { "path": "../user-service" }
+  ]
 }

@@ -26,12 +26,12 @@ const founders_list_db = new sequelize_1.Sequelize(`${FOUNDERS_LIST_DB}`, {
     }
 });
 exports.founders_list_db = founders_list_db;
-founders_list_db.sync({}).then(() => {
-    console.log(`Stage is: ${config_1.default.stage}`, "Founders list database connected");
-})
-    .catch((error) => {
-    console.log("No connection:", error);
-});
+// founders_list_db.sync({}).then(() => {
+//     console.log(`Stage is: ${config.stage}`, "Founders list database connected");
+//   })
+//   .catch((error: any) => {
+//     console.log("No connection:", error);
+//   });
 const users_service_db = new sequelize_1.Sequelize(`${USERS_SERVICE_DB}`, {
     dialect: 'postgres',
     pool: {
@@ -49,9 +49,3 @@ const users_service_db = new sequelize_1.Sequelize(`${USERS_SERVICE_DB}`, {
     }
 });
 exports.users_service_db = users_service_db;
-users_service_db.sync({}).then(() => {
-    console.log(`Stage is: ${config_1.default.stage}`, "Users database connected");
-})
-    .catch((error) => {
-    console.log("No connection:", error);
-});

@@ -1,6 +1,6 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
 import { users_service_db } from '../../../config/databases';
-import { UserAttributes, UserRoles, ProfileVisibility } from '../types/users.types';
+import { UserAttributes, UserRoles, RegisterMethods, ProfileVisibility } from '../types/users.types';
 
 class Users extends Model<UserAttributes> implements UserAttributes {
     public id!: string;
@@ -14,6 +14,11 @@ class Users extends Model<UserAttributes> implements UserAttributes {
     public isActive!: boolean;
     public isBlocked!: boolean;
     public verifiedAt!: Date;
+    public registerMethod!: RegisterMethods;
+    public googleAccessToken?: string;
+    public googleRefreshToken?: string;
+    public accessToken?: string;
+    public refreshToken?: string;
     public country?: string;
     public phoneNumber?: string;
     public deletedAt?: Date;
@@ -74,7 +79,7 @@ Users.init(
         },
         password: {
             type: DataTypes.STRING,
-            allowNull: false,
+            allowNull: true,
         },
         isVerified: {
             type: DataTypes.BOOLEAN,
@@ -155,6 +160,26 @@ Users.init(
         },
         securityQuestions: {
             type: DataTypes.JSON,
+            allowNull: true,
+        },
+        registerMethod: {
+            type: DataTypes.ENUM(...Object.values(RegisterMethods)),
+            allowNull: false,
+        },
+        googleAccessToken: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+        },
+        googleRefreshToken: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+        },
+        accessToken: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+        },
+        refreshToken: {
+            type: DataTypes.TEXT,
             allowNull: true,
         },
     },

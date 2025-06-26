@@ -2,7 +2,7 @@ import { v4 } from "uuid";
 import { helperFunctions, endpointCallsUtilities } from "../../utilities/index";
 // import Users from "../../models/users.models";
 import axios from 'axios';
-import { OtpAttributes, OtpNotificationType, UserAttributes, UserRoles } from "../../types/users.types";
+import { OtpAttributes, OtpNotificationType, RegisterMethods, UserAttributes, UserRoles } from "../../types/users.types";
 import usersRepositories from "../../repositories/userRepositories/users.repositories";
 import { responseUtilities, errorUtilities } from "../../../../shared/utilities";
 import { StatusCodes } from "../../responses/statusCodes/statusCodes.responses";
@@ -46,7 +46,8 @@ const registerUserService = errorUtilities.withServiceErrorHandling(async (regis
         isActive: true,
         isBlocked: false,
         isFirstTimeLogin: true,
-        role: role ?? UserRoles.USER
+        role: role ?? UserRoles.USER,
+        registerMethod: RegisterMethods.EMAIL
     }
 
 

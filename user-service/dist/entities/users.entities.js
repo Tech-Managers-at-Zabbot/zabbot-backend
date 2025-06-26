@@ -28,7 +28,7 @@ Users.init({
     },
     password: {
         type: sequelize_1.DataTypes.STRING,
-        allowNull: false,
+        allowNull: true,
     },
     isVerified: {
         type: sequelize_1.DataTypes.BOOLEAN,
@@ -109,6 +109,26 @@ Users.init({
     },
     securityQuestions: {
         type: sequelize_1.DataTypes.JSON,
+        allowNull: true,
+    },
+    registerMethod: {
+        type: sequelize_1.DataTypes.ENUM(...Object.values(users_types_1.RegisterMethods)),
+        allowNull: false,
+    },
+    googleAccessToken: {
+        type: sequelize_1.DataTypes.TEXT,
+        allowNull: true,
+    },
+    googleRefreshToken: {
+        type: sequelize_1.DataTypes.TEXT,
+        allowNull: true,
+    },
+    accessToken: {
+        type: sequelize_1.DataTypes.TEXT,
+        allowNull: true,
+    },
+    refreshToken: {
+        type: sequelize_1.DataTypes.TEXT,
         allowNull: true,
     },
 }, {

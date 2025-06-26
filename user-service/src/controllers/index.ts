@@ -1,7 +1,8 @@
-import authControllers from "./authControllers/auth.controllers";
-
+import emailAuthControllers from "./authControllers/emailAuth.controllers";
+import googleAuthControllers from "./authControllers/googleAuth.controllers";
 
 
 export {
-    authControllers,
+    emailAuthControllers,
+    googleAuthControllers
 }

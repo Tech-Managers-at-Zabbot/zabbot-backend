@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { authServices } from "../../services";
+import { emailAuthServices } from "../../services";
 import { responseUtilities, errorUtilities } from "../../../../shared/utilities";
 import { GeneralResponses } from "../../responses/generalResponses/general.responses";
 import { StatusCodes } from "../../responses/statusCodes/statusCodes.responses";
@@ -61,7 +61,7 @@ const userRegistrationController = errorUtilities.withControllerErrorHandling(
                 throw errorUtilities.createError(GeneralResponses.FAILED_TESTER_CHECK, StatusCodes.InternalServerError);
             }
         }
-        const registerUser = await authServices.registerUserService(payloadDetails);
+        const registerUser = await emailAuthServices.registerUserService(payloadDetails);
 
         return responseUtilities.responseHandler(
             response,
@@ -78,7 +78,7 @@ const verifyUserAccountController = errorUtilities.withControllerErrorHandling(a
     if (!otp) {
         throw errorUtilities.createError(OtpResponses.ENTER_OTP, StatusCodes.BadRequest);
     }
-    const verifiedUser = await authServices.verifyUserAccountService(email, otp)
+    const verifiedUser = await emailAuthServices.verifyUserAccountService(email, otp)
     return responseUtilities.responseHandler(
         response,
         verifiedUser.message,
@@ -89,7 +89,7 @@ const verifyUserAccountController = errorUtilities.withControllerErrorHandling(a
 
 const resendVerificationOtpController = errorUtilities.withControllerErrorHandling(async (request: Request, response: Response) => {
     const { email } = request.body;
-    const resendLink = await authServices.resendVerificationOtpService(email);
+    const resendLink = await emailAuthServices.resendVerificationOtpService(email);
     return responseUtilities.responseHandler(
         response,
         resendLink.message,
@@ -100,7 +100,7 @@ const resendVerificationOtpController = errorUtilities.withControllerErrorHandli
 
 const userLoginController = errorUtilities.withControllerErrorHandling(async (request: Request, response: Response) => {
     const payloadDetails = request.body;
-    const userLogin = await authServices.loginUserService(payloadDetails)
+    const userLogin = await emailAuthServices.loginUserService(payloadDetails)
     return responseUtilities.responseHandler(
         response,
         userLogin.message,
@@ -111,7 +111,7 @@ const userLoginController = errorUtilities.withControllerErrorHandling(async (re
 
 const userPasswordResetRequestController = errorUtilities.withControllerErrorHandling(async (request: Request, response: Response) => {
     const { email } = request.body;
-    const requestPasswordReset = await authServices.passwordResetRequestService(email)
+    const requestPasswordReset = await emailAuthServices.passwordResetRequestService(email)
     return responseUtilities.responseHandler(
         response,
         requestPasswordReset.message,
@@ -123,7 +123,7 @@ const userPasswordResetRequestController = errorUtilities.withControllerErrorHan
 
 const userResetPasswordController = errorUtilities.withControllerErrorHandling(async (request: Request, response: Response) => {
     const { token, newPassword, confirmNewPassword } = request.body;
-    const resetPassword = await authServices.resetPasswordService({ token, newPassword, confirmNewPassword })
+    const resetPassword = await emailAuthServices.resetPasswordService({ token, newPassword, confirmNewPassword })
     return responseUtilities.responseHandler(
         response,
         resetPassword.message,

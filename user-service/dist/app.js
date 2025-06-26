@@ -15,6 +15,10 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const path_1 = __importDefault(require("path"));
 const utilities_1 = require("../../shared/utilities");
 const routes_1 = __importDefault(require("./routes"));
+const passport_1 = __importDefault(require("passport"));
+const utilities_2 = require("./utilities");
+const users_entities_1 = __importDefault(require("./entities/users.entities"));
+const services_1 = require("./services");
 // import { associateUserModels } from './entities/associations';
 const app = (0, express_1.default)();
 // Load environment variables
@@ -45,6 +49,17 @@ app.get('/', (req, res) => {
 // associateUserModels();
 // Error handling
 app.use(utilities_1.errorUtilities.globalErrorHandler);
+utilities_2.googleAuthUtilities.setupGoogleStrategy(services_1.googleAuthServices.googleOAuthVerify);
+passport_1.default.serializeUser((user, done) => done(null, user.id));
+passport_1.default.deserializeUser(async (id, done) => {
+    try {
+        const user = await users_entities_1.default.findByPk(id);
+        done(null, user);
+    }
+    catch (error) {
+        done(error, null);
+    }
+});
 // Start server if not imported as a module
 if (require.main === module) {
     const PORT = exports.config.port;

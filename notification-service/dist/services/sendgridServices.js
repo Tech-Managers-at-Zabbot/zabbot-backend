@@ -417,13 +417,25 @@ const sendWelcomeEmailWithOtpService = utilities_1.errorUtilities.withServiceErr
     //     console.error('SendGrid error:', error.response?.body || error);
     //     throw error;
     // }
-    const messageDetails = {
-        to: email,
-        from: process.env.SENDGRID_FROM_EMAIL,
-        subject: `Ẹ káàbọ̀! (Welcome!) ${firstName}`,
-        text: `Hello ${firstName},\n\nYour OTP is: ${otp}\n\nThank you!`,
-        html: `<p>Hello ${firstName},</p><p>Welcome to Zabbot</p><p>Your OTP is: <strong>${otp}</strong></p><p>Thank you!</p>`,
-    };
+    let messageDetails;
+    if (otp) {
+        messageDetails = {
+            to: email,
+            from: process.env.SENDGRID_FROM_EMAIL,
+            subject: `Ẹ káàbọ̀! (Welcome!) ${firstName}`,
+            text: `Hello ${firstName},\n\nYour OTP is: ${otp}\n\nThank you!`,
+            html: `<p>Hello ${firstName},</p><p>Welcome to Zabbot</p><p>Your OTP is: <strong>${otp}</strong></p><p>Thank you!</p>`,
+        };
+    }
+    else {
+        messageDetails = {
+            to: email,
+            from: process.env.SENDGRID_FROM_EMAIL,
+            subject: `Ẹ káàbọ̀! (Welcome!) ${firstName}`,
+            text: `Hello ${firstName},\n\nWelcome to Zabbot!\n\nThank you!`,
+            html: `<p>Hello ${firstName},</p><p>Welcome to Zabbot!</p><p>Thank you!</p>`,
+        };
+    }
     try {
         const emailResponse = await services_1.nodemailerService.sendEmailService(messageDetails);
         console.log('Email sent:', emailResponse);

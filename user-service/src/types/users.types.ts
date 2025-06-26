@@ -8,6 +8,11 @@ export enum ProfileVisibility {
   PRIVATE = 'private'
 }
 
+export enum RegisterMethods {
+  GOOGLE = 'google',
+  EMAIL = 'email'
+}
+
 export interface UserAttributes {
   id: string;
   firstName: string;
@@ -15,6 +20,11 @@ export interface UserAttributes {
   email: string;
   password: string;
   isVerified: boolean;
+  registerMethod: RegisterMethods;
+  googleAccessToken?: string;
+  googleRefreshToken?: string;
+  accessToken?: string;
+  refreshToken?: string;
   isFirstTimeLogin: boolean;
   role: string;
   isActive: boolean;
@@ -53,7 +63,7 @@ export interface UserAttributes {
   securityQuestions?: {
     question: string;
     answer: string;
-}[];
+  }[];
 }
 
 
@@ -128,3 +138,9 @@ export interface SecurityLogAttributes {
   timestamp: Date;
   resolved: boolean;
 }
+
+export type GoogleStrategyOptions = {
+  clientID: string;
+  clientSecret: string;
+  callbackURL: string;
+};
