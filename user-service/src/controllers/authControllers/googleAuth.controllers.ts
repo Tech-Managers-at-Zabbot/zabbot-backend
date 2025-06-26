@@ -10,6 +10,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
 export const config = {
     // LOCAL_FOUNDERS_LIST_URL: process.env.LOCAL_FOUNDERS_LIST_URL,
     DEV_FRONTEND_URL: process.env.DEV_FRONTEND_URL,
+    DEMO_FRONTEND_URL: process.env.DEMO_FRONTEND_URL!,
     PRODUCTION_FRONTEND_URL: process.env.PRODUCTION_FRONTEND_URL,
 };
 
@@ -21,10 +22,10 @@ const googleAuthCallbackController = errorUtilities.withControllerErrorHandling(
             if (!user) {
                 // Check if there's custom error info in the request
                 const errorMessage = (request as any).authInfo?.message || 'authentication_failed';
-                return response.redirect(`${config?.DEV_FRONTEND_URL}/login?error=${errorMessage}`);
+                return response.redirect(`${config?.DEMO_FRONTEND_URL}/login?error=${errorMessage}`);
             }
 
-            return response.redirect(`${config?.DEV_FRONTEND_URL}/google-success`);
+            return response.redirect(`${config?.DEMO_FRONTEND_URL}/google-success`);
 
         } catch (error) {
             next(error);
@@ -36,13 +37,13 @@ const googleAuthCallbackController = errorUtilities.withControllerErrorHandling(
 //     // Check if there's custom error info in the request
 //          console.log('usering:', request?.authInfo)
 //     const errorMessage = (request as any).authInfo?.message || 'authentication_failed';
-//     return response.redirect(`${config?.DEV_FRONTEND_URL}/login?error=${errorMessage}`);
+//     return response.redirect(`${config?.DEMO_FRONTEND_URL}/login?error=${errorMessage}`);
 // })
 
 const googleAuthFailure = errorUtilities.withControllerErrorHandling(async (request: Request, response: Response, next: NextFunction) => {
     const errorMessage = request.query.error || 'authentication_failed';
     console.log('Auth failure with error:', errorMessage);
-    return response.redirect(`${config?.DEV_FRONTEND_URL}/login?error=${errorMessage}`);
+    return response.redirect(`${config?.DEMO_FRONTEND_URL}/login?error=${errorMessage}`);
 });
 
 
