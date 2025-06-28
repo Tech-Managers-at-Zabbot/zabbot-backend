@@ -65,7 +65,7 @@ const googleAuthLoginCallbackController = utilities_1.errorUtilities.withControl
         //     secure: process.env.NODE_ENV === 'production',
         //     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         // });
-        return response.redirect(`${config_1.default?.FRONTEND_URL}/founders-circle`);
+        return response.redirect(`${config_1.default?.FRONTEND_URL}/founders-circle?success=login_successful`);
     }
     catch (error) {
         next(error);
