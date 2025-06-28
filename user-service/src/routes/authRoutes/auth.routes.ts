@@ -2,6 +2,8 @@ import joiValidations from '../../validations/joi/joi.validations';
 import { emailAuthControllers, googleAuthControllers } from '../../controllers';
 import express, {Request, Response, NextFunction} from 'express';
 import passport from 'passport';
+import config from '../../../../config/config';
+
 
 const router = express.Router()
 
@@ -13,45 +15,64 @@ router.post('/login', joiValidations.inputValidator(joiValidations.loginUserSche
 router.post('/reset-password-request', joiValidations.inputValidator(joiValidations.resendVerificationLinkSchema), emailAuthControllers.userPasswordResetRequestController)
 router.post('/reset-password', joiValidations.inputValidator(joiValidations.resetPasswordSchema), emailAuthControllers.userResetPasswordController)
 
+// Google Registration Route
 router.get(
-  '/google',
-  passport.authenticate('google', {
+  '/google/register',
+  passport.authenticate('google-register', {
     scope: ['profile', 'email'],
     session: false,
   })
 );
 
-// router.get(
-//   '/google/callback',
-//   passport.authenticate('google', {
-//     session: false,
-//     failureRedirect: '/api/v1/users/auth/google/failure',
-//   }),
-//   googleAuthControllers.googleAuthCallbackController
-// );
-
+// Google Login Route
 router.get(
-  '/google/callback',
-  (req: Request, res: Response, next: NextFunction) => {
-    passport.authenticate('google', {
+  '/google/login',
+  passport.authenticate('google-login', {
+    scope: ['profile', 'email'],
+    session: false,
+  })
+);
+
+// Google Registration Callback
+router.get(
+  '/google/register/callback',
+  (request: Request, response: Response, next: NextFunction) => {
+    passport.authenticate('google-register', {
       session: false,
-    })(req, res, (err: any) => {
-      if (err) {
-        // Redirect to failure with error message
-        return res.redirect(`/api/v1/users/auth/google/failure?error=${err.message}`);
+    })(request, response, (error: any) => {
+      if (error) {
+        return response.redirect(`${config.GOOGLE_AUTH_FAILURE_URL}?error=${error.message}`);
       }
       
-      if (!req.user) {
-        return res.redirect(`/api/v1/users/auth/google/failure?error=authentication_failed`);
+      if (!request.user) {
+        return response.redirect(`${config.GOOGLE_AUTH_FAILURE_URL}?error=registration_failed`);
       }
       
-      // Success - call your controller
-      return googleAuthControllers.googleAuthCallbackController(req, res, next);
+      return googleAuthControllers.googleAuthRegistrationCallbackController(request, response, next);
+    });
+  }
+);
+
+// Google Login Callback
+router.get(
+  '/google/login/callback',
+  (request: Request, response: Response, next: NextFunction) => {
+    passport.authenticate('google-login', {
+      session: false,
+    })(request, response, (error: any) => {
+      if (error) {
+        return response.redirect(`${config.GOOGLE_AUTH_FAILURE_URL}?error=${error.message}`);
+      }
+      
+      if (!request.user) {
+        return response.redirect(`${config.GOOGLE_AUTH_FAILURE_URL}?error=login_failed`);
+      }
+      
+      return googleAuthControllers.googleAuthLoginCallbackController(request, response, next);
     });
   }
 );
 
 router.get('/google/failure', googleAuthControllers.googleAuthFailure);
-
 
 export default router

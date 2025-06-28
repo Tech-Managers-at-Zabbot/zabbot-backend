@@ -21,6 +21,8 @@ const morgan_1 = __importDefault(require("morgan"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const http_1 = __importDefault(require("http"));
 const syncDb_1 = require("./config/syncDb");
+const config_1 = __importDefault(require("./config/config"));
+console.log('stage:', config_1.default);
 const services = [
     {
         name: 'founders-list-service',

@@ -49,7 +49,9 @@ app.get('/', (req, res) => {
 // associateUserModels();
 // Error handling
 app.use(utilities_1.errorUtilities.globalErrorHandler);
-utilities_2.googleAuthUtilities.setupGoogleStrategy(services_1.googleAuthServices.googleOAuthVerify);
+utilities_2.googleAuthUtilities.setupGoogleRegisterStrategy(services_1.googleAuthServices.googleOAuthRegister);
+utilities_2.googleAuthUtilities.setupGoogleLoginStrategy(services_1.googleAuthServices.googleOAuthLogin);
+// Keep the existing serialize/deserialize functions as they are
 passport_1.default.serializeUser((user, done) => done(null, user.id));
 passport_1.default.deserializeUser(async (id, done) => {
     try {

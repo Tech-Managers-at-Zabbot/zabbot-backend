@@ -546,7 +546,6 @@ const sendWelcomeEmailWithOtpService = errorUtilities.withServiceErrorHandling(
     }
 );
 
-
 const sendgridResendOtpService = errorUtilities.withServiceErrorHandling(
     async (email: string, firstName: string, otp: string) => {
 

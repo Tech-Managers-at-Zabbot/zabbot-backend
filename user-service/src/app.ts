@@ -55,8 +55,10 @@ app.get('/', (req, res) => {
 // Error handling
 app.use(errorUtilities.globalErrorHandler as any);
 
-googleAuthUtilities.setupGoogleStrategy(googleAuthServices.googleOAuthVerify);
+googleAuthUtilities.setupGoogleRegisterStrategy(googleAuthServices.googleOAuthRegister);
+googleAuthUtilities.setupGoogleLoginStrategy(googleAuthServices.googleOAuthLogin);
 
+// Keep the existing serialize/deserialize functions as they are
 passport.serializeUser((user: any, done) => done(null, user.id));
 passport.deserializeUser(async (id: string, done) => {
   try {
