@@ -169,18 +169,7 @@ const resendVerificationOtpService = utilities_1.errorUtilities.withServiceError
 });
 const loginUserService = utilities_1.errorUtilities.withServiceErrorHandling(async (loginPayload) => {
     const { email, password, stayLoggedIn } = loginPayload;
-    const user = await users_repositories_1.default.getOne({ email }, [
-        "id",
-        "email",
-        "password",
-        "role",
-        "isActive",
-        "isBlocked",
-        "isVerified",
-        "firstName",
-        "lastName",
-        "isFirstTimeLogin",
-    ]);
+    const user = await users_repositories_1.default.getOne({ email });
     if (!user) {
         throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.USER_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
     }

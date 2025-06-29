@@ -22,12 +22,6 @@ const googleAuthRegistrationCallbackController = utilities_1.errorUtilities.with
             const errorMessage = request.authInfo?.message || 'registration_failed';
             return response.redirect(`${config_1.default?.FRONTEND_URL}/signup?error=${errorMessage}`);
         }
-        // Generate tokens for the new user
-        // TODO: Replace with your actual token generation logic
-        // const tokens = helperFunctions.generateTokens(user);
-        // For now, redirecting with success. You can modify this to send tokens via query params
-        // or set them as HTTP-only cookies before redirecting
-        // Option 1: Set tokens as HTTP-only cookies (recommended)
         // response.cookie('access_token', tokens.accessToken, { 
         //     httpOnly: true, 
         //     secure: process.env.NODE_ENV === 'production',
@@ -38,7 +32,11 @@ const googleAuthRegistrationCallbackController = utilities_1.errorUtilities.with
         //     secure: process.env.NODE_ENV === 'production',
         //     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         // });
-        return response.redirect(`${config_1.default?.FRONTEND_URL}/google-success`);
+        const userData = encodeURIComponent(JSON.stringify(user.user));
+        const token = encodeURIComponent(user.token);
+        const authType = encodeURIComponent(user.authType);
+        return response.redirect(`${config_1.default?.FRONTEND_URL}/google-success?token=${token}&user=${userData}&authType=${authType}`);
+        // return response.redirect(`${config?.FRONTEND_URL}/google-success`)
     }
     catch (error) {
         next(error);
@@ -51,10 +49,6 @@ const googleAuthLoginCallbackController = utilities_1.errorUtilities.withControl
             const errorMessage = request.authInfo?.message || 'login_failed';
             return response.redirect(`${config_1.default?.FRONTEND_URL}/login?error=${errorMessage}`);
         }
-        // Generate tokens for the existing user
-        // TODO: Replace with your actual token generation logic
-        // const tokens = helperFunctions.generateTokens(user);
-        // Option 1: Set tokens as HTTP-only cookies (recommended)
         // response.cookie('access_token', tokens.accessToken, { 
         //     httpOnly: true, 
         //     secure: process.env.NODE_ENV === 'production',
@@ -65,7 +59,11 @@ const googleAuthLoginCallbackController = utilities_1.errorUtilities.withControl
         //     secure: process.env.NODE_ENV === 'production',
         //     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         // });
-        return response.redirect(`${config_1.default?.FRONTEND_URL}/founders-circle?success=login_successful`);
+        const userData = encodeURIComponent(JSON.stringify(user.user));
+        const token = encodeURIComponent(user.token);
+        const authType = encodeURIComponent(user.authType);
+        return response.redirect(`${config_1.default?.FRONTEND_URL}/google-success?token=${token}&user=${userData}&authType=${authType}`);
+        // return response.redirect(`${config?.FRONTEND_URL}/founders-circle?success=login_successful`)
     }
     catch (error) {
         next(error);

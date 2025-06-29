@@ -10,14 +10,13 @@ const axios_1 = __importDefault(require("axios"));
 const statusCodes_responses_1 = require("../../responses/statusCodes/statusCodes.responses");
 const index_1 = require("../../utilities/index");
 const config_1 = __importDefault(require("../../../../config/config"));
+const users_repositories_2 = __importDefault(require("../../repositories/userRepositories/users.repositories"));
 const googleOAuthRegister = async (accessToken, refreshToken, profile, done) => {
     try {
         let user = await users_repositories_1.default.getOne({ email: profile.emails?.[0].value }, ["id", "email"]);
         if (user) {
-            // User already exists - registration not allowed
             return done(new Error('user_already_exists'));
         }
-        // Check if user is a beta tester
         try {
             const isBetaTester = await axios_1.default.get(`${config_1.default.LOCAL_FOUNDERS_LIST_URL}/beta-tester-check?email=${profile.emails?.[0].value}`, {
                 timeout: 10000,
@@ -67,8 +66,32 @@ const googleOAuthRegister = async (accessToken, refreshToken, profile, done) => 
             googleRefreshToken: refreshToken,
             registerMethod: users_types_1.RegisterMethods.GOOGLE
         };
-        user = await users_repositories_1.default.create(createUserPayload);
-        // Send welcome email
+        await users_repositories_1.default.create(createUserPayload);
+        const newUser = await users_repositories_2.default.getByPK(createUserPayload.id);
+        const accessTokenData = {
+            data: {
+                userId: newUser.id,
+                email: newUser.email,
+                role: newUser.role,
+            },
+            expires: "2h",
+        };
+        const refreshTokenData = {
+            data: {
+                userId: newUser.id,
+                email: newUser.email,
+                role: newUser.role,
+            },
+            expires: "30d",
+        };
+        const appAccessToken = index_1.helperFunctions.generateToken(accessTokenData);
+        const appRefreshToken = index_1.helperFunctions.generateToken(refreshTokenData);
+        await users_repositories_2.default.updateOne({
+            id: newUser.id,
+        }, {
+            refreshToken: appRefreshToken
+        });
+        const userDetails = await users_repositories_1.default.extractUserDetails(newUser);
         const emailData = {
             email: createUserPayload.email,
             firstName: createUserPayload.firstName,
@@ -80,10 +103,7 @@ const googleOAuthRegister = async (accessToken, refreshToken, profile, done) => 
         index_1.endpointCallsUtilities.processEmailsInBackground(emailPayload).catch(error => {
             console.error(`Background email processing failed for ${createUserPayload.email}:`, error.message);
         });
-        // Generate tokens for new user
-        // TODO: Replace with your actual token generation logic
-        // const tokens = helperFunctions.generateTokens(user);
-        done(null, { ...user, authType: 'registration' });
+        done(null, { token: appAccessToken, user: userDetails, authType: 'registration' });
     }
     catch (err) {
         return done(new Error('registration_failed'));
@@ -93,22 +113,37 @@ const googleOAuthLogin = async (accessToken, refreshToken, profile, done) => {
     try {
         let user = await users_repositories_1.default.getOne({ email: profile.emails?.[0].value }, ["id", "email", "firstName", "lastName", "isActive", "isBlocked"]);
         if (!user) {
-            // User doesn't exist - login not allowed
             return done(new Error('user_not_found_please_register'));
         }
-        // Check if user is active and not blocked
         if (!user.isActive || user.isBlocked) {
             return done(new Error('account_inactive_or_blocked'));
         }
-        // Update user's Google tokens
+        const newUser = await users_repositories_2.default.getByPK(user.id);
+        const accessTokenData = {
+            data: {
+                userId: newUser.id,
+                email: newUser.email,
+                role: newUser.role,
+            },
+            expires: "2h",
+        };
+        const refreshTokenData = {
+            data: {
+                userId: newUser.id,
+                email: newUser.email,
+                role: newUser.role,
+            },
+            expires: "30d",
+        };
+        const appAccessToken = index_1.helperFunctions.generateToken(accessTokenData);
+        const appRefreshToken = index_1.helperFunctions.generateToken(refreshTokenData);
         await users_repositories_1.default.updateOne({ email: user.email }, {
             googleAccessToken: accessToken,
             googleRefreshToken: refreshToken,
+            refreshToken: appRefreshToken
         });
-        // Generate tokens for existing user
-        // TODO: Replace with your actual token generation logic
-        // const tokens = helperFunctions.generateTokens(user);
-        done(null, { ...user, authType: 'login' });
+        const userDetails = await users_repositories_1.default.extractUserDetails(newUser);
+        done(null, { token: appAccessToken, user: userDetails, authType: 'login' });
     }
     catch (err) {
         return done(new Error('login_failed'));
