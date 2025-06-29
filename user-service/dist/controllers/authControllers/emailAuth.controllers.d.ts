@@ -1,6 +1,3 @@
-export declare const config: {
-    LOCAL_FOUNDERS_LIST_URL: string | undefined;
-};
 declare const _default: {
     userRegistrationController: (req: import("express").Request, res: import("express").Response, next: import("express").NextFunction) => Promise<void>;
     verifyUserAccountController: (req: import("express").Request, res: import("express").Response, next: import("express").NextFunction) => Promise<void>;

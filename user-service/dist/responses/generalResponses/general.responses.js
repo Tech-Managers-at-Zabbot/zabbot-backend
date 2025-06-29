@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GeneralResponses = void 0;
 var GeneralResponses;
 (function (GeneralResponses) {
-    GeneralResponses["EMAIL_EXISTS_LOGIN"] = "This email address is already in the Founders Circle - Beta Test group.  Click on SIGN IN instead.";
+    GeneralResponses["EMAIL_EXISTS_LOGIN"] = "This email address is already registered. Click on SIGN IN instead.";
     GeneralResponses["PROCESS_UNSSUCCESSFUL"] = "Process unsuccessful, please try again";
     GeneralResponses["USER_REGSTRATION_SUCCESSFUL"] = "User registered successfully, a mail has been sent to your email, click on the link in it to verify your account";
     GeneralResponses["ADMIN_REGISTRATION_SUCCESSFUL"] = "Admin account successfully registered. Please check your mail for an email. Welcome to Zabbot.";
@@ -14,7 +14,7 @@ var GeneralResponses;
     GeneralResponses["INACTIVE_ACCOUNT"] = "Account is inactive, please contact us on bola@zabbot.com";
     GeneralResponses["BLOCKED_ACCOUNT"] = "Account is blocked, please contact us on bola@zabbot.com";
     GeneralResponses["INVALID_CREDENTIALS"] = "Invalid credentials, please try again";
-    GeneralResponses["UNVERIFIED_ACCOUNT"] = "Your account is not verified, please verify your account";
+    GeneralResponses["UNVERIFIED_ACCOUNT"] = "Your account is not verified, an OTP has been sent to your email address for account verification. Please verify your account";
     GeneralResponses["SUCCESSFUL_LOGIN"] = "Login successful";
     GeneralResponses["EMAIL_REQUIRED"] = "Email is required";
     GeneralResponses["SUCCESSFUL_PASSWORD_RESET_LINK_SENT"] = "Password reset link sent successfully";

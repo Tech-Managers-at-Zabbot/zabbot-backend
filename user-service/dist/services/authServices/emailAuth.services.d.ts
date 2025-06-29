@@ -1,8 +1,3 @@
-export declare const config: {
-    NOTIFICATION_SERVICE_ROUTE: string | undefined;
-    DEV_PASSWORD_RESET_URL: string | undefined;
-    PROD_PASSWORD_RESET_URL: string | undefined;
-};
 declare const _default: {
     registerUserService: (...args: any[]) => Promise<any>;
     verifyUserAccountService: (...args: any[]) => Promise<any>;

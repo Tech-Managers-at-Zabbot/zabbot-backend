@@ -62,3 +62,6 @@ export declare enum StatusCodes {
     NotExtended = 510,
     NetworkAuthenticationRequired = 511
 }
+export declare enum SpecialCodeMessage {
+    UNVERIFIED_ACCOUNT = "UNVERIFIED_ACCOUNT"
+}

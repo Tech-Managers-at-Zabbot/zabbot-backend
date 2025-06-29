@@ -8,5 +8,6 @@ declare const _default: {
     GOOGLE_AUTH_FAILURE_URL: string;
     LOCAL_FOUNDERS_LIST_URL: string;
     NOTIFICATION_SERVICE_ROUTE: string;
+    APP_JWT_SECRET: string;
 };
 export default _default;

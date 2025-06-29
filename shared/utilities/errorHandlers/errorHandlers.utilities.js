@@ -1,9 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.globalErrorHandler = exports.createUnknownError = void 0;
-const createError = (message, statusCode) => ({
+const createError = (message, statusCode, specialCodeMessage) => ({
     message,
     statusCode,
+    specialCodeMessage,
     timestamp: new Date(),
     isOperational: true,
 });
@@ -43,6 +44,7 @@ const globalErrorHandler = (err, req, res, next) => {
         status: 'error',
         message: errorResponse.message,
         timestamp: errorResponse.timestamp,
+        specialCodeMessage: errorResponse?.specialCodeMessage,
         details: !err.isOperational ? errorResponse.details : '',
     });
 };

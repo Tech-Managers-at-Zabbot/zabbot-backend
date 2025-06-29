@@ -3,19 +3,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.config = void 0;
 const services_1 = require("../../services");
 const utilities_1 = require("../../../../shared/utilities");
 const general_responses_1 = require("../../responses/generalResponses/general.responses");
 const statusCodes_responses_1 = require("../../responses/statusCodes/statusCodes.responses");
 const otp_responses_1 = require("../../responses/otpResponses/otp.responses");
 const axios_1 = __importDefault(require("axios"));
-const dotenv_1 = __importDefault(require("dotenv"));
-const path_1 = __importDefault(require("path"));
-dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '../../../../.env') });
-exports.config = {
-    LOCAL_FOUNDERS_LIST_URL: process.env.LOCAL_FOUNDERS_LIST_URL,
-};
+const config_1 = __importDefault(require("../../../../config/config"));
 /**
  * @description Controller for user registration
  * @param request - Express Request object
@@ -27,7 +21,7 @@ const userRegistrationController = utilities_1.errorUtilities.withControllerErro
     const payloadDetails = request.body;
     const { email } = payloadDetails;
     try {
-        const isBetaTester = await axios_1.default.get(`${exports.config.LOCAL_FOUNDERS_LIST_URL}/beta-tester-check?email=${email}`, {
+        const isBetaTester = await axios_1.default.get(`${config_1.default.LOCAL_FOUNDERS_LIST_URL}/beta-tester-check?email=${email}`, {
             timeout: 10000,
             headers: {
                 'Content-Type': 'application/json'

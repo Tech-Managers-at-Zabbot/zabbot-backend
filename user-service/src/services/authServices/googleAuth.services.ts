@@ -9,6 +9,7 @@ import { StatusCodes } from "../../responses/statusCodes/statusCodes.responses";
 import { responseUtilities, errorUtilities } from "../../../../shared/utilities";
 import { helperFunctions, endpointCallsUtilities } from "../../utilities/index";
 import config from '../../../../config/config';
+import userRepositories from '../../repositories/userRepositories/users.repositories';
 
 const googleOAuthRegister = async (
     accessToken: string,
@@ -23,11 +24,9 @@ const googleOAuthRegister = async (
         );
 
         if (user) {
-            // User already exists - registration not allowed
             return done(new Error('user_already_exists'));
         }
 
-        // Check if user is a beta tester
         try {
             const isBetaTester = await axios.get(
                 `${config.LOCAL_FOUNDERS_LIST_URL}/beta-tester-check?email=${profile.emails?.[0].value}`,
@@ -83,9 +82,42 @@ const googleOAuthRegister = async (
             registerMethod: RegisterMethods.GOOGLE
         };
 
-        user = await usersRepositories.create(createUserPayload);
+        await usersRepositories.create(createUserPayload);
 
-        // Send welcome email
+        const newUser:any = await userRepositories.getByPK(createUserPayload.id)
+
+          const accessTokenData = {
+      data: {
+        userId: newUser.id,
+        email: newUser.email,
+        role: newUser.role,
+      },
+      expires: "2h",
+    };
+
+    const refreshTokenData = {
+      data: {
+        userId: newUser.id,
+        email: newUser.email,
+        role: newUser.role,
+      },
+      expires: "30d",
+    };
+
+    const appAccessToken = helperFunctions.generateToken(accessTokenData);
+    const appRefreshToken = helperFunctions.generateToken(refreshTokenData);
+
+       await userRepositories.updateOne(
+      {
+        id: newUser.id,
+      },
+      {
+        refreshToken:appRefreshToken
+      }
+    );
+
+     const userDetails = await usersRepositories.extractUserDetails(newUser);
+
         const emailData = {
             email: createUserPayload.email,
             firstName: createUserPayload.firstName,
@@ -99,12 +131,8 @@ const googleOAuthRegister = async (
         endpointCallsUtilities.processEmailsInBackground(emailPayload).catch(error => {
             console.error(`Background email processing failed for ${createUserPayload.email}:`, error.message);
         });
-
-        // Generate tokens for new user
-        // TODO: Replace with your actual token generation logic
-        // const tokens = helperFunctions.generateTokens(user);
         
-        done(null, { ...user, authType: 'registration' });
+        done(null, { token:appAccessToken, user:userDetails, authType: 'registration' });
     } catch (err) {
         return done(new Error('registration_failed'));
     }
@@ -123,29 +151,50 @@ const googleOAuthLogin = async (
         );
 
         if (!user) {
-            // User doesn't exist - login not allowed
             return done(new Error('user_not_found_please_register'));
         }
 
-        // Check if user is active and not blocked
         if (!user.isActive || user.isBlocked) {
             return done(new Error('account_inactive_or_blocked'));
         }
 
-        // Update user's Google tokens
-        await usersRepositories.updateOne(
+    const newUser:any = await userRepositories.getByPK(user.id)
+
+          const accessTokenData = {
+      data: {
+        userId: newUser.id,
+        email: newUser.email,
+        role: newUser.role,
+      },
+      expires: "2h",
+    };
+
+    const refreshTokenData = {
+      data: {
+        userId: newUser.id,
+        email: newUser.email,
+        role: newUser.role,
+      },
+      expires: "30d",
+    };
+
+    const appAccessToken = helperFunctions.generateToken(accessTokenData);
+    const appRefreshToken = helperFunctions.generateToken(refreshTokenData);
+
+            await usersRepositories.updateOne(
             { email: user.email },
             {
                 googleAccessToken: accessToken,
                 googleRefreshToken: refreshToken,
+                refreshToken:appRefreshToken
             }
         );
 
-        // Generate tokens for existing user
-        // TODO: Replace with your actual token generation logic
-        // const tokens = helperFunctions.generateTokens(user);
+     const userDetails = await usersRepositories.extractUserDetails(newUser);
 
-        done(null, { ...user, authType: 'login' });
+
+        done(null, { token:appAccessToken, user:userDetails, authType: 'login' });
+   
     } catch (err) {
         return done(new Error('login_failed'));
     }

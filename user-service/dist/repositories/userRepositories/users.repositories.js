@@ -102,7 +102,25 @@ const userRepositories = {
                 lastName: userData.lastName,
                 role: userData.role,
                 id: userData.id,
-                isFirstTimeLogin: userData.isFirstTimeLogin
+                isFirstTimeLogin: userData.isFirstTimeLogin,
+                isVerified: userData.isVerified,
+                isActive: userData.isActive,
+                isBlocked: userData.isBlocked,
+                verifiedAt: userData.verifiedAt,
+                registerMethod: userData.registerMethod,
+                country: userData.country,
+                phoneNumber: userData.phoneNumber,
+                deletedAt: userData.deletedAt,
+                profilePicture: userData.profilePicture,
+                bio: userData.bio,
+                dateOfBirth: userData.dateOfBirth,
+                address: userData.address,
+                socialLinks: userData.socialLinks,
+                preferences: userData.preferences,
+                lastLoginAt: userData.lastLoginAt,
+                lastPasswordChangeAt: userData.lastPasswordChangeAt,
+                twoFactorEnabled: userData.twoFactorEnabled,
+                securityQuestions: userData.securityQuestions,
             };
         }
         catch (error) {

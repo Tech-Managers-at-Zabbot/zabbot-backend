@@ -11,7 +11,7 @@ const googleAuthFailure = errorUtilities.withControllerErrorHandling(async (requ
     } else if (errorMessage === 'user_already_exists') {
         return response.redirect(`${config?.FRONTEND_URL}/login?error=user_exists_please_login`)
     }
-    
+
     return response.redirect(`${config?.FRONTEND_URL}/signup?error=${errorMessage}`)
 });
 
@@ -20,20 +20,11 @@ const googleAuthRegistrationCallbackController = errorUtilities.withControllerEr
     async (request: Request, response: Response, next: NextFunction) => {
         try {
             const user = request.user as any;
-            
+
             if (!user) {
                 const errorMessage = (request as any).authInfo?.message || 'registration_failed';
                 return response.redirect(`${config?.FRONTEND_URL}/signup?error=${errorMessage}`)
             }
-
-            // Generate tokens for the new user
-            // TODO: Replace with your actual token generation logic
-            // const tokens = helperFunctions.generateTokens(user);
-            
-            // For now, redirecting with success. You can modify this to send tokens via query params
-            // or set them as HTTP-only cookies before redirecting
-            
-            // Option 1: Set tokens as HTTP-only cookies (recommended)
             // response.cookie('access_token', tokens.accessToken, { 
             //     httpOnly: true, 
             //     secure: process.env.NODE_ENV === 'production',
@@ -44,8 +35,13 @@ const googleAuthRegistrationCallbackController = errorUtilities.withControllerEr
             //     secure: process.env.NODE_ENV === 'production',
             //     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
             // });
-            
-            return response.redirect(`${config?.FRONTEND_URL}/google-success`)
+
+            const userData = encodeURIComponent(JSON.stringify(user.user));
+            const token = encodeURIComponent(user.token);
+            const authType = encodeURIComponent(user.authType);
+            return response.redirect(`${config?.FRONTEND_URL}/google-success?token=${token}&user=${userData}&authType=${authType}`);
+
+            // return response.redirect(`${config?.FRONTEND_URL}/google-success`)
 
         } catch (error) {
             next(error);
@@ -57,17 +53,11 @@ const googleAuthLoginCallbackController = errorUtilities.withControllerErrorHand
     async (request: Request, response: Response, next: NextFunction) => {
         try {
             const user = request.user as any;
-            
+
             if (!user) {
                 const errorMessage = (request as any).authInfo?.message || 'login_failed';
                 return response.redirect(`${config?.FRONTEND_URL}/login?error=${errorMessage}`)
             }
-
-            // Generate tokens for the existing user
-            // TODO: Replace with your actual token generation logic
-            // const tokens = helperFunctions.generateTokens(user);
-            
-            // Option 1: Set tokens as HTTP-only cookies (recommended)
             // response.cookie('access_token', tokens.accessToken, { 
             //     httpOnly: true, 
             //     secure: process.env.NODE_ENV === 'production',
@@ -78,8 +68,14 @@ const googleAuthLoginCallbackController = errorUtilities.withControllerErrorHand
             //     secure: process.env.NODE_ENV === 'production',
             //     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
             // });
-            
-            return response.redirect(`${config?.FRONTEND_URL}/founders-circle?success=login_successful`)
+
+
+
+            const userData = encodeURIComponent(JSON.stringify(user.user));
+            const token = encodeURIComponent(user.token);
+            const authType = encodeURIComponent(user.authType);
+            return response.redirect(`${config?.FRONTEND_URL}/google-success?token=${token}&user=${userData}&authType=${authType}`);
+            // return response.redirect(`${config?.FRONTEND_URL}/founders-circle?success=login_successful`)
 
         } catch (error) {
             next(error);

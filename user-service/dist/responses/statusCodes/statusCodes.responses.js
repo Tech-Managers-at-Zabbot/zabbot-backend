@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.StatusCodes = void 0;
+exports.SpecialCodeMessage = exports.StatusCodes = void 0;
 var StatusCodes;
 (function (StatusCodes) {
     // 1xx Informational
@@ -71,3 +71,7 @@ var StatusCodes;
     StatusCodes[StatusCodes["NotExtended"] = 510] = "NotExtended";
     StatusCodes[StatusCodes["NetworkAuthenticationRequired"] = 511] = "NetworkAuthenticationRequired";
 })(StatusCodes || (exports.StatusCodes = StatusCodes = {}));
+var SpecialCodeMessage;
+(function (SpecialCodeMessage) {
+    SpecialCodeMessage["UNVERIFIED_ACCOUNT"] = "UNVERIFIED_ACCOUNT";
+})(SpecialCodeMessage || (exports.SpecialCodeMessage = SpecialCodeMessage = {}));

@@ -1,7 +1,7 @@
 
 
 export enum GeneralResponses {
-    EMAIL_EXISTS_LOGIN = "This email address is already in the Founders Circle - Beta Test group.  Click on SIGN IN instead.",
+    EMAIL_EXISTS_LOGIN = "This email address is already registered. Click on SIGN IN instead.", //in the Founders Circle - Beta Test group.  
     PROCESS_UNSSUCCESSFUL = "Process unsuccessful, please try again",
     USER_REGSTRATION_SUCCESSFUL = "User registered successfully, a mail has been sent to your email, click on the link in it to verify your account",
     ADMIN_REGISTRATION_SUCCESSFUL = "Admin account successfully registered. Please check your mail for an email. Welcome to Zabbot.",
@@ -12,7 +12,7 @@ export enum GeneralResponses {
     INACTIVE_ACCOUNT = "Account is inactive, please contact us on bola@zabbot.com",
     BLOCKED_ACCOUNT = "Account is blocked, please contact us on bola@zabbot.com",
     INVALID_CREDENTIALS = "Invalid credentials, please try again",
-    UNVERIFIED_ACCOUNT = "Your account is not verified, please verify your account",
+    UNVERIFIED_ACCOUNT = "Your account is not verified, an OTP has been sent to your email address for account verification. Please verify your account",
     SUCCESSFUL_LOGIN = "Login successful",
     EMAIL_REQUIRED = "Email is required",
     SUCCESSFUL_PASSWORD_RESET_LINK_SENT = "Password reset link sent successfully",

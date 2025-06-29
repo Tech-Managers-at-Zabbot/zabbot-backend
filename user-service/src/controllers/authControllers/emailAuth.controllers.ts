@@ -5,15 +5,8 @@ import { GeneralResponses } from "../../responses/generalResponses/general.respo
 import { StatusCodes } from "../../responses/statusCodes/statusCodes.responses";
 import { OtpResponses } from "../../responses/otpResponses/otp.responses";
 import axios from "axios";
-import dotenv from "dotenv";
-import path from "path";
+import config from '../../../../config/config';
 
-
-dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
-
-export const config = {
-    LOCAL_FOUNDERS_LIST_URL: process.env.LOCAL_FOUNDERS_LIST_URL,
-};
 /**
  * @description Controller for user registration
  * @param request - Express Request object
