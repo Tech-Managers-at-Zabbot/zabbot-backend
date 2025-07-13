@@ -42,7 +42,7 @@ const googleOAuthRegister = async (
                 const errorMessage = isBetaTester.status === StatusCodes.Forbidden
                     ? 'unauthorized_for_testing'
                     : 'failed_tester_check';
-                
+
                 return done(new Error(errorMessage));
             }
         } catch (err: any) {
@@ -52,7 +52,7 @@ const googleOAuthRegister = async (
                 data: err.response?.data,
                 code: err.code
             });
-            
+
             let customError = 'authentication_failed';
             if (err.response?.status === StatusCodes.NotFound) {
                 customError = 'signup_as_tester';
@@ -61,7 +61,7 @@ const googleOAuthRegister = async (
             } else {
                 customError = 'failed_tester_check';
             }
-            
+
             return done(new Error(customError));
         }
 
@@ -84,39 +84,39 @@ const googleOAuthRegister = async (
 
         await usersRepositories.create(createUserPayload);
 
-        const newUser:any = await userRepositories.getByPK(createUserPayload.id)
+        const newUser: any = await userRepositories.getByPK(createUserPayload.id)
 
-          const accessTokenData = {
-      data: {
-        userId: newUser.id,
-        email: newUser.email,
-        role: newUser.role,
-      },
-      expires: "2h",
-    };
+        const accessTokenData = {
+            data: {
+                userId: newUser.id,
+                email: newUser.email,
+                role: newUser.role,
+            },
+            expires: "2h",
+        };
 
-    const refreshTokenData = {
-      data: {
-        userId: newUser.id,
-        email: newUser.email,
-        role: newUser.role,
-      },
-      expires: "30d",
-    };
+        const refreshTokenData = {
+            data: {
+                userId: newUser.id,
+                email: newUser.email,
+                role: newUser.role,
+            },
+            expires: "30d",
+        };
 
-    const appAccessToken = helperFunctions.generateToken(accessTokenData);
-    const appRefreshToken = helperFunctions.generateToken(refreshTokenData);
+        const appAccessToken = helperFunctions.generateToken(accessTokenData);
+        const appRefreshToken = helperFunctions.generateToken(refreshTokenData);
 
-       await userRepositories.updateOne(
-      {
-        id: newUser.id,
-      },
-      {
-        refreshToken:appRefreshToken
-      }
-    );
+        await userRepositories.updateOne(
+            {
+                id: newUser.id,
+            },
+            {
+                refreshToken: appRefreshToken
+            }
+        );
 
-     const userDetails = await usersRepositories.extractUserDetails(newUser);
+        const userDetails = await usersRepositories.extractUserDetails(newUser);
 
         const emailData = {
             email: createUserPayload.email,
@@ -131,8 +131,8 @@ const googleOAuthRegister = async (
         endpointCallsUtilities.processEmailsInBackground(emailPayload).catch(error => {
             console.error(`Background email processing failed for ${createUserPayload.email}:`, error.message);
         });
-        
-        done(null, { token:appAccessToken, user:userDetails, authType: 'registration' });
+
+        done(null, { token: appAccessToken, user: userDetails, authType: 'registration' });
     } catch (err) {
         return done(new Error('registration_failed'));
     }
@@ -158,43 +158,43 @@ const googleOAuthLogin = async (
             return done(new Error('account_inactive_or_blocked'));
         }
 
-    const newUser:any = await userRepositories.getByPK(user.id)
+        const newUser: any = await userRepositories.getByPK(user.id)
 
-          const accessTokenData = {
-      data: {
-        userId: newUser.id,
-        email: newUser.email,
-        role: newUser.role,
-      },
-      expires: "2h",
-    };
+        const accessTokenData = {
+            data: {
+                userId: newUser.id,
+                email: newUser.email,
+                role: newUser.role,
+            },
+            expires: "2h",
+        };
 
-    const refreshTokenData = {
-      data: {
-        userId: newUser.id,
-        email: newUser.email,
-        role: newUser.role,
-      },
-      expires: "30d",
-    };
+        const refreshTokenData = {
+            data: {
+                userId: newUser.id,
+                email: newUser.email,
+                role: newUser.role,
+            },
+            expires: "30d",
+        };
 
-    const appAccessToken = helperFunctions.generateToken(accessTokenData);
-    const appRefreshToken = helperFunctions.generateToken(refreshTokenData);
+        const appAccessToken = helperFunctions.generateToken(accessTokenData);
+        const appRefreshToken = helperFunctions.generateToken(refreshTokenData);
 
-            await usersRepositories.updateOne(
+        await usersRepositories.updateOne(
             { email: user.email },
             {
                 googleAccessToken: accessToken,
                 googleRefreshToken: refreshToken,
-                refreshToken:appRefreshToken
+                refreshToken: appRefreshToken
             }
         );
 
-     const userDetails = await usersRepositories.extractUserDetails(newUser);
+        const userDetails = await usersRepositories.extractUserDetails(newUser);
 
 
-        done(null, { token:appAccessToken, user:userDetails, authType: 'login' });
-   
+        done(null, { token: appAccessToken, user: userDetails, authType: 'login' });
+
     } catch (err) {
         return done(new Error('login_failed'));
     }
@@ -204,5 +204,5 @@ const googleOAuthLogin = async (
 
 export default {
     googleOAuthRegister,
-googleOAuthLogin
+    googleOAuthLogin
 }
