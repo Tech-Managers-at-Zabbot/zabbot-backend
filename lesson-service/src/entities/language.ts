@@ -1,0 +1,37 @@
+import { DataTypes, Model, Sequelize } from 'sequelize';
+import { users_service_db } from '../../../config/databases';
+import { LanguageAttributes } from '../data-types/interface';
+// import { UserAttributes, UserRoles, RegisterMethods, ProfileVisibility } from '../types/users.types';
+
+class Languages extends Model<LanguageAttributes> implements LanguageAttributes {
+    public id!: string;
+    public title!: string;
+    public code!: string;
+}
+
+Languages.init(
+    {
+        id: {
+            type: DataTypes.UUID,
+            primaryKey: true
+        },
+        title: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
+        code: {
+            type: DataTypes.STRING,
+            allowNull: false,
+            unique: true
+        }
+    },
+    {
+        sequelize: users_service_db,
+        modelName: 'Users',
+        tableName: 'users',
+        timestamps: true,
+        paranoid: true,
+    }
+);
+
+export default Languages;
