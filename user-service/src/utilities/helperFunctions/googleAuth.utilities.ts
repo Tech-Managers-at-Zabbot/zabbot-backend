@@ -3,7 +3,7 @@ import { errorUtilities } from '../../../../shared/utilities';
 import path from 'path';
 import passport from 'passport';
 import { Strategy as GoogleStrategy, Profile, VerifyCallback } from 'passport-google-oauth20';
-import { GoogleStrategyOptions } from 'src/types/users.types';
+import { GoogleStrategyOptions } from '../../types/users.types';
 import config from '../../../../config/config';
 dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
 
