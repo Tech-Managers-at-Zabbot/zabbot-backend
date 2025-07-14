@@ -60,15 +60,15 @@ const services: ServiceConfig[] = [
       prod: path.resolve(__dirname, '../user-service/dist/app.js')
     }
   },
-  {
-    name: 'lesson-service',
-    path: '/api/v1/lessons',
-    port: 3005,
-    entryPoint: {
-      dev: path.resolve(__dirname, './lesson-service/src/app.ts'),
-      prod: path.resolve(__dirname, '../lesson-service/dist/app.js')
-    }
-  }
+  // {
+  //   name: 'lesson-service',
+  //   path: '/api/v1/lessons',
+  //   port: 3005,
+  //   entryPoint: {
+  //     dev: path.resolve(__dirname, './lesson-service/src/app.ts'),
+  //     prod: path.resolve(__dirname, '../lesson-service/dist/app.js')
+  //   }
+  // }
 ];
 
 const app = express();
@@ -121,8 +121,10 @@ function startSingleService(service: ServiceConfig) {
     args = [entryPoint];
   } else {
     // For development with TS files, use ts-node
-    command = 'npx';
-    args = ['ts-node', entryPoint];
+    // command = 'npx';
+    // args = ['ts-node', entryPoint];
+    command = 'node';
+    args = ['-r', 'ts-node/register', entryPoint];
   }
 
   const childProcess = spawn(command, args, {
@@ -132,6 +134,7 @@ function startSingleService(service: ServiceConfig) {
       SERVICE_NAME: service.name
     },
     stdio: 'inherit',
+    shell: true
   });
 
   serviceProcesses.set(service.name, childProcess);

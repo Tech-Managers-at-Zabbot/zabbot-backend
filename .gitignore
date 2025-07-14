@@ -1,2 +1,6 @@
 node_modules
 .env
+dist
+DocumentLayout.json
+.wsuo
+VSWorkspaceState.json
