@@ -57,7 +57,7 @@ const founders_list_db = new Sequelize(`${FOUNDERS_LIST_DB}`,
 )
 
 // users_service_db.sync({}).then(() => {
-//     console.log(`Stage is: ${config.stage}`, "Users database connected");
+//     console.log(`Stage is: ${config}`, "Users database connected");
 //   })
 //   .catch((error: any) => {
 //     console.log("No connection:", error);

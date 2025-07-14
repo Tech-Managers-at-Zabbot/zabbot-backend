@@ -49,3 +49,9 @@ const users_service_db = new sequelize_1.Sequelize(`${USERS_SERVICE_DB}`, {
     }
 });
 exports.users_service_db = users_service_db;
+users_service_db.sync({}).then(() => {
+    console.log(`Stage is: ${config_1.default}`, "Users database connected");
+})
+    .catch((error) => {
+    console.log("No connection:", error);
+});
