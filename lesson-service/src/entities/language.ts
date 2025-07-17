@@ -4,9 +4,10 @@ import { LanguageAttributes } from '../data-types/interface';
 // import { UserAttributes, UserRoles, RegisterMethods, ProfileVisibility } from '../types/users.types';
 
 class Languages extends Model<LanguageAttributes> implements LanguageAttributes {
-    public id!: string;
+    public id?: string;
     public title!: string;
     public code!: string;
+    public isActive?: boolean;
 }
 
 Languages.init(
@@ -23,6 +24,11 @@ Languages.init(
             type: DataTypes.STRING,
             allowNull: false,
             unique: true
+        },
+        isActive: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: true
         }
     },
     {

@@ -8,8 +8,8 @@ class LanguageContents extends Model<LanguageContentAtrributes> implements Langu
     public title!: string;
     public word!: string;
     public tone!: string;
-    public createdAt: Date;
-    public updatedAt: Date;
+    public createdAt!: Date;
+    public updatedAt!: Date;
 }
 
 LanguageContents.init(

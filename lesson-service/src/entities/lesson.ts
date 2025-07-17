@@ -1,13 +1,13 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
 import { users_service_db } from '../../../config/databases';
-import { LanguageAttributes, LessonAttributes } from '../data-types/interface';
+import { LessonAttributes } from '../data-types/interface';
 
 class Lessons extends Model<LessonAttributes> implements LessonAttributes {
-    public id!: string;
+    public id?: string;
     public title!: string;
     public description!: string;
-    public createdAt: Date;
-    public updatedAt: Date;
+    public createdAt!: Date;
+    public updatedAt?: Date;
 }
 
 Lessons.init(

@@ -3,13 +3,13 @@ import { users_service_db } from '../../../config/databases';
 import { ContentAttributes } from '../data-types/interface';
 
 class Contents extends Model<ContentAttributes> implements ContentAttributes {
-    public id!: string;
-    public lessonId: string;
-    public languageContentId: string;
-    public translation: string;
-    public filePathId: string;
-    public createdAt: Date;
-    public updatedAt: Date;
+    public id?: string;
+    public lessonId!: string;
+    public languageContentId!: string;
+    public translation?: string;
+    public filePathId?: string;
+    public createdAt!: Date;
+    public updatedAt?: Date;
 }
 
 Contents.init(
@@ -33,7 +33,7 @@ Contents.init(
         },
         filePathId: {
             type: DataTypes.UUID,
-            allowNull: false
+            allowNull: true
         },
         createdAt: {
             type: DataTypes.DATE,

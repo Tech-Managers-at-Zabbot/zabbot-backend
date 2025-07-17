@@ -1,17 +1,18 @@
 import { ContentDataType } from "./enums";
 
 export interface LanguageAttributes {
-  id: string;
+  id?: string;
   code: string;
   title: string;
+  isActive?: boolean;
 }
 
 export interface LessonAttributes {
-  id: string;
+  id?: string;
   title: string;
   description: string;
   contents?: {
-    id: string;
+    id?: string;
     translation: string;
     contentPath?: {
       contentType: ContentDataType;
@@ -19,11 +20,11 @@ export interface LessonAttributes {
     };
   }[];
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt?: Date;
 }
 
 export interface ContentAttributes {
-  id: string;
+  id?: string;
   lessonId: string;
   lesson?: {
     name: string;
@@ -35,10 +36,10 @@ export interface ContentAttributes {
     word: string;
     tone: string;
   };
-  translation: string;
-  filePathId: string;
+  translation?: string;
+  filePathId?: string;
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt?: Date;
 }
 
 export interface LanguageContentAtrributes {
