@@ -2,7 +2,9 @@ import Languages from "src/entities/language";
 import { errorUtilities } from "../../../shared/utilities";
 import { LanguageAttributes } from "src/data-types/interface";
 import { updateLanguage } from "src/controllers/language.controllers";
+import LanguageContents from "src/entities/language-content";
 
+// LANGUAGE SESSION START
 getLanguages: async (filter: {isActive: boolean}) => {
   try {
     const where: any = {}
@@ -74,7 +76,10 @@ updateLanguage: async (id: string, languageData: LanguageAttributes) => {
     throw errorUtilities.createError(`Error Updating language: ${error.message}`, 500);
   }
 }
+// END LANGUAGE SESSION
 
+
+// TOGGLE LANGUAGE STATUS
 toggleLanguageStatus: async (id: string) => {
   const language = await Languages.findByPk(id);
   if (!language)
@@ -87,3 +92,73 @@ toggleLanguageStatus: async (id: string) => {
 
   return updatedLanguage;  
 }
+
+// SESSION FOR LANGUAGE CONTENTS
+getLanguageContents: async () => {
+  try {
+    const languageContents = await LanguageContents.findAll();
+  
+    return languageContents;
+
+  } catch (error: any) {
+    throw errorUtilities.createError(`Error fetching language contents: ${error.message}`, 500);
+  }
+}
+
+getLanguageContent: async (languageId: string) => {
+  try {
+    const languageContent = await LanguageContents.findOne({ where: { languageId } });
+    if (!languageContent)
+      throw errorUtilities.createError(`No contents found for this language`, 404);
+    
+
+    return languageContent;
+
+  } catch (error: any) {
+    throw errorUtilities.createError(`Error fetching contents for this language: ${error.message}`, 500);
+  }
+}
+
+addLanguageContent: async (languageContentData: any) => {
+  try {
+    // Create a new language content
+    const newLanguageContent = await LanguageContents.create({
+      languageId: languageContentData.languageId,
+      title: languageContentData.title,
+      word: languageContentData.word,
+      tone: languageContentData.tone,
+      createdAt: new Date()
+    });
+
+    return newLanguageContent;
+
+  } catch (error: any) {
+
+    throw errorUtilities.createError(`Error creating a new language content: ${error.message}`, 500);
+  }
+}
+
+updateLanguageContent: async (id: string, languageContentData: any) => {
+  try {
+    // Check if the language content exists
+    const currentLanguageContent = await LanguageContents.findByPk(id);
+    if (!currentLanguageContent) {
+      throw errorUtilities.createError(`Language content does not exist`, 404);
+    }
+
+    currentLanguageContent.title = languageContentData.title;
+    currentLanguageContent.word = languageContentData.word;
+    currentLanguageContent.tone = languageContentData.tone;
+    currentLanguageContent.updatedAt = new Date();
+
+    // Update the language content
+    const updatedLanguageContent = await LanguageContents.update( currentLanguageContent, { where: { id } });
+
+    return updatedLanguageContent;
+
+  } catch (error: any) {
+
+    throw errorUtilities.createError(`Error Updating language content: ${error.message}`, 500);
+  }
+}
+// END LANGUAGE CONTENTS SESSION

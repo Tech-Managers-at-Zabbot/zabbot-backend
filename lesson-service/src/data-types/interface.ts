@@ -1,4 +1,4 @@
-import { ContentDataType } from "./enums";
+import { ContentDataType, Level } from "./enums";
 
 export interface LanguageAttributes {
   id?: string;
@@ -37,25 +37,29 @@ export interface ContentAttributes {
     tone: string;
   };
   translation?: string;
-  filePathId?: string;
+  level: Level
+  filePath?: {
+    contentType: ContentDataType;
+    filePath: string;
+  }[];
   createdAt: Date;
   updatedAt?: Date;
 }
 
 export interface LanguageContentAtrributes {
-  id: string;
+  id?: string;
   languageId: string;
-  title: string;
-  word: string;
-  tone: string;
+  title?: string;
+  word?: string;
+  tone?: string;
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt?: Date;
 }
 
 export interface ContentFileAttributes {
-  id: string;
+  id?: string;
   contentId: string;
   contentType: ContentDataType;
-  filePath: string;
+  filePath?: string;
   createdAt: Date;
 }

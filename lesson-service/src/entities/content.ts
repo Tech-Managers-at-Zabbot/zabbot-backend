@@ -1,13 +1,14 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
 import { users_service_db } from '../../../config/databases';
 import { ContentAttributes } from '../data-types/interface';
+import { Level } from 'src/data-types/enums';
 
 class Contents extends Model<ContentAttributes> implements ContentAttributes {
     public id?: string;
     public lessonId!: string;
     public languageContentId!: string;
     public translation?: string;
-    public filePathId?: string;
+    public level!: Level;
     public createdAt!: Date;
     public updatedAt?: Date;
 }
@@ -31,9 +32,10 @@ Contents.init(
             type: DataTypes.STRING,
             allowNull: false
         },
-        filePathId: {
-            type: DataTypes.UUID,
-            allowNull: true
+        level: {
+            type: DataTypes.ENUM,
+            values: Object.values(Level),
+            allowNull: false
         },
         createdAt: {
             type: DataTypes.DATE,

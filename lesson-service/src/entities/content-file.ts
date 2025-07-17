@@ -4,11 +4,11 @@ import { ContentFileAttributes, LanguageAttributes } from '../data-types/interfa
 import { ContentDataType } from '../data-types/enums';
 
 class ContentFiles extends Model<ContentFileAttributes> implements ContentFileAttributes {
-    public id!: string;
+    public id?: string;
     public contentId!: string;
     public contentType!: ContentDataType;
-    public filePath: string;
-    public createdAt: Date;
+    public filePath?: string;
+    public createdAt!: Date;
 }
 
 ContentFiles.init(
