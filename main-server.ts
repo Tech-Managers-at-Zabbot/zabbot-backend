@@ -60,15 +60,15 @@ const services: ServiceConfig[] = [
       prod: path.resolve(__dirname, '../user-service/dist/app.js')
     }
   },
-  // {
-  //   name: 'lesson-service',
-  //   path: '/api/v1/lessons',
-  //   port: 3005,
-  //   entryPoint: {
-  //     dev: path.resolve(__dirname, './lesson-service/src/app.ts'),
-  //     prod: path.resolve(__dirname, '../lesson-service/dist/app.js')
-  //   }
-  // }
+  {
+    name: 'lesson-service',
+    path: '/api/v1/lessons',
+    port: 3005,
+    entryPoint: {
+      dev: path.resolve(__dirname, './lesson-service/src/app.ts'),
+      prod: path.resolve(__dirname, '../lesson-service/dist/app.js')
+    }
+  }
 ];
 
 const app = express();
