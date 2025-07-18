@@ -79,5 +79,5 @@ export default {
   addFieldToListController,
   addUsersToUpdateListController,
   addUsersToContributorsController,
-addUsersToTestersController
+  addUsersToTestersController
 }

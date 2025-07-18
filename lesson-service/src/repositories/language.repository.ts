@@ -1,7 +1,7 @@
 import Languages from "src/entities/language";
 import { errorUtilities } from "../../../shared/utilities";
 import { LanguageAttributes } from "src/data-types/interface";
-import { updateLanguage } from "src/controllers/language.controllers";
+import { updateLanguage } from "src/controllers/language.controller";
 import LanguageContents from "src/entities/language-content";
 
 // LANGUAGE SESSION START
