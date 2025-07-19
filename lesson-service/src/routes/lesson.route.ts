@@ -1,11 +1,11 @@
 import express from 'express';
-import { getLessons, getLesson, createLesson, updateLesson } from '../controllers/lesson.controller';
+import { getLessonsController, getLessonController, createLessonController, updateLessonController,} from '../controllers/lesson.controller';
 
 const router = express.Router();
 
-router.get('/lessons', getLessons);
-router.get('/lessons/:id', getLesson);
-router.post('/lessons', createLesson);
-router.put('/lessons/:id', updateLesson);
+router.get('/lessons', getLessonsController);
+router.get('/lessons/:id', getLessonController);
+router.post('/lessons', createLessonController);
+router.put('/lessons/:id', updateLessonController);
 
 export default router;

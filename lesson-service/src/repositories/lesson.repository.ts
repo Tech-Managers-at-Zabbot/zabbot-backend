@@ -1,6 +1,6 @@
 import { errorUtilities } from "../../../shared/utilities";
-import { LessonAttributes } from "src/data-types/interface";
-import Lessons from "src/entities/lesson";
+import { LessonAttributes } from "../data-types/interface";
+import Lessons from "../entities/lesson";
 
 const lessonRepositories = {
 

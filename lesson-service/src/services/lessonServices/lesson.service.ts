@@ -1,11 +1,13 @@
-import { LessonAttributes } from "src/data-types/interface";
-import { errorUtilities } from "../../../../shared/utilities";
+import { LessonAttributes } from "../../data-types/interface"
+import { errorUtilities, responseUtilities } from "../../../../shared/utilities";
 import lessonRepositories from "../../repositories/lesson.repository"
+import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
+// import { StatusCodes } from "../../"
 
 const getLessons = errorUtilities.withServiceErrorHandling(
   async () => {
     const lessons = await lessonRepositories.getLessons();
-    return lessons;
+    return responseUtilities.handleServicesResponse(StatusCodes.OK, "", lessons);
   }
 );
 
@@ -20,7 +22,7 @@ const getLesson = errorUtilities.withServiceErrorHandling (
   }
 );
 
-const addLesson = errorUtilities.withServiceErrorHandling(
+const createLesson = errorUtilities.withServiceErrorHandling(
   async (lessonData: LessonAttributes) => {
     const newLesson = await lessonRepositories.addLesson(lessonData);
     return newLesson;
@@ -52,6 +54,6 @@ const updateLesson = errorUtilities.withServiceErrorHandling(
 export default {
   getLessons,
   getLesson,
-  addLesson,
+  createLesson,
   updateLesson
 }
