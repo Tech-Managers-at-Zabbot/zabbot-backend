@@ -5,7 +5,7 @@ import { RegisterMethods, UserRoles } from "../../types/users.types";
 import axios from "axios";
 import { Response } from 'express'
 import { GeneralResponses } from "../../responses/generalResponses/general.responses";
-import { StatusCodes } from "../../responses/statusCodes/statusCodes.responses";
+import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
 import { responseUtilities, errorUtilities } from "../../../../shared/utilities";
 import { helperFunctions, endpointCallsUtilities } from "../../utilities/index";
 import config from '../../../../config/config';

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { errorUtilities, responseUtilities } from '../../../../shared/utilities';
-import { StatusCodes } from "../../responses/statusCodes/statusCodes.responses";
+import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
 import config from '../../../../config/config';
 
 const googleAuthFailure = errorUtilities.withControllerErrorHandling(async (request: Request, response: Response, next: NextFunction) => {
