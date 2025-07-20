@@ -34,10 +34,10 @@ app.use(logger("dev"));
 app.use(cookieParser());
 
 // Routes
-app.use('/lesson', rootRouter);
+app.use('/', rootRouter);
 
 
-app.get('/', (req, res) => {
+app.get('/check-status', (req, res) => {
   res.json({
     service: 'Lesson Server',
     status: 'ok',

@@ -36,8 +36,8 @@ Lessons.init(
     },
     {
         sequelize: users_service_db,
-        modelName: 'Users',
-        tableName: 'users',
+        modelName: 'Lessons',
+        tableName: 'lessons',
         timestamps: true,
         paranoid: true,
     }

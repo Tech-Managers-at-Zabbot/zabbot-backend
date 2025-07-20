@@ -3,9 +3,9 @@ import { getLessonsController, getLessonController, createLessonController, upda
 
 const router = express.Router();
 
-router.get('/lessons', getLessonsController);
-router.get('/lessons/:id', getLessonController);
-router.post('/lessons', createLessonController);
-router.put('/lessons/:id', updateLessonController);
+router.get('/', getLessonsController);
+router.get('/:id', getLessonController);
+router.post('/', createLessonController);
+router.put('/:id', updateLessonController);
 
 export default router;

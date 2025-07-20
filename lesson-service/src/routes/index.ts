@@ -7,7 +7,7 @@ const rootRouter = express.Router()
 // rootRouter.use('/language', require('./language.route').default);
 // rootRouter.use('/content', require('./content.route').default);
 
-rootRouter.use('/lesson', lessonRouter);
-rootRouter.use('/language', languageRouter);
+rootRouter.use('/lessons', lessonRouter);
+rootRouter.use('/languages', languageRouter);
 
 export default rootRouter;
