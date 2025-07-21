@@ -37,8 +37,8 @@ ContentFiles.init(
     },
     {
         sequelize: users_service_db,
-        modelName: 'Users',
-        tableName: 'users',
+        modelName: 'ContentFiles',
+        tableName: 'content_files',
         timestamps: true,
         paranoid: true,
     }

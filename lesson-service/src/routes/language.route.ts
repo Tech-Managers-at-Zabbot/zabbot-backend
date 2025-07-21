@@ -1,11 +1,20 @@
 import express from 'express';
-import { createLanguage, getLanguage, getLanguages, updateLanguage } from '../controllers/language.controller';
+import { 
+    getLanguageController, 
+    getLanguagesController, 
+    createLanguageController, 
+    changeLanguageStatusController, 
+    deleteLanguageController, 
+    updateLanguageController 
+} from '../controllers/language.controller';
 
 const router = express.Router();
 
-router.get('/languages', getLanguages);
-router.get('/languages/:id', getLanguage);
-router.post('/languages', createLanguage);
-router.put('/languages/:id', updateLanguage);
+router.get('/', getLanguagesController);
+router.get('/:id', getLanguageController);
+router.post('/', createLanguageController);
+router.put('/:id', updateLanguageController);
+router.delete('/:id', deleteLanguageController);
+router.patch('/:id/status', changeLanguageStatusController);
 
 export default router;

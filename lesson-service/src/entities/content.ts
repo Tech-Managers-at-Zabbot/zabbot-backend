@@ -49,8 +49,8 @@ Contents.init(
     },
     {
         sequelize: users_service_db,
-        modelName: 'Users',
-        tableName: 'users',
+        modelName: 'Contents',
+        tableName: 'contents',
         timestamps: true,
         paranoid: true,
     }

@@ -21,7 +21,6 @@ const lessonRepositories = {
       return lesson;
 
     } catch (error: any) {
-
       throw errorUtilities.createError(`Error Fetching lesson: ${error.message}`, 500);
     }
   },
@@ -38,7 +37,6 @@ const lessonRepositories = {
       return newLesson;
 
     } catch (error: any) {
-
       throw errorUtilities.createError(`Error creating a new lesson: ${error.message}`, 500);
     }
   },
@@ -61,7 +59,6 @@ const lessonRepositories = {
       return updatedLesson;
 
     } catch (error: any) {
-
       throw errorUtilities.createError(`Error Updating lesson: ${error.message}`, 500);
     }
   }

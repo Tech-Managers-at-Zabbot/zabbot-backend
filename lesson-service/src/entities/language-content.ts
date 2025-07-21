@@ -46,8 +46,8 @@ LanguageContents.init(
   },
   {
       sequelize: users_service_db,
-      modelName: 'Users',
-      tableName: 'users',
+      modelName: 'LanguageContents',
+      tableName: 'language_contents',
       timestamps: true,
       paranoid: true,
   }

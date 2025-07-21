@@ -33,8 +33,8 @@ Languages.init(
     },
     {
         sequelize: users_service_db,
-        modelName: 'Users',
-        tableName: 'users',
+        modelName: 'Languages',
+        tableName: 'languages',
         timestamps: true,
         paranoid: true,
     }

@@ -5,7 +5,6 @@ import { errorUtilities, responseUtilities } from '../../../shared/utilities';
 // Controller to get all lessons
 export const getLessonsController = errorUtilities.withControllerErrorHandling(
   async (req: Request, res: Response) => {
-    console.log("Fetching all lessons");
     const payload = req.body;
     const lessons = await lessonService.getLessons(payload);
     return responseUtilities.responseHandler(res, lessons.message, lessons.statusCode, lessons.data);
