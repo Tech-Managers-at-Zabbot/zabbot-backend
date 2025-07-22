@@ -1,3 +1,4 @@
+import { Transaction } from "sequelize";
 import { errorUtilities } from "../../../shared/utilities";
 import { LessonAttributes } from "../data-types/interface";
 import Lessons from "../entities/lesson";
@@ -9,6 +10,7 @@ const lessonRepositories = {
       const lessons = await Lessons.findAll();
 
       return lessons;
+
     } catch (error: any) {
         throw errorUtilities.createError(`Error Fetching lessons: ${error.message}`, 500);
     }
@@ -25,14 +27,10 @@ const lessonRepositories = {
     }
   },
 
-  addLesson: async (lessonData: LessonAttributes) => {
+  addLesson: async (lessonData: any, transaction?: Transaction) => {
     try {
       // Create a new lesson
-      const newLesson = await Lessons.create({
-        title: lessonData.title,
-        description: lessonData.description,
-        createdAt: new Date()
-      });
+      const newLesson = await Lessons.create(lessonData, { transaction });
 
       return newLesson;
 
@@ -41,20 +39,10 @@ const lessonRepositories = {
     }
   },
 
-  updateLesson: async (id: string, lessonData: LessonAttributes) => {
+  updateLesson: async (lessonData: any, transaction?: Transaction) => {
     try {
-      // Check if the language exists
-      const currentLesson = await Lessons.findByPk(id);
-      if (!currentLesson) {
-        throw errorUtilities.createError(`Lesson does not exist`, 404);
-      }
-
-      currentLesson.title = lessonData.title;
-      currentLesson.description = lessonData.description;
-      currentLesson.updatedAt = new Date();
-
       // Update the language
-      const updatedLesson = await Lessons.update( currentLesson, { where: { id } });
+      const updatedLesson = await lessonData.update( lessonData, { transaction });
 
       return updatedLesson;
 

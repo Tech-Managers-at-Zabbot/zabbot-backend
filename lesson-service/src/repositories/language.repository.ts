@@ -1,12 +1,12 @@
+import { Transaction } from "sequelize";
 import { errorUtilities } from "../../../shared/utilities";
-import { LanguageAttributes } from "../data-types/interface";
 import Languages from "../entities/language";
 import LanguageContents from "../entities/language-content";
 
 
 const languageRepositories = {
   // LANGUAGE SESSION START
-  getLanguages: async (filter?: {isActive: boolean}) => {
+  getLanguages: async (filter?: { isActive: boolean }) => {
     try {
       const where: any = {}
       if (typeof filter?.isActive === 'boolean') {
@@ -36,9 +36,6 @@ const languageRepositories = {
   getLanguageByCode: async (code: string) => {
     try {
       const language = await Languages.findOne({ where: { code } });
-      if (!language) {
-        throw errorUtilities.createError(`Language with code ${code} not found`, 404);
-      }
 
       return language;
 
@@ -47,14 +44,10 @@ const languageRepositories = {
     }
   },
 
-  addLanguage: async (languageData: LanguageAttributes) => {
+  addLanguage: async (languageData: any, transaction?: Transaction) => {
     try {
       // Create a new language
-      const newLanguage = await Languages.create({
-        code: languageData.code,
-        title: languageData.title,
-        isActive: true
-      });
+      const newLanguage = await Languages.create(languageData, { transaction });
 
       return newLanguage;
 
@@ -63,21 +56,12 @@ const languageRepositories = {
     }
   },
 
-  updateLanguage: async (id: string, languageData: LanguageAttributes) => {
+  updateLanguage: async (languageData: any, transaction?: Transaction) => {
     try {
-      // Check if the language exists
-      const currentLanguage = await Languages.findByPk(id);
-      if (!currentLanguage) {
-        throw errorUtilities.createError(`Language does not exist`, 404);
-      }
-
-      currentLanguage.title = languageData.title;
-      currentLanguage.code = languageData.code;
-
       // Update the language
-      const updatedLanguage = await Languages.update( currentLanguage, { where: { id } });
+      await languageData.update( languageData, { transaction });
 
-      return updatedLanguage;
+      return languageData;
 
     } catch (error: any) {
 

@@ -1,8 +1,8 @@
+import { v4 } from "uuid";
 import { LessonAttributes } from "../../data-types/interface"
-import { errorUtilities, responseUtilities } from "../../../../shared/utilities";
 import lessonRepositories from "../../repositories/lesson.repository"
+import { errorUtilities, responseUtilities } from "../../../../shared/utilities";
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
-// import { StatusCodes } from "../../"
 
 const getLessons = errorUtilities.withServiceErrorHandling(
   async () => {
@@ -24,17 +24,27 @@ const getLesson = errorUtilities.withServiceErrorHandling (
 
 const createLesson = errorUtilities.withServiceErrorHandling(
   async (lessonData: LessonAttributes) => {
-    const newLesson = await lessonRepositories.addLesson(lessonData);
+    const payload = {
+      ...lessonData,
+      id: v4(),
+      createdAt: new Date(),
+    }
+    const newLesson = await lessonRepositories.addLesson(payload);
     return newLesson;
   }
 );
 
 const updateLesson = errorUtilities.withServiceErrorHandling(
   async (id: string, lessonData: LessonAttributes) => {
-    const updatedLesson = await lessonRepositories.updateLesson(id, lessonData);
-    if (!updatedLesson) {
+    const lesson = await lessonRepositories.getLesson(id);
+    if (!lesson) 
       throw errorUtilities.createError(`Lesson not found`, 404);
-    }
+
+    lesson.updatedAt = new Date();
+    lesson.title = lessonData.title;
+    lesson.description = lessonData.description;
+
+    const updatedLesson = await lessonRepositories.updateLesson(lesson);
 
     return updatedLesson;
   }

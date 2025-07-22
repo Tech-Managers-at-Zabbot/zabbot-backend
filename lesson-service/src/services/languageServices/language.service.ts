@@ -2,6 +2,7 @@ import { LanguageAttributes, LessonAttributes } from "../../data-types/interface
 import { errorUtilities, responseUtilities } from "../../../../shared/utilities";
 import languageRepositories from "../../repositories/language.repository";
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
+import { v4 } from "uuid";
 
 const getLanguages = errorUtilities.withServiceErrorHandling(
   async (params?: {isActive: boolean}) => {
@@ -24,13 +25,19 @@ const getLanguage = errorUtilities.withServiceErrorHandling(
 const addLanguage = errorUtilities.withServiceErrorHandling(
   async (languageData: LanguageAttributes) => {
 
-     // Check if the language already exists
-      const currentLanguage = await languageRepositories.getLanguageByCode( languageData.code);
-      if (currentLanguage) {
-        throw errorUtilities.createError(`Language with code ${languageData.code} already exists`, 400);
-      }
+    // Check if the language already exists
+    const currentLanguage = await languageRepositories.getLanguageByCode( languageData.code);
+    if (currentLanguage) {
+      throw errorUtilities.createError(`Language with code ${languageData.code} already exists`, 400);
+    }
 
-    const newLanguage = await languageRepositories.addLanguage(languageData);
+    const newLanguagePayload = {
+      ...languageData,
+      id: v4(),
+      createdAt: new Date(),
+    }
+
+    const newLanguage = await languageRepositories.addLanguage(newLanguagePayload);
     return responseUtilities.handleServicesResponse(StatusCodes.Created, "Language created successfully", newLanguage);
   }
 );
@@ -42,18 +49,16 @@ const updateLanguage = errorUtilities.withServiceErrorHandling(
       throw errorUtilities.createError(`Language not found`, 404);
     }
 
-    const updatedLanguage = await languageRepositories.updateLanguage(id, languageData);
+    language.title = languageData.title;
+    language.code = languageData.code;
+
+    const updatedLanguage = await languageRepositories.updateLanguage(language);
     return responseUtilities.handleServicesResponse(StatusCodes.OK, "Language updated successfully", updatedLanguage);
   }
 );
 
 const changeLanguageStatus = errorUtilities.withServiceErrorHandling(
   async (id: string) => {
-    const language = await languageRepositories.getLanguage(id);
-    if (!language) {
-      throw errorUtilities.createError(`Language not found`, 404);
-    }
-
     const updatedLanguage = await languageRepositories.toggleLanguageStatus(id);
 
     return responseUtilities.handleServicesResponse(StatusCodes.NoContent, "Language status updated successfully", updatedLanguage);
