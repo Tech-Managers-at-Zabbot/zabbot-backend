@@ -1,10 +1,10 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
 import { users_service_db } from '../../../config/databases';
 import { ContentAttributes } from '../data-types/interface';
-import { Level } from 'src/data-types/enums';
+import { Level } from "../data-types/enums";
 
 class Contents extends Model<ContentAttributes> implements ContentAttributes {
-  public id?: string;
+  public id!: string;
   public lessonId!: string;
   public languageContentId!: string;
   public translation?: string;
@@ -17,7 +17,8 @@ Contents.init(
   {
     id: {
       type: DataTypes.UUID,
-      primaryKey: true
+      primaryKey: true,
+      defaultValue: DataTypes.UUIDV4,
     },
     lessonId: {
       type: DataTypes.UUID,
