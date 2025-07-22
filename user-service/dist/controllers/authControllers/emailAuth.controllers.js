@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const services_1 = require("../../services");
 const utilities_1 = require("../../../../shared/utilities");
 const general_responses_1 = require("../../responses/generalResponses/general.responses");
-const statusCodes_responses_1 = require("../../responses/statusCodes/statusCodes.responses");
+const statusCodes_responses_1 = require("../../../../shared/statusCodes/statusCodes.responses");
 const otp_responses_1 = require("../../responses/otpResponses/otp.responses");
 const axios_1 = __importDefault(require("axios"));
 const config_1 = __importDefault(require("../../../../config/config"));
