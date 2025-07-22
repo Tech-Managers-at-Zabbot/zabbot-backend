@@ -9,5 +9,12 @@ declare const _default: {
     LOCAL_FOUNDERS_LIST_URL: string;
     NOTIFICATION_SERVICE_ROUTE: string;
     APP_JWT_SECRET: string;
+    EDEDUN_APP_SECRET: string;
+    EDEDUN_SMTP_USER_NAME: string;
+    EDEDUN_SMTP_PASSWORD: string;
+    EDEDUN_CLOUDINARY_NAME: string;
+    EDEDUN_CLOUDINARY_API_KEY: string;
+    EDEDUN_CLOUDINARY_API_SECRET: string;
+    EDEDUN_DB: string;
 };
 export default _default;

@@ -4,3 +4,8 @@ dist
 DocumentLayout.json
 .wsuo
 VSWorkspaceState.json
+keys.ts
+Yoruba_Dataset.xlsx
+yoruba-translator.js
+output.json
+docker-compose.yml

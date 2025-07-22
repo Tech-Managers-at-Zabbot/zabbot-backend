@@ -9,6 +9,7 @@ const services = [
   { name: 'founding-list-service', path: './waiting-list-service' },
   { name: 'notification-service', path: './notification-service' },
   { name: 'user-service', path: './user-service' },
+  { name: 'ededun-service', path: './ededun-service' },
   { name: 'root', path: './' }
 ];
 

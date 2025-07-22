@@ -60,6 +60,15 @@ const services: ServiceConfig[] = [
       prod: path.resolve(__dirname, '../user-service/dist/app.js')
     }
   },
+  {
+    name: 'ededun-service',
+    path: '/api/v1/ededun',
+    port: 3006,
+    entryPoint: {
+      dev: path.resolve(__dirname, './ededun-service/src/app.ts'),
+      prod: path.resolve(__dirname, '../ededun-service/dist/app.js')
+    }
+  }
   // {
   //   name: 'lesson-service',
   //   path: '/api/v1/lessons',
@@ -196,8 +205,6 @@ app.get('/health', (req, res) => {
   });
 });
 
-syncDatabases()
-
 // associateUserModels();
 
 // Main app root
@@ -250,7 +257,12 @@ process.on('SIGTERM', () => shutdown(0));
 process.on('SIGINT', () => shutdown(0));
 
 // Start all services
-startServices();
+async function init() {
+  await syncDatabases();
+  startServices();
+}
+
+init();
 
 // Error handlers for Express
 app.use((req, res, next) => {
