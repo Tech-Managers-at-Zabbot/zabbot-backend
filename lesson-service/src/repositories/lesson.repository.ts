@@ -1,0 +1,55 @@
+import { Transaction } from "sequelize";
+import { errorUtilities } from "../../../shared/utilities";
+import { LessonAttributes } from "../data-types/interface";
+import Lessons from "../entities/lesson";
+
+const lessonRepositories = {
+
+  getLessons: async () => {
+    try {
+      const lessons = await Lessons.findAll();
+
+      return lessons;
+
+    } catch (error: any) {
+        throw errorUtilities.createError(`Error Fetching lessons: ${error.message}`, 500);
+    }
+  },
+
+  getLesson: async (id: string) => {
+    try {
+      const lesson = await Lessons.findByPk(id);
+
+      return lesson;
+
+    } catch (error: any) {
+      throw errorUtilities.createError(`Error Fetching lesson: ${error.message}`, 500);
+    }
+  },
+
+  addLesson: async (lessonData: any, transaction?: Transaction) => {
+    try {
+      // Create a new lesson
+      const newLesson = await Lessons.create(lessonData, { transaction });
+
+      return newLesson;
+
+    } catch (error: any) {
+      throw errorUtilities.createError(`Error creating a new lesson: ${error.message}`, 500);
+    }
+  },
+
+  updateLesson: async (lessonData: any, transaction?: Transaction) => {
+    try {
+      // Update the language
+      const updatedLesson = await lessonData.update( lessonData, { transaction });
+
+      return updatedLesson;
+
+    } catch (error: any) {
+      throw errorUtilities.createError(`Error Updating lesson: ${error.message}`, 500);
+    }
+  }
+}
+
+export default lessonRepositories;

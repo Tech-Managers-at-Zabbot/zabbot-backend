@@ -70,7 +70,7 @@ const users_service_db = new Sequelize(`${USERS_SERVICE_DB}`,
 )
 
 // users_service_db.sync({}).then(() => {
-//     console.log(`Stage is: ${config.stage}`, "Users database connected");
+//     console.log(`Stage is: ${config}`, "Users database connected");
 //   })
 //   .catch((error: any) => {
 //     console.log("No connection:", error);

@@ -61,6 +61,15 @@ const services: ServiceConfig[] = [
     }
   },
   {
+    name: 'lesson-service',
+    path: '/api/v1/lessons',
+    port: 3005,
+    entryPoint: {
+      dev: path.resolve(__dirname, './lesson-service/src/app.ts'),
+      prod: path.resolve(__dirname, '../lesson-service/dist/app.js')
+    }
+  },
+  {
     name: 'ededun-service',
     path: '/api/v1/ededun',
     port: 3006,
@@ -69,15 +78,6 @@ const services: ServiceConfig[] = [
       prod: path.resolve(__dirname, '../ededun-service/dist/app.js')
     }
   }
-  // {
-  //   name: 'lesson-service',
-  //   path: '/api/v1/lessons',
-  //   port: 3005,
-  //   entryPoint: {
-  //     dev: path.resolve(__dirname, './lesson-service/src/app.ts'),
-  //     prod: path.resolve(__dirname, '../lesson-service/dist/app.js')
-  //   }
-  // }
 ];
 
 const app = express();
