@@ -4,3 +4,9 @@ export enum ContentDataType {
     AUDIO = 'audio',
     IMAGE = 'image',
 }
+
+export enum Level {
+    BEGINNER = 'beginner',
+    INTERMEDIATE = 'intermediate',
+    ADVANCED = 'advanced',
+}

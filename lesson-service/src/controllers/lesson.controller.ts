@@ -1,5 +1,40 @@
+import { Request, Response } from 'express';
+import lessonService from '../services/lessonServices/lesson.service'
+import { errorUtilities, responseUtilities } from '../../../shared/utilities';
 
-export const getLessons = async (req, res) => { res.send('List of lessons'); }
-export const getLesson = async (req, res) => { res.send('Get a lesson'); }
-export const createLesson = async (req, res) => { res.send('Create a new lesson'); }
-export const updateLesson = async (req, res) => { res.send('Update an existing lesson'); }
+// Controller to get all lessons
+export const getLessonsController = errorUtilities.withControllerErrorHandling(
+  async (req: Request, res: Response) => {
+    const payload = req.body;
+    const lessons = await lessonService.getLessons(payload);
+    return responseUtilities.responseHandler(res, lessons.message, lessons.statusCode, lessons.data);
+  }
+);
+
+// Controller to get a single lesson
+export const getLessonController = errorUtilities.withControllerErrorHandling(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const lesson = await lessonService.getLesson(id);
+    return responseUtilities.responseHandler(res, lesson.message, lesson.statusCode, lesson.data);
+  }
+);
+
+// Controller to create a new lesson
+export const createLessonController = errorUtilities.withControllerErrorHandling(
+  async (req: Request, res: Response) => {
+    const payload = req.body;
+    const lesson = await lessonService.createLesson(payload);
+    return responseUtilities.responseHandler(res, lesson.message, lesson.statusCode, lesson.data);
+  }
+);
+
+// Controller to update an existing lesson
+export const updateLessonController = errorUtilities.withControllerErrorHandling(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const payload = req.body;
+    const lesson = await lessonService.updateLesson(id, payload);
+    return responseUtilities.responseHandler(res, lesson.message, lesson.statusCode, lesson.data);
+  }
+);

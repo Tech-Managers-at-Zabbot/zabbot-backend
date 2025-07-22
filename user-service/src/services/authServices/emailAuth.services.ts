@@ -17,7 +17,7 @@ import {
 import {
   SpecialCodeMessage,
   StatusCodes,
-} from "../../responses/statusCodes/statusCodes.responses";
+} from "../../../../shared/statusCodes/statusCodes.responses";
 import { GeneralResponses } from "../../responses/generalResponses/general.responses";
 import { OtpResponses } from "../../responses/otpResponses/otp.responses";
 import userRepositories from "../../repositories/userRepositories/users.repositories";
