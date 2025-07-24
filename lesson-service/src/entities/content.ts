@@ -41,7 +41,7 @@ Contents.init(
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: DataTypes.NOW,
+      defaultValue: DataTypes.DATE
     },
     updatedAt: {
       type: DataTypes.DATE,

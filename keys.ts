@@ -1,5 +1,6 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
-import { users_service_db } from '../../../config/databases';
+// import { users_service_db } from '../../../config/databases';
+import { users_service_db } from './config/databases';
 
 // ==================== ENUMS AND TYPES ====================
 
