@@ -1,3 +1,4 @@
+import e from "express";
 import { ContentDataType, Level } from "./enums";
 
 export interface LanguageAttributes {
@@ -14,6 +15,7 @@ export interface LessonAttributes {
   id?: string;
   title: string;
   description: string;
+  courseId: string;
   contents?: {
     id?: string;
     translation: string;
@@ -89,4 +91,26 @@ export interface UserDailyGoalAttributes {
   createdAt?: Date;
   updatedAt?: Date;
   date: Date;
+}
+
+export interface CourseAttributes {
+  id: string;
+  title: string;
+  description?: string;
+  languageId: string;
+  isActive: boolean;
+  estimatedDuration?: number; // in minutes
+  totalLessons?: number;
+  thumbnailImage?: string;
+  tags?: string[];
+  prerequisites?: string[]; // course IDs
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+export interface UserCourseAttributes {
+  id: string;
+  userId: string;
+  courseId: string;
+  createdAt: Date;
 }
