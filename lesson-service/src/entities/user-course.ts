@@ -1,52 +1,45 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
 import { users_service_db } from '../../../config/databases';
-import { LessonAttributes } from '../data-types/interface';
+import { UserCourseAttributes } from '../data-types/interface';
+import { Level } from "../data-types/enums";
 
-class Lessons extends Model<LessonAttributes> implements LessonAttributes {
+class UserCourses extends Model<UserCourseAttributes> implements UserCourseAttributes {
   public id!: string;
-  public title!: string;
-  public description!: string;
+  public userId!: string;
   public courseId!: string;
   public createdAt!: Date;
-  public updatedAt?: Date;
 }
 
-Lessons.init(
+UserCourses.init(
   {
     id: {
       type: DataTypes.UUID,
       primaryKey: true,
       defaultValue: DataTypes.UUIDV4,
     },
-    title: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-    description: {
-      type: DataTypes.STRING,
+    userId: {
+      type: DataTypes.UUID,
       allowNull: false,
+      unique: true
     },
     courseId: {
       type: DataTypes.UUID,
       allowNull: false,
+      unique: true
     },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      allowNull: true
-    },
+      defaultValue: DataTypes.DATE
+    }
   },
   {
     sequelize: users_service_db,
-    modelName: 'Lessons',
-    tableName: 'lessons',
+    modelName: 'User_Courses',
+    tableName: 'user_courses',
     timestamps: true,
     paranoid: true,
   }
 );
 
-export default Lessons;
+export default UserCourses;
