@@ -1,4 +1,4 @@
-import lessonRepositories from "src/repositories/lesson.repository";
+import lessonRepositories from "../../repositories/lesson.repository";
 import { errorUtilities } from "../../../../shared/utilities";
 import contentRepositories from "../../repositories/content.repository"
 
@@ -23,9 +23,8 @@ const getContent = errorUtilities.withServiceErrorHandling (
 const getLessonContents = errorUtilities.withServiceErrorHandling (
   async (lessonId: string) => {
     const lesson = await lessonRepositories.getLesson(lessonId);
-    if (!lesson) {
+    if (!lesson)
       throw errorUtilities.createError(`Lesson not found`, 404);
-    }
 
     const contents = await contentRepositories.getLessonContents(lessonId);
     return contents;
@@ -34,7 +33,19 @@ const getLessonContents = errorUtilities.withServiceErrorHandling (
 
 const addContent = errorUtilities.withServiceErrorHandling (
   async (contentData: any) => {
-    const newContent = await contentRepositories.createContent(contentData);
+    const lesson = await lessonRepositories.getLesson(contentData.lessonId);
+    if (!lesson) 
+      throw errorUtilities.createError(`Lesson not found`, 404);
+
+    const payload = {
+      lessonId: contentData.lessonId,
+      languageContentId: contentData.languageContentId,
+      translation: contentData.translation,
+      level: contentData.level,
+      createdAt: new Date()
+    }
+
+    const newContent = await contentRepositories.createContent(payload);
     return newContent;
   }
 );
@@ -46,7 +57,13 @@ const updateContent = errorUtilities.withServiceErrorHandling (
       throw errorUtilities.createError(`Content not found`, 404);
     }
 
-    const updatedContent = await contentRepositories.updateContent(id, contentData);
+    content.lessonId = contentData.lessonId;
+    content.languageContentId = contentData.languageContentId;
+    content.translation = contentData.translation;
+    content.level = contentData.level;
+    content.updatedAt = new Date();
+
+    const updatedContent = await contentRepositories.updateContent(content);
     return updatedContent;
   }
 );

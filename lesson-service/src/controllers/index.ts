@@ -1,9 +1,13 @@
-import languageController from "./language.controller";
-import lessonController from "./lesson.controller";
+// import languageController from "./language.controller";
+// import lessonController from "./lesson.controller";
+import wordForTheDayController from './wordForTheDay.controller'
+import dailyGoalController from './dailyGoal.controller';
 
 
 
 export { 
-    languageController,
-    lessonController
+    // languageController,
+    // lessonController,
+    wordForTheDayController,
+    dailyGoalController
 };

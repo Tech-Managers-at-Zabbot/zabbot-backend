@@ -6,6 +6,7 @@ class Lessons extends Model<LessonAttributes> implements LessonAttributes {
   public id!: string;
   public title!: string;
   public description!: string;
+  public courseId!: string;
   public createdAt!: Date;
   public updatedAt?: Date;
 }
@@ -23,6 +24,10 @@ Lessons.init(
     },
     description: {
       type: DataTypes.STRING,
+      allowNull: false,
+    },
+    courseId: {
+      type: DataTypes.UUID,
       allowNull: false,
     },
     createdAt: {

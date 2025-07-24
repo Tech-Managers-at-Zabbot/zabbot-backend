@@ -36,6 +36,7 @@ export interface UserAttributes {
   profilePicture?: string;
   bio?: string;
   dateOfBirth?: Date;
+  timeZone: string;
   address?: string;
   socialLinks?: {
     facebook?: string;

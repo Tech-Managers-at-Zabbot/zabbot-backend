@@ -86,7 +86,8 @@ const userRepositories = {
                 where: filter,
                 attributes: projection,
                 ...options,
-                order
+                order,
+                raw: true
             });
             return users;
         }

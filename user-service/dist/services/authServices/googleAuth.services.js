@@ -64,7 +64,8 @@ const googleOAuthRegister = async (accessToken, refreshToken, profile, done) => 
             profilePicture: profile?.photos?.[0].value,
             googleAccessToken: accessToken,
             googleRefreshToken: refreshToken,
-            registerMethod: users_types_1.RegisterMethods.GOOGLE
+            registerMethod: users_types_1.RegisterMethods.GOOGLE,
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
         };
         await users_repositories_1.default.create(createUserPayload);
         const newUser = await users_repositories_2.default.getByPK(createUserPayload.id);
@@ -140,7 +141,8 @@ const googleOAuthLogin = async (accessToken, refreshToken, profile, done) => {
         await users_repositories_1.default.updateOne({ email: user.email }, {
             googleAccessToken: accessToken,
             googleRefreshToken: refreshToken,
-            refreshToken: appRefreshToken
+            refreshToken: appRefreshToken,
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
         });
         const userDetails = await users_repositories_1.default.extractUserDetails(newUser);
         done(null, { token: appAccessToken, user: userDetails, authType: 'login' });

@@ -10,6 +10,7 @@ process.on('unhandledRejection', (reason, promise) => {
   shutdown(1);
 });
 
+import './cronJob-services/lessonServiceJobs';
 import express from 'express';
 import { createProxyMiddleware, Options } from 'http-proxy-middleware';
 import { spawn, ChildProcess } from 'child_process';
@@ -18,6 +19,7 @@ import cors from 'cors';
 import logger from "morgan";
 import dotenv from 'dotenv';
 import http from 'http';
+import './config/models';
 import { syncDatabases } from './config/syncDb';
 // import { associateUserModels } from './user-service/src/entities/associations';
 

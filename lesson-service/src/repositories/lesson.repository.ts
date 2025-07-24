@@ -5,9 +5,14 @@ import Lessons from "../entities/lesson";
 
 const lessonRepositories = {
 
-  getLessons: async () => {
+  getLessons: async (filter?: { courseId: string }) => {
     try {
-      const lessons = await Lessons.findAll();
+      const where: any = {};
+			if (typeof filter?.courseId === 'string') {
+				where.courseId = filter.courseId;
+			}
+
+      const lessons = await Lessons.findAll({ where });
 
       return lessons;
 

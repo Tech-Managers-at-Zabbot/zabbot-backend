@@ -2,7 +2,6 @@ import { execSync } from 'child_process';
 import path from 'path';
 import fs from 'fs-extra';
 
-// Build order is important - shared must be built first
 const services = [
   {name: 'config', path: './config'},
   { name: 'shared', path: './shared' },
@@ -10,10 +9,10 @@ const services = [
   { name: 'notification-service', path: './notification-service' },
   { name: 'user-service', path: './user-service' },
   { name: 'ededun-service', path: './ededun-service' },
+   { name: 'lesson-service', path: './lesson-service' },
   { name: 'root', path: './' }
 ];
 
-// Create build function with more detailed output
 function buildService(service: { name: string; path: string }) {
   const servicePath = path.join(__dirname, service.path);
   const packageJson = path.join(servicePath, 'package.json');
@@ -22,7 +21,6 @@ function buildService(service: { name: string; path: string }) {
     try {
       console.log(`\n🏗️  Building ${service.name}...`);
       
-      // If it's the root project, use the local build script
       if (service.name === 'root') {
         execSync('npm run build', { stdio: 'inherit' });
       } else {
@@ -34,7 +32,6 @@ function buildService(service: { name: string; path: string }) {
 
     } catch (error: any) {
       console.error(`❌ Failed to build ${service.name}:`, error.message);
-      // Exit with error code if a build fails
       process.exit(1);
     }finally {
         console.log('Copying shared utilities to services...');
@@ -47,7 +44,6 @@ function buildService(service: { name: string; path: string }) {
 
 console.log('🚀 Starting build process...');
 
-// Build services in sequence (important for TypeScript project references)
 for (const service of services) {
   buildService(service);
 }

@@ -1,6 +1,7 @@
-import Contents from "src/entities/content"
+import Contents from "../entities/content"
 import { errorUtilities } from "../../../shared/utilities";
-import ContentFiles from "src/entities/content-file";
+import ContentFiles from "../entities/content-file";
+import { Transaction } from "sequelize";
 
 const contentRepositories = {
 
@@ -35,16 +36,10 @@ const contentRepositories = {
     }
   },
 
-  createContent: async (contentData: any) => {
+  createContent: async (contentData: any, transaction?: Transaction) => {
     try {
       // Create a new content
-      const newContent = await Contents.create({
-        lessonId: contentData.lessonId,
-        languageContentId: contentData.languageContentId,
-        translation: contentData.translation,
-        level: contentData.level,
-        createdAt: new Date()
-      });
+      const newContent = await Contents.create(contentData, { transaction });
 
       return newContent;
 
@@ -53,16 +48,10 @@ const contentRepositories = {
     }
   },
 
-  updateContent: async (id: string, contentData: any) => {
+  updateContent: async (contentData: any, transaction?: Transaction) => {
     try {
-      contentData.lessonId = contentData.lessonId;
-      contentData.languageContentId = contentData.languageContentId;
-      contentData.translation = contentData.translation;
-      contentData.level = contentData.level;
-      contentData.updatedAt = new Date();
-
       // Update the content
-      const updatedContent = await Contents.update(contentData, { where: { id } });
+      const updatedContent = await contentData.update(contentData, { transaction });
 
       return updatedContent;
 
