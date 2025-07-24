@@ -5,6 +5,9 @@ export interface LanguageAttributes {
   code: string;
   title: string;
   isActive?: boolean;
+  totalCourses?: number;
+  flagIcon?: string;
+  totalLessons?: number;
 }
 
 export interface LessonAttributes {
@@ -62,4 +65,28 @@ export interface ContentFileAttributes {
   contentType: ContentDataType;
   filePath?: string;
   createdAt: Date;
+}
+
+export interface DailyWordAttributes {
+  id: string;
+  languageId: string;
+  dateUsed?: Date;
+  isActive: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+  audioUrls: string[];
+  languageText: string;
+  englishText: string;
+  isUsed: boolean;
+}
+
+export interface UserDailyGoalAttributes {
+  id: string;
+  userId: string;
+  languageId?: string;
+  isCompleted: boolean;
+  percentageCompletion: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  date: Date;
 }

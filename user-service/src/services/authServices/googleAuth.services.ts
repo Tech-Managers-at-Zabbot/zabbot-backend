@@ -79,7 +79,8 @@ const googleOAuthRegister = async (
             profilePicture: profile?.photos?.[0].value,
             googleAccessToken: accessToken,
             googleRefreshToken: refreshToken,
-            registerMethod: RegisterMethods.GOOGLE
+            registerMethod: RegisterMethods.GOOGLE,
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
         };
 
         await usersRepositories.create(createUserPayload);
@@ -186,7 +187,8 @@ const googleOAuthLogin = async (
             {
                 googleAccessToken: accessToken,
                 googleRefreshToken: refreshToken,
-                refreshToken: appRefreshToken
+                refreshToken: appRefreshToken,
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
             }
         );
 

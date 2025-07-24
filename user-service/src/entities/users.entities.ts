@@ -26,6 +26,7 @@ class Users extends Model<UserAttributes> implements UserAttributes {
     public bio?: string;
     public dateOfBirth?: Date;
     public address?: string;
+    public timeZone!: string;
     public socialLinks?: {
         facebook?: string;
         twitter?: string;
@@ -147,6 +148,10 @@ Users.init(
         },
         lastLoginAt: {
             type: DataTypes.DATE,
+            allowNull: true,
+        },
+        timeZone: {
+            type: DataTypes.STRING,
             allowNull: true,
         },
         lastPasswordChangeAt: {

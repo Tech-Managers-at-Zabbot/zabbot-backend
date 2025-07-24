@@ -69,7 +69,8 @@ const userRegisterSchemaViaEmail = joi_1.default.object({
     role: joi_1.default.string()
         .trim()
         .min(4)
-        .optional()
+        .optional(),
+    timeZone: joi_1.default.string().optional()
 });
 const loginUserSchema = joi_1.default.object({
     email: joi_1.default.string()
@@ -88,7 +89,8 @@ const loginUserSchema = joi_1.default.object({
         'string.empty': 'Password is required',
         'string.min': 'Password must be at least 8 characters long',
     }),
-    stayLoggedIn: joi_1.default.boolean().truthy('true').falsy('false').optional()
+    stayLoggedIn: joi_1.default.boolean().truthy('true').falsy('false').optional(),
+    timeZone: joi_1.default.string().optional()
 });
 const resendVerificationLinkSchema = joi_1.default.object({
     email: joi_1.default.string()

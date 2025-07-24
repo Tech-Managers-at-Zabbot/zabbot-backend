@@ -17,7 +17,7 @@ const users_repositories_2 = __importDefault(require("../../repositories/userRep
 const otp_repositories_1 = __importDefault(require("../../repositories/otpRepositories/otp.repositories"));
 const config_1 = __importDefault(require("../../../../config/config"));
 const registerUserService = utilities_1.errorUtilities.withServiceErrorHandling(async (registerPayload) => {
-    const { firstName, lastName, email, password, role } = registerPayload;
+    const { firstName, lastName, email, password, role, timeZone } = registerPayload;
     const userExists = await users_repositories_1.default.getOne({ email: email }, [
         "id",
         "email",
@@ -35,6 +35,7 @@ const registerUserService = utilities_1.errorUtilities.withServiceErrorHandling(
         isVerified: role && role === users_types_1.UserRoles.ADMIN ? true : false,
         isActive: true,
         isBlocked: false,
+        timeZone,
         isFirstTimeLogin: true,
         role: role ?? users_types_1.UserRoles.USER,
         registerMethod: users_types_1.RegisterMethods.EMAIL,
@@ -168,7 +169,7 @@ const resendVerificationOtpService = utilities_1.errorUtilities.withServiceError
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.Created, general_responses_1.GeneralResponses.USER_REGSTRATION_SUCCESSFUL, user.email);
 });
 const loginUserService = utilities_1.errorUtilities.withServiceErrorHandling(async (loginPayload) => {
-    const { email, password, stayLoggedIn } = loginPayload;
+    const { email, password, stayLoggedIn, timeZone } = loginPayload;
     const user = await users_repositories_1.default.getOne({ email });
     if (!user) {
         throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.USER_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
@@ -238,7 +239,8 @@ const loginUserService = utilities_1.errorUtilities.withServiceErrorHandling(asy
     await users_repositories_2.default.updateOne({
         id: user.id,
     }, {
-        refreshToken
+        refreshToken,
+        timeZone
     });
     const userDetails = await users_repositories_1.default.extractUserDetails(user);
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, general_responses_1.GeneralResponses.SUCCESSFUL_LOGIN, { token: accessToken, user: userDetails });

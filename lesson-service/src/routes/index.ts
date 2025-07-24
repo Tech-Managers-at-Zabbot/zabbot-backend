@@ -1,6 +1,7 @@
 import express from 'express';
 import lessonRouter from './lesson.route';
 import languageRouter from './language.route';
+import dailyWordRouter from './dailyWord.route';
 
 const rootRouter = express.Router()
 
@@ -9,5 +10,6 @@ const rootRouter = express.Router()
 
 rootRouter.use('/lessons', lessonRouter);
 rootRouter.use('/languages', languageRouter);
+rootRouter.use('/daily-words', dailyWordRouter)
 
 export default rootRouter;

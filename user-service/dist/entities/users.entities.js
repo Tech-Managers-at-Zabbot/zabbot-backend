@@ -98,6 +98,10 @@ Users.init({
         type: sequelize_1.DataTypes.DATE,
         allowNull: true,
     },
+    timeZone: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: true,
+    },
     lastPasswordChangeAt: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: true,

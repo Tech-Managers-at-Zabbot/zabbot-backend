@@ -26,7 +26,7 @@ import config from "../../../../config/config";
 
 const registerUserService = errorUtilities.withServiceErrorHandling(
   async (registerPayload: UserAttributes) => {
-    const { firstName, lastName, email, password, role } = registerPayload;
+    const { firstName, lastName, email, password, role, timeZone } = registerPayload;
 
     const userExists = await usersRepositories.getOne({ email: email }, [
       "id",
@@ -51,6 +51,7 @@ const registerUserService = errorUtilities.withServiceErrorHandling(
       isVerified: role && role === UserRoles.ADMIN ? true : false,
       isActive: true,
       isBlocked: false,
+      timeZone,
       isFirstTimeLogin: true,
       role: role ?? UserRoles.USER,
       registerMethod: RegisterMethods.EMAIL,
@@ -284,8 +285,9 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
     email: string;
     password: string;
     stayLoggedIn: boolean;
+    timeZone: string;
   }) => {
-    const { email, password, stayLoggedIn } = loginPayload;
+    const { email, password, stayLoggedIn, timeZone } = loginPayload;
 
     const user = await usersRepositories.getOne({ email });
 
@@ -403,7 +405,8 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
         id: user.id,
       },
       {
-        refreshToken
+        refreshToken,
+        timeZone
       }
     );
 
@@ -606,6 +609,8 @@ const resetPasswordService = errorUtilities.withServiceErrorHandling(
     );
   }
 );
+
+
 
 export default {
   registerUserService,

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { adminServices } from "../../services";
-import { responseUtilities } from "../../utilities";
+import { errorUtilities, responseUtilities } from "../../utilities";
 import { JwtPayload } from "jsonwebtoken";
 import { CloudinaryResponse, CloudinaryResource } from "../../types/generalTypes";
 
@@ -121,10 +121,32 @@ const adminDeletesCloudinaryLeftOverRecordings = async (
   )
 }
 
+export const adminGetsPhraseWithRecordingsForZabbot = async (
+  request: Request,
+  response: Response
+): Promise<any> => {
+
+  const { englishText, yorubaText } = request.query;
+
+  if (!englishText && !yorubaText) {
+    throw errorUtilities.createError("Either English Text or Yoruba Text must be provided", 400);
+  }
+  const fetchRecordings = await adminServices.getPhraseWithAllRecordingsForZabbot(
+    englishText, yorubaText);
+
+  return responseUtilities.responseHandler(
+    response,
+    fetchRecordings.message,
+    fetchRecordings.statusCode,
+    fetchRecordings.data
+  )
+};
+
 export default {
   adminCreatePhrase,
   adminUpdatesPhrase,
   adminDeletesPhrase,
   adminCreatesManyPhrases,
-  adminDeletesCloudinaryLeftOverRecordings
+  adminDeletesCloudinaryLeftOverRecordings,
+  adminGetsPhraseWithRecordingsForZabbot
 };

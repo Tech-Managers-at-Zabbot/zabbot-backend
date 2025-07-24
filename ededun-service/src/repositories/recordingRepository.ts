@@ -56,7 +56,8 @@ const recordingRepository = {
     try {
       const recording = await Recordings.findOne({
         where: filter,
-        attributes: projection
+        attributes: projection,
+        raw: true
       });
       return recording;
     } catch (error: any) {
@@ -70,6 +71,7 @@ const recordingRepository = {
       const recordings = await Recordings.findAll({
         where: filter,
         attributes: projection,
+        raw: true,
         ...options,
         order
       });
