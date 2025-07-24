@@ -23,7 +23,6 @@ router.put('/', updateCourseController);
 router.get('/user', getUserCoursesController);
 router.get('/user/:id', getUserCourseController);
 router.post('/user', addUserCourseController);
-router.put('/user', updateUserCourseController)
-
+router.put('/user', updateUserCourseController);
 
 export default router;
