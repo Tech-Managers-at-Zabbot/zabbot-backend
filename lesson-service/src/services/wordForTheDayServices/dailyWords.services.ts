@@ -7,7 +7,7 @@ import { DailyWordResponses, LanguageResponses } from "../../responses/responses
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { Op } from "sequelize";
-import { fetchSingleUser } from "src/utilities/axiosCalls";
+import { fetchSingleUser } from "../../utilities/axiosCalls";
 
 
 dayjs.extend(utc);
