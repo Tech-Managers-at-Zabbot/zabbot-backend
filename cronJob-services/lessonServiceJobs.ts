@@ -1,8 +1,9 @@
 import cron from 'node-cron';
 import { dailyWordsServices } from '../lesson-service/src/services';
+import config from '../config/config';
 
 const LANGUAGE_IDS = [
-    '6f4bd2a1-66ef-4cc3-8ef5-26a2dcc40f46'
+    config.YORUBA_LANGUAGE_ID!
 ];
 
 const pickWordOfTheDay = async () => {
@@ -16,7 +17,6 @@ const pickWordOfTheDay = async () => {
             console.error(`❌ Failed for ${languageId}:`, error.message);
         }
     }
-
     console.log(`[${new Date().toISOString()}] ✅ Daily word selection finished.`);
 };
 

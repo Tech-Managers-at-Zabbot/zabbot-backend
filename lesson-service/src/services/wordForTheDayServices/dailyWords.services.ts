@@ -6,6 +6,7 @@ import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.response
 import { DailyWordResponses, LanguageResponses } from "../../responses/responses";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
+import { Op } from "sequelize";
 
 
 dayjs.extend(utc);
@@ -14,9 +15,9 @@ dayjs.extend(utc);
 const createWordForTheDayService = errorUtilities.withServiceErrorHandling(
     async (wordData: Record<string, any>) => {
 
-        const { languageId, audioUrls, languageText, englishText } = wordData
+        const { languageId, audioUrls, languageText, englishText, pronunciationNote } = wordData
 
-        const languageCheck = await languageRepositories.getLanguage(languageId)
+        // const languageCheck = await languageRepositories.getLanguage(languageId)
 
         // if (!languageCheck) {
         //     throw errorUtilities.createError(
@@ -37,10 +38,11 @@ const createWordForTheDayService = errorUtilities.withServiceErrorHandling(
         const createDailyWordData = {
             id: v4(),
             languageId,
-            dateUsed: new Date(),
+            dateUsed: null,
             audioUrls,
             languageText,
             englishText,
+            pronunciationNote,
             isActive: true,
             isUsed: false
         }
@@ -63,19 +65,23 @@ const createWordForTheDayService = errorUtilities.withServiceErrorHandling(
 );
 
 const createManyWordsForTheDayService = errorUtilities.withServiceErrorHandling(
-    async (wordDataArray: Record<string, any>[]) => {
+    async (wordDataArray: Record<string, any>[], languageId: string) => {
         const BATCH_SIZE = 200;
         const created: any[] = [];
         const uncreated: any[] = [];
         const incomplete: any[] = [];
 
+        if (!wordDataArray || !Array.isArray(wordDataArray) || wordDataArray.length === 0) {
+            throw errorUtilities.createError(DailyWordResponses.PHRASES_ARRAY_NEEDED, StatusCodes.BadRequest);
+        }
+
         for (let i = 0; i < wordDataArray.length; i += BATCH_SIZE) {
             const batch = wordDataArray.slice(i, i + BATCH_SIZE);
 
             for (const wordData of batch) {
-                const { languageId, audioUrl, languageText, englishText } = wordData;
+                const { recordings, yorubaText, englishText, pronunciationNote } = wordData;
 
-                if (!languageId || !audioUrl || !languageText || !englishText) {
+                if (!recordings || !yorubaText || !englishText) {
                     incomplete.push(wordData);
                     continue;
                 }
@@ -87,7 +93,7 @@ const createManyWordsForTheDayService = errorUtilities.withServiceErrorHandling(
                         continue;
                     }
 
-                    const existingWord = await wordForTheDayRepositories.getOne({ languageText, englishText });
+                    const existingWord = await wordForTheDayRepositories.getOne({ languageText: yorubaText, englishText });
                     if (existingWord) {
                         uncreated.push({ ...wordData, reason: DailyWordResponses.ALREADY_EXISTS });
                         continue;
@@ -96,10 +102,11 @@ const createManyWordsForTheDayService = errorUtilities.withServiceErrorHandling(
                     const createDailyWordData = {
                         id: v4(),
                         languageId,
-                        dateUsed: new Date(),
-                        audioUrl,
-                        languageText,
+                        dateUsed: null,
+                        audioUrls: recordings,
+                        languageText: yorubaText,
                         englishText,
+                        pronunciationNote,
                         isActive: true,
                         isUsed: false,
                     };
@@ -141,14 +148,51 @@ const getTodayWordService = errorUtilities.withServiceErrorHandling(
             dateUsed: today,
         }
 
-        const todayWord = await wordForTheDayRepositories.getOne(filter);
+        let todayWord = await wordForTheDayRepositories.getOne(filter);
 
         if (!todayWord) {
-            console.error("Word for today not found. It may not have been picked yet.")
-            throw errorUtilities.createError(
-                DailyWordResponses.TODAY_WORD_NOT_FOUND,
-                StatusCodes.NotFound
+            console.log("Word for today not found. Attempting to assign a word...");
+
+            const unusedWordFilter = {
+                languageId,
+                dateUsed: null
+            };
+
+            let availableWord = await wordForTheDayRepositories.getOneOldWord(unusedWordFilter);
+
+            if (!availableWord) {
+                console.log("No unused words found. Checking for words older than 30 days...");
+
+                const thirtyDaysAgo = dayjs().utc().subtract(30, 'days').startOf('day').toDate();
+
+                const oldWordFilter = {
+                    languageId,
+                    dateUsed: {
+                        [Op.lt]: thirtyDaysAgo
+                    }
+                };
+
+                availableWord = await wordForTheDayRepositories.getOneOldWord(oldWordFilter);
+            }
+
+            if (!availableWord) {
+                console.error("No available words found to assign for today.");
+                throw errorUtilities.createError(
+                    DailyWordResponses.NO_AVAILABLE_WORDS,
+                    StatusCodes.NotFound
+                );
+            }
+
+            const updateData = {
+                dateUsed: today
+            };
+
+            todayWord = await wordForTheDayRepositories.updateOne(
+                { id: availableWord.id },
+                updateData
             );
+
+            console.log(`Successfully assigned word ID ${availableWord.id} for today.`);
         }
 
         return responseUtilities.handleServicesResponse(

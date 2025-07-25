@@ -117,7 +117,9 @@ const googleOAuthRegister = async (
             }
         );
 
-        const userDetails = await usersRepositories.extractUserDetails(newUser);
+        const userDetails:any = await usersRepositories.extractUserDetails(newUser);
+
+        userDetails.languageId = config.YORUBA_LANGUAGE_ID!
 
         const emailData = {
             email: createUserPayload.email,
@@ -192,7 +194,9 @@ const googleOAuthLogin = async (
             }
         );
 
-        const userDetails = await usersRepositories.extractUserDetails(newUser);
+        const userDetails:any = await usersRepositories.extractUserDetails(newUser);
+
+        userDetails.languageId = config.YORUBA_LANGUAGE_ID!
 
 
         done(null, { token: appAccessToken, user: userDetails, authType: 'login' });

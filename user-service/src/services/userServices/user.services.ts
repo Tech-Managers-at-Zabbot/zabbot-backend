@@ -13,7 +13,7 @@ import { GeneralResponses } from "../../responses/generalResponses/general.respo
 
 const getSingleUserService = errorUtilities.withServiceErrorHandling(
   async (userId:string, projection?:string[]) => {
-  const user = await usersRepositories.getOne({ id:userId, projection });
+  const user = await usersRepositories.getOne({ id:userId }, projection);
     if (!user) {
       throw errorUtilities.createError(
         GeneralResponses.USER_NOT_FOUND,
@@ -27,6 +27,17 @@ const getSingleUserService = errorUtilities.withServiceErrorHandling(
     );
   })
 
+  const getAllUserCountService = errorUtilities.withServiceErrorHandling(
+  async () => {
+    const userCount = await usersRepositories.getAllCount()
+      return responseUtilities.handleServicesResponse(
+      StatusCodes.OK,
+      GeneralResponses.PROCESS_SUCCESSFUL,
+      userCount
+    );
+  })
+
 export default {
-    getSingleUserService
+    getSingleUserService,
+    getAllUserCountService
 }

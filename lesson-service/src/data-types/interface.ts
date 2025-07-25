@@ -80,6 +80,7 @@ export interface DailyWordAttributes {
   languageText: string;
   englishText: string;
   isUsed: boolean;
+  pronunciationNote?:string;
 }
 
 export interface UserDailyGoalAttributes {
@@ -87,7 +88,7 @@ export interface UserDailyGoalAttributes {
   userId: string;
   languageId?: string;
   isCompleted: boolean;
-  percentageCompletion: string;
+  percentageCompletion: number;
   createdAt?: Date;
   updatedAt?: Date;
   date: Date;

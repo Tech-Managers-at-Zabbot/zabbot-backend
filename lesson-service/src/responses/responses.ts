@@ -7,7 +7,9 @@ export enum DailyWordResponses {
     TODAY_WORD_FOUND = "Today's word retrieved successfully",
     BULK_CREATION_DONE = "Bulk word creation processed",
     REQUIRED_LANGUAGE_DATA = "Atlease one of language text or english text is required",
-    REQUIRED_LANGUAGE_CODE = "Language code is required"
+    REQUIRED_LANGUAGE_CODE = "Language code is required",
+    NO_AVAILABLE_WORDS="No available words found to assign for today",
+    PHRASES_ARRAY_NEEDED = "Phrases array must be provided and cannot be empty"
 }
 
 
@@ -18,5 +20,7 @@ export enum LanguageResponses {
 
 export enum DailyGoalResponses {
     SUCCESSFULLY_CREATED = "Daily goal created successfully",
-    SUCCESSFUL_FETCH = "Daily goal fetched successfully"
+    SUCCESSFUL_FETCH = "Daily goal fetched successfully",
+    SUCCESSFUL_PROCESS = "Process successful",
+    GOAL_ALREADY_COMPLETED = "Goal Completed already"
 }

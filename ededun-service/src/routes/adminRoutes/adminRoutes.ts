@@ -12,6 +12,7 @@ router.delete('/delete-phrase/:phraseId', adminControllers.adminDeletesPhrase)
 router.post('/add-many-phrases', adminControllers.adminCreatesManyPhrases)
 router.post('/cleanup-cloudinary-files', adminControllers.adminDeletesCloudinaryLeftOverRecordings);
 router.get('/recordings-for-zabbot', adminControllers.adminGetsPhraseWithRecordingsForZabbot)
+router.get('/many-recordings', adminControllers.adminGetsPhraseWithRecordingsForZabbotBatch)
 
 
 export default router;
