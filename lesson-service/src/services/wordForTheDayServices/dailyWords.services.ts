@@ -7,6 +7,7 @@ import { DailyWordResponses, LanguageResponses } from "../../responses/responses
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { Op } from "sequelize";
+import { fetchSingleUser } from "src/utilities/axiosCalls";
 
 
 dayjs.extend(utc);
@@ -140,8 +141,26 @@ const createManyWordsForTheDayService = errorUtilities.withServiceErrorHandling(
 );
 
 const getTodayWordService = errorUtilities.withServiceErrorHandling(
-    async (languageId: string) => {
-        const today = dayjs().utc().startOf('day').toDate();
+    async (languageId: string, userId?: string) => {
+        let today;
+
+        if (userId) {
+
+            const userDetails = await fetchSingleUser(userId, ["id", "email", "timeZone"])
+
+            const user = userDetails.data
+
+            const userTimezone = user.timeZone || 'UTC';
+
+            const now = new Date();
+
+            today = new Intl.DateTimeFormat('en-CA', {
+                timeZone: userTimezone
+            }).format(now);
+
+        } else {
+            today = dayjs().utc().startOf('day').toDate();
+        }
 
         const filter = {
             languageId,
