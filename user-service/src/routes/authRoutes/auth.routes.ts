@@ -18,19 +18,25 @@ router.post('/reset-password', joiValidations.inputValidator(joiValidations.rese
 // Google Registration Route
 router.get(
   '/google/register',
-  passport.authenticate('google-register', {
-    scope: ['profile', 'email'],
-    session: false,
-  })
+  (request: Request, response: Response, next: NextFunction) => {
+    passport.authenticate('google-register', {
+      scope: ['profile', 'email'],
+      session: false,
+      passReqToCallback: true
+    })(request, response, next);
+  }
 );
 
 // Google Login Route
 router.get(
   '/google/login',
-  passport.authenticate('google-login', {
-    scope: ['profile', 'email'],
-    session: false,
-  })
+  (request: Request, response: Response, next: NextFunction) => {
+    passport.authenticate('google-login', {
+      scope: ['profile', 'email'],
+      session: false,
+      passReqToCallback: true
+    })(request, response, next);
+  }
 );
 
 // Google Registration Callback

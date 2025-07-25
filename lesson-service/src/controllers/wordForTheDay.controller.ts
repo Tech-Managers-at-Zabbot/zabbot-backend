@@ -108,7 +108,9 @@ const createManyDailyWordsController = errorUtilities.withControllerErrorHandlin
 const getWordOfTheDayController = errorUtilities.withControllerErrorHandling(async (request: Request, response: Response) => {
     const { languageId } = request.params
 
-    const getWord = await dailyWordsServices.getTodayWordService(languageId)
+    const { userId } = request.query
+
+    const getWord = await dailyWordsServices.getTodayWordService(languageId, userId)
 
     return responseUtilities.responseHandler(
         response,

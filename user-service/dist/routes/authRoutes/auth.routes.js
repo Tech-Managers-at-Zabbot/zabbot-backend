@@ -16,15 +16,21 @@ router.post('/login', joi_validations_1.default.inputValidator(joi_validations_1
 router.post('/reset-password-request', joi_validations_1.default.inputValidator(joi_validations_1.default.resendVerificationLinkSchema), controllers_1.emailAuthControllers.userPasswordResetRequestController);
 router.post('/reset-password', joi_validations_1.default.inputValidator(joi_validations_1.default.resetPasswordSchema), controllers_1.emailAuthControllers.userResetPasswordController);
 // Google Registration Route
-router.get('/google/register', passport_1.default.authenticate('google-register', {
-    scope: ['profile', 'email'],
-    session: false,
-}));
+router.get('/google/register', (request, response, next) => {
+    passport_1.default.authenticate('google-register', {
+        scope: ['profile', 'email'],
+        session: false,
+        passReqToCallback: true
+    })(request, response, next);
+});
 // Google Login Route
-router.get('/google/login', passport_1.default.authenticate('google-login', {
-    scope: ['profile', 'email'],
-    session: false,
-}));
+router.get('/google/login', (request, response, next) => {
+    passport_1.default.authenticate('google-login', {
+        scope: ['profile', 'email'],
+        session: false,
+        passReqToCallback: true
+    })(request, response, next);
+});
 // Google Registration Callback
 router.get('/google/register/callback', (request, response, next) => {
     passport_1.default.authenticate('google-register', {

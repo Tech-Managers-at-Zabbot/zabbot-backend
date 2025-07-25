@@ -14,6 +14,7 @@ const setupGoogleRegisterStrategy = (verifyCallback, options) => {
         clientID: process.env.GOOGLE_CLIENT_ID || '',
         clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
         callbackURL: `${config_1.default?.GOOGLE_REGISTER_CALLBACK_URL}`,
+        passReqToCallback: true,
         ...options,
     };
     passport_1.default.use('google-register', new passport_google_oauth20_1.Strategy(strategyOptions, verifyCallback));
@@ -23,6 +24,7 @@ const setupGoogleLoginStrategy = (verifyCallback, options) => {
         clientID: process.env.GOOGLE_CLIENT_ID || '',
         clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
         callbackURL: `${config_1.default?.GOOGLE_LOGIN_CALLBACK_URL}`,
+        passReqToCallback: true,
         ...options,
     };
     passport_1.default.use('google-login', new passport_google_oauth20_1.Strategy(strategyOptions, verifyCallback));

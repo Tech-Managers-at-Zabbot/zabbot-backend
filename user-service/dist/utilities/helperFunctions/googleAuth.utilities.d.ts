@@ -1,7 +1,7 @@
-import { Profile, VerifyCallback } from 'passport-google-oauth20';
-import { GoogleStrategyOptions } from '../../types/users.types';
+import { Request } from 'express';
+import { Profile, StrategyOptionsWithRequest, VerifyCallback } from 'passport-google-oauth20';
 declare const _default: {
-    setupGoogleRegisterStrategy: (verifyCallback: (accessToken: string, refreshToken: string, profile: Profile, done: VerifyCallback) => void, options?: Partial<GoogleStrategyOptions>) => void;
-    setupGoogleLoginStrategy: (verifyCallback: (accessToken: string, refreshToken: string, profile: Profile, done: VerifyCallback) => void, options?: Partial<GoogleStrategyOptions>) => void;
+    setupGoogleRegisterStrategy: (verifyCallback: (req: Request, accessToken: string, refreshToken: string, profile: Profile, done: VerifyCallback) => void, options?: Partial<StrategyOptionsWithRequest>) => void;
+    setupGoogleLoginStrategy: (verifyCallback: (req: Request, accessToken: string, refreshToken: string, profile: Profile, done: VerifyCallback) => void, options?: Partial<StrategyOptionsWithRequest>) => void;
 };
 export default _default;

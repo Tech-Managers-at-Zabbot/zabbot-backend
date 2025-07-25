@@ -11,7 +11,7 @@ const statusCodes_responses_1 = require("../../../../shared/statusCodes/statusCo
 const index_1 = require("../../utilities/index");
 const config_1 = __importDefault(require("../../../../config/config"));
 const users_repositories_2 = __importDefault(require("../../repositories/userRepositories/users.repositories"));
-const googleOAuthRegister = async (accessToken, refreshToken, profile, done) => {
+const googleOAuthRegister = async (request, accessToken, refreshToken, profile, done) => {
     try {
         let user = await users_repositories_1.default.getOne({ email: profile.emails?.[0].value }, ["id", "email"]);
         if (user) {
@@ -65,7 +65,7 @@ const googleOAuthRegister = async (accessToken, refreshToken, profile, done) => 
             googleAccessToken: accessToken,
             googleRefreshToken: refreshToken,
             registerMethod: users_types_1.RegisterMethods.GOOGLE,
-            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            timeZone: request.query?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
         };
         await users_repositories_1.default.create(createUserPayload);
         const newUser = await users_repositories_2.default.getByPK(createUserPayload.id);
@@ -111,7 +111,7 @@ const googleOAuthRegister = async (accessToken, refreshToken, profile, done) => 
         return done(new Error('registration_failed'));
     }
 };
-const googleOAuthLogin = async (accessToken, refreshToken, profile, done) => {
+const googleOAuthLogin = async (request, accessToken, refreshToken, profile, done) => {
     try {
         let user = await users_repositories_1.default.getOne({ email: profile.emails?.[0].value }, ["id", "email", "firstName", "lastName", "isActive", "isBlocked"]);
         if (!user) {
@@ -143,7 +143,7 @@ const googleOAuthLogin = async (accessToken, refreshToken, profile, done) => {
             googleAccessToken: accessToken,
             googleRefreshToken: refreshToken,
             refreshToken: appRefreshToken,
-            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            timeZone: request.query?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
         });
         const userDetails = await users_repositories_1.default.extractUserDetails(newUser);
         userDetails.languageId = config_1.default.YORUBA_LANGUAGE_ID;
