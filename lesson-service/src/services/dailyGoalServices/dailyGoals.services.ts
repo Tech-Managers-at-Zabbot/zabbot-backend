@@ -22,8 +22,7 @@ const getDailyGoalService = errorUtilities.withServiceErrorHandling(
             timeZone: userTimezone
         }).format(now);
 
-        let goal = await userDailyGoalRepositories.getOne({ userId, date: userDate });
-
+        let goal = await userDailyGoalRepositories.getOne({ userId: userId, date: userDate });
         if (!goal) {
             const goalData = {
                 id: v4(),
@@ -41,9 +40,52 @@ const getDailyGoalService = errorUtilities.withServiceErrorHandling(
             DailyGoalResponses.SUCCESSFUL_FETCH,
             goal
         );
-})
+    })
 
+const completionOfDailyGoals = errorUtilities.withServiceErrorHandling(
+    async (userId: string, goalId: string) => {
+
+        const existingGoal = await userDailyGoalRepositories.getOne({ userId, id: goalId });
+
+        if (existingGoal && existingGoal.isCompleted) {
+            return responseUtilities.handleServicesResponse(
+                StatusCodes.OK,
+                DailyGoalResponses.GOAL_ALREADY_COMPLETED,
+                existingGoal
+            );
+        }
+
+        const goalUpdate = await userDailyGoalRepositories.updateOne(
+            {
+                userId, id: goalId
+            },
+            {
+                isCompleted: true,
+                percentageCompletion: 100
+            }
+        );
+
+        return responseUtilities.handleServicesResponse(
+            StatusCodes.OK,
+            DailyGoalResponses.SUCCESSFUL_PROCESS,
+            goalUpdate
+        );
+    })
+
+const getAllUserCompletedGoals = errorUtilities.withServiceErrorHandling(
+    async (userId: string) => {
+
+        const userGoalsCount = await userDailyGoalRepositories.getCount({ userId, isCompleted: true })
+
+        return responseUtilities.handleServicesResponse(
+            StatusCodes.OK,
+            DailyGoalResponses.SUCCESSFUL_FETCH,
+            userGoalsCount
+        );
+    })
 
 export default {
-    getDailyGoalService
+    getDailyGoalService,
+    completionOfDailyGoals,
+    getAllUserCompletedGoals
 }

@@ -243,6 +243,7 @@ const loginUserService = utilities_1.errorUtilities.withServiceErrorHandling(asy
         timeZone
     });
     const userDetails = await users_repositories_1.default.extractUserDetails(user);
+    userDetails.languageId = config_1.default.YORUBA_LANGUAGE_ID;
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, general_responses_1.GeneralResponses.SUCCESSFUL_LOGIN, { token: accessToken, user: userDetails });
 });
 const passwordResetRequestService = utilities_1.errorUtilities.withServiceErrorHandling(async (email) => {

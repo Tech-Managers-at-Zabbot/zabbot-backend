@@ -121,7 +121,7 @@ const adminDeletesCloudinaryLeftOverRecordings = async (
   )
 }
 
-export const adminGetsPhraseWithRecordingsForZabbot = async (
+const adminGetsPhraseWithRecordingsForZabbot = async (
   request: Request,
   response: Response
 ): Promise<any> => {
@@ -142,11 +142,46 @@ export const adminGetsPhraseWithRecordingsForZabbot = async (
   )
 };
 
+
+const adminGetsPhraseWithRecordingsForZabbotBatch = async (
+  request: Request,
+  response: Response
+): Promise<any> => {
+
+  const { phrases } = request.query;
+
+  if (!phrases) {
+    throw errorUtilities.createError("Phrases must be provided", 400);
+  }
+
+  const phrasesArr = JSON.parse(phrases as string)
+
+  if (!phrasesArr || !Array.isArray(phrasesArr) || phrasesArr.length === 0) {
+    throw errorUtilities.createError("Phrases array must be provided and cannot be empty", 400);
+  }
+
+  for (const phrase of phrasesArr) {
+    if (!phrase.englishText && !phrase.yorubaText) {
+      throw errorUtilities.createError("Each phrase must have either englishText or yorubaText", 400);
+    }
+  }
+
+  const fetchRecordings = await adminServices.getPhrasesWithAllRecordingsForZabbotParallel(phrasesArr);
+
+  return responseUtilities.responseHandler(
+    response,
+    fetchRecordings.message,
+    fetchRecordings.statusCode,
+    fetchRecordings.data
+  );
+};
+
 export default {
   adminCreatePhrase,
   adminUpdatesPhrase,
   adminDeletesPhrase,
   adminCreatesManyPhrases,
   adminDeletesCloudinaryLeftOverRecordings,
-  adminGetsPhraseWithRecordingsForZabbot
+  adminGetsPhraseWithRecordingsForZabbot,
+  adminGetsPhraseWithRecordingsForZabbotBatch
 };

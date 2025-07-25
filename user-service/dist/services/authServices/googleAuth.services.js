@@ -93,6 +93,7 @@ const googleOAuthRegister = async (accessToken, refreshToken, profile, done) => 
             refreshToken: appRefreshToken
         });
         const userDetails = await users_repositories_1.default.extractUserDetails(newUser);
+        userDetails.languageId = config_1.default.YORUBA_LANGUAGE_ID;
         const emailData = {
             email: createUserPayload.email,
             firstName: createUserPayload.firstName,
@@ -145,6 +146,7 @@ const googleOAuthLogin = async (accessToken, refreshToken, profile, done) => {
             timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
         });
         const userDetails = await users_repositories_1.default.extractUserDetails(newUser);
+        userDetails.languageId = config_1.default.YORUBA_LANGUAGE_ID;
         done(null, { token: appAccessToken, user: userDetails, authType: 'login' });
     }
     catch (err) {

@@ -9,7 +9,7 @@ class UserDailyGoals extends Model<UserDailyGoalAttributes> implements UserDaily
     public isCompleted!: boolean;
     public completedAt?: Date;
     public updatedAt?: Date;
-    public percentageCompletion!: string;
+    public percentageCompletion!: number;
     public date!: Date;
 }
 
@@ -43,12 +43,12 @@ UserDailyGoals.init({
         defaultValue: false,
     },
     percentageCompletion: {
-        type: DataTypes.STRING,
+        type: DataTypes.INTEGER,
         allowNull: false,
         defaultValue: 0,
     },
     date: {
-        type: DataTypes.DATE,
+        type: DataTypes.DATEONLY,
         allowNull: false,
     }
 }, {

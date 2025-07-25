@@ -12,6 +12,7 @@ class WordForTheDay extends Model<DailyWordAttributes> implements DailyWordAttri
     public languageText!: string;
     public englishText!: string;
     public isUsed!: boolean;
+    public pronunciationNote?: string;
 }
 
 WordForTheDay.init({
@@ -23,10 +24,10 @@ WordForTheDay.init({
     languageId: {
         type: DataTypes.UUID,
         allowNull: false,
-        // references: {
-        //     model: 'languages',
-        //     key: 'id',
-        // },
+        references: {
+            model: 'languages',
+            key: 'id',
+        },
     },
     dateUsed: {
         type: DataTypes.DATEONLY,
@@ -48,6 +49,10 @@ WordForTheDay.init({
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: true,
+    },
+    pronunciationNote: {
+        type: DataTypes.STRING,
+        allowNull: true,
     },
     isUsed: {
         type: DataTypes.BOOLEAN,

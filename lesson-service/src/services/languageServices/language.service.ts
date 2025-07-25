@@ -31,6 +31,7 @@ const addLanguage = errorUtilities.withServiceErrorHandling(
       throw errorUtilities.createError(`Language with code ${languageData.code} already exists`, 400);
     }
 
+    languageData.title = languageData.title.charAt(0).toUpperCase() + languageData.title.slice(1)
     const newLanguagePayload = {
       ...languageData,
       id: v4(),

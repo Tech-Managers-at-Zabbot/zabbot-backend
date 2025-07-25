@@ -36,6 +36,36 @@ export const fetchEdedunLanguage = async (englishText?: string, yorubaText?: str
     }
 }
 
+export const fetchEdedunLanguageBatches = async (wordArr: Record<string, any>[]) => {
+    try {
+        const params = new URLSearchParams();
+
+        const newArr = JSON.stringify(wordArr)
+
+        params.append('phrases', newArr)
+
+        const queryString = params.toString();
+        const url = `http://localhost:3006/admin/many-recordings${queryString ? '?' + queryString : ''}`;
+
+        const response = await axios.get(url);
+
+        return {
+            success: true,
+            statusCode: response.status,
+            data: response.data.data,
+            message: response.data.message || 'Fetched successfully',
+        };
+
+    } catch (error: any) {
+        return {
+            success: false,
+            statusCode: error.response?.status || 500,
+            data: null,
+            message: error.response?.data?.message || error.message || 'Failed to fetch from Ededun',
+        };
+    }
+}
+
 export const fetchSingleUser = async (userId:string, projection?:string[]) => {
     try{
          const params = new URLSearchParams();
