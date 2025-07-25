@@ -6,7 +6,7 @@ export async function syncDatabases() {
     console.log('🔄 Syncing databases...');
     await Promise.all([
       founders_list_db.sync({}),
-      users_service_db.sync({alter:true}),
+      users_service_db.sync({}),
       ededun_database.sync({})
     ]);
     console.log('✅ All databases synced successfully');

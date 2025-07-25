@@ -24,10 +24,10 @@ WordForTheDay.init({
     languageId: {
         type: DataTypes.UUID,
         allowNull: false,
-        // references: {
-        //     model: 'languages',
-        //     key: 'id',
-        // },
+        references: {
+            model: 'languages',
+            key: 'id',
+        },
     },
     dateUsed: {
         type: DataTypes.DATEONLY,

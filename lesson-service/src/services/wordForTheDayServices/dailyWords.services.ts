@@ -192,7 +192,7 @@ const getTodayWordService = errorUtilities.withServiceErrorHandling(
                 updateData
             );
 
-            console.log(`Successfully assigned word ID ${availableWord.id} for today.`);
+            console.log(`Successfully assigned word for today.`);
         }
 
         return responseUtilities.handleServicesResponse(

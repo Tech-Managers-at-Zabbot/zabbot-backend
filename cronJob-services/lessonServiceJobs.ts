@@ -6,15 +6,19 @@ const LANGUAGE_IDS = [
     config.YORUBA_LANGUAGE_ID!
 ];
 
+const LANGUAGES = {
+    [config.YORUBA_LANGUAGE_ID!]: "Yoruba"
+};
+
 const pickWordOfTheDay = async () => {
     console.log(`[${new Date().toISOString()}] ⏳ Starting daily word selection...`);
 
     for (const languageId of LANGUAGE_IDS) {
         try {
             await dailyWordsServices.getTodayWordService(languageId);
-            console.log(`✅ Word picked for language ${languageId}`);
+            console.log(`✅ Word picked for language ${LANGUAGES[languageId]}`);
         } catch (error: any) {
-            console.error(`❌ Failed for ${languageId}:`, error.message);
+            console.error(`❌ Failed for ${LANGUAGES[languageId]}:`, error.message);
         }
     }
     console.log(`[${new Date().toISOString()}] ✅ Daily word selection finished.`);
@@ -25,7 +29,7 @@ cron.schedule('0 0 * * *', async () => {
     await pickWordOfTheDay();
 });
 
-// Optional: Run once immediately on app start
-// (async () => {
-//     await pickWordOfTheDay();
-// })();
+// Run once immediately on app start
+(async () => {
+    await pickWordOfTheDay();
+})();
