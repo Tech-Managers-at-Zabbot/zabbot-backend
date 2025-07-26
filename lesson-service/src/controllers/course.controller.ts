@@ -7,7 +7,11 @@ import { errorUtilities, responseUtilities } from '../../../shared/utilities';
 // Controller to get all courses
 export const getCoursesController = errorUtilities.withControllerErrorHandling(
   async (req: Request, res: Response) => {
-      const { isActive } = req.query;
+      // const {  } = req.query;
+      const isActive: boolean | null = req.query.isActive === 'true' ? true
+        : req.query.isActive === 'false' ? false
+        : null;
+        
       const courses = await courseService.getCourses(req.query);
       return responseUtilities.responseHandler(res, courses.message, courses.statusCode, courses.data);
   }
