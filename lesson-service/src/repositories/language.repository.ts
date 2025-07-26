@@ -118,9 +118,6 @@ const languageRepositories = {
   getLanguageContent: async (languageId: string) => {
     try {
       const languageContent = await LanguageContents.findOne({ where: { languageId } });
-      if (!languageContent)
-        throw errorUtilities.createError(`No contents found for this language`, 404);
-      
 
       return languageContent;
 
@@ -132,15 +129,9 @@ const languageRepositories = {
   addLanguageContent: async (languageContentData: any) => {
     try {
       // Create a new language content
-      const newLanguageContent = await LanguageContents.create({
-        languageId: languageContentData.languageId,
-        title: languageContentData.title,
-        word: languageContentData.word,
-        tone: languageContentData.tone,
-        createdAt: new Date()
-      });
+      languageContentData.createdAt = new Date();
 
-      return newLanguageContent;
+      return languageContentData;
 
     } catch (error: any) {
 
