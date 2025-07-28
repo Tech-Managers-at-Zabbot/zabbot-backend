@@ -100,9 +100,13 @@ const languageRepositories = {
   },
 
   // SESSION FOR LANGUAGE CONTENTS
-  getLanguageContents: async () => {
+  getLanguageContents: async (filter?: { languageId?: string}) => {
     try {
-      const languageContents = await LanguageContents.findAll();
+      const where: any = {}
+      if (typeof filter?.languageId === 'string')
+        where.languageId = filter?.languageId
+      
+      const languageContents = await LanguageContents.findAll({ where });
     
       return languageContents;
 
@@ -111,12 +115,9 @@ const languageRepositories = {
     }
   },
 
-  getLanguageContent: async (languageId: string) => {
+  getLanguageContent: async (id: string) => {
     try {
-      const languageContent = await LanguageContents.findOne({ where: { languageId } });
-      if (!languageContent)
-        throw errorUtilities.createError(`No contents found for this language`, 404);
-      
+      const languageContent = await LanguageContents.findByPk(id);
 
       return languageContent;
 
@@ -128,15 +129,9 @@ const languageRepositories = {
   addLanguageContent: async (languageContentData: any) => {
     try {
       // Create a new language content
-      const newLanguageContent = await LanguageContents.create({
-        languageId: languageContentData.languageId,
-        title: languageContentData.title,
-        word: languageContentData.word,
-        tone: languageContentData.tone,
-        createdAt: new Date()
-      });
+      languageContentData.createdAt = new Date();
 
-      return newLanguageContent;
+      return languageContentData;
 
     } catch (error: any) {
 
@@ -146,24 +141,29 @@ const languageRepositories = {
 
   updateLanguageContent: async (id: string, languageContentData: any) => {
     try {
-      // Check if the language content exists
-      const currentLanguageContent = await LanguageContents.findByPk(id);
-      if (!currentLanguageContent) {
-        throw errorUtilities.createError(`Language content does not exist`, 404);
-      }
-
-      currentLanguageContent.title = languageContentData.title;
-      currentLanguageContent.word = languageContentData.word;
-      currentLanguageContent.tone = languageContentData.tone;
-      currentLanguageContent.updatedAt = new Date();
+      
+      // currentLanguageContent.title = languageContentData.title;
+      // currentLanguageContent.word = languageContentData.word;
+      // currentLanguageContent.tone = languageContentData.tone;
+      languageContentData.updatedAt = new Date();
 
       // Update the language content
-      const updatedLanguageContent = await LanguageContents.update( currentLanguageContent, { where: { id } });
+      const updatedLanguageContent = await LanguageContents.update( languageContentData, { where: { id } });
 
       return updatedLanguageContent;
 
     } catch (error: any) {
       throw errorUtilities.createError(`Error Updating language content: ${error.message}`, 500);
+    }
+  },
+
+  deleteLanguageContent: async(id: string) => {
+    try{
+      await LanguageContents.destroy({ where: { id }});
+      return { message: "Language content deleted successfully"};
+
+    } catch (error) {
+      throw errorUtilities.createError(`Error deleting Language content`, 500);
     }
   }
   // END LANGUAGE CONTENTS SESSION
