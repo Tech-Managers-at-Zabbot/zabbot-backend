@@ -2,7 +2,7 @@ import lessonRepositories from "../../repositories/lesson.repository";
 import { errorUtilities } from "../../../../shared/utilities";
 import contentRepositories from "../../repositories/content.repository"
 import { v4 } from "uuid";
-import { FileContentAttributes } from "src/data-types/interface";
+import { FileContentAttributes } from "../../data-types/interface";
 
 const getContents = errorUtilities.withServiceErrorHandling (
     async () => {
