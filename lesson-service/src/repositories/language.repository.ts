@@ -115,9 +115,9 @@ const languageRepositories = {
     }
   },
 
-  getLanguageContent: async (languageId: string) => {
+  getLanguageContent: async (id: string) => {
     try {
-      const languageContent = await LanguageContents.findOne({ where: { languageId } });
+      const languageContent = await LanguageContents.findByPk(id);
 
       return languageContent;
 

@@ -82,7 +82,9 @@ export const getUserCourseController = errorUtilities.withControllerErrorHandlin
 // Controller to add user to course
 export const addUserCourseController = errorUtilities.withControllerErrorHandling(
   async (req: Request, res: Response) => {
-    const addUserCourse = await userCourseService.addUserCourse(req.body);
+    const { title } = req.params;
+    const addUserCourse = await userCourseService.addUserCourse(title);
+
     return responseUtilities.responseHandler(res, addUserCourse.message, addUserCourse.statusCode, addUserCourse.data);
   }
 );
@@ -90,8 +92,18 @@ export const addUserCourseController = errorUtilities.withControllerErrorHandlin
 // Controller to update user course
 export const updateUserCourseController = errorUtilities.withControllerErrorHandling(
   async (req: Request, res: Response) => {
-    const {id, userCourseData} = req.body;
-    const updateUserCourse = await userCourseService.updateUserCourse({id, userCourseData});
+    const {id} = req.params;
+    const {userCourseData} = req.body;
+    const updateUserCourse = await userCourseService.updateUserCourse(id, userCourseData);
     return responseUtilities.responseHandler(res, updateUserCourse.message, updateUserCourse.statusCode, updateUserCourse.data);
+  }
+);
+
+export const removeUserCourseController = errorUtilities.withControllerErrorHandling(
+  async(req: Request, res: Response) => {
+    const {id} = req.params;
+    const removeUserFromCourse = await userCourseService.deleteUserCourse(id);
+
+    return responseUtilities.responseHandler(res, removeUserFromCourse.message, removeUserFromCourse.statusCode, removeUserFromCourse.data);
   }
 );

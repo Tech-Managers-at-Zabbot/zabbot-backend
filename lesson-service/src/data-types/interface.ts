@@ -6,9 +6,7 @@ export interface LanguageAttributes {
   code: string;
   title: string;
   isActive?: boolean;
-  totalCourses?: number;
   flagIcon?: string;
-  totalLessons?: number;
 }
 
 export interface LessonAttributes {
@@ -29,7 +27,7 @@ export interface LessonAttributes {
 }
 
 export interface ContentAttributes {
-  id?: string;
+  id: string;
   lessonId: string;
   lesson?: {
     name: string;
@@ -47,7 +45,9 @@ export interface ContentAttributes {
     contentType: ContentDataType;
     filePath: string;
   }[];
-  createdAt: Date;
+  totalLessons?: number;
+  totalContents?: number;
+  createdAt?: Date;
   updatedAt?: Date;
 }
 

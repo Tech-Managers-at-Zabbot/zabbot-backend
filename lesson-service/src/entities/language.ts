@@ -9,9 +9,7 @@ class Languages extends Model<LanguageAttributes> implements LanguageAttributes 
   public title!: string;
   public code!: string;
   public isActive?: boolean;
-  public totalCourses?: number;
   public flagIcon?: string;
-  public totalLessons?: number;
 }
 
 Languages.init(
@@ -30,19 +28,9 @@ Languages.init(
       allowNull: false,
       unique: false,
     },
-    totalCourses: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      defaultValue: 0,
-    },
     flagIcon: {
       type: DataTypes.STRING,
       allowNull: true,
-    },
-    totalLessons: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      defaultValue: 0,
     },
     isActive: {
       type: DataTypes.BOOLEAN,
@@ -55,7 +43,7 @@ Languages.init(
     modelName: 'Languages',
     tableName: 'languages',
     timestamps: true,
-    paranoid: true,
+    // paranoid: true,
   }
 );
 
