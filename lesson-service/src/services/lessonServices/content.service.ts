@@ -1,6 +1,8 @@
 import lessonRepositories from "../../repositories/lesson.repository";
 import { errorUtilities } from "../../../../shared/utilities";
 import contentRepositories from "../../repositories/content.repository"
+import { v4 } from "uuid";
+import { FileContentAttributes } from "src/data-types/interface";
 
 const getContents = errorUtilities.withServiceErrorHandling (
     async () => {
@@ -38,6 +40,7 @@ const addContent = errorUtilities.withServiceErrorHandling (
       throw errorUtilities.createError(`Lesson not found`, 404);
 
     const payload = {
+      id: v4(),
       lessonId: contentData.lessonId,
       languageContentId: contentData.languageContentId,
       translation: contentData.translation,
@@ -46,6 +49,16 @@ const addContent = errorUtilities.withServiceErrorHandling (
     }
 
     const newContent = await contentRepositories.createContent(payload);
+    
+    let fileContents = contentData.contentFiles as FileContentAttributes[];
+    if (fileContents) {
+      fileContents.forEach(item => {
+        item.contentId = newContent.id;
+      });
+
+      await contentRepositories.createMultipleContents(fileContents);
+    }
+    
     return newContent;
   }
 );

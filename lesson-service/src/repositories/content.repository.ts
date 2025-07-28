@@ -48,6 +48,17 @@ const contentRepositories = {
     }
   },
 
+  createMultipleContents: async (contentsData: any[], transaction?: Transaction) => {
+    try {
+      // Create a new list of contents
+      const newContents = await Contents.bulkCreate(contentsData, { transaction });
+
+      return newContents;
+    } catch (error: any) {
+      throw errorUtilities.createError(`Error creating new contents: ${error.message}`, 500);
+    }
+  },
+
   updateContent: async (contentData: any, transaction?: Transaction) => {
     try {
       // Update the content

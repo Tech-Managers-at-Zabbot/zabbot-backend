@@ -40,15 +40,21 @@ export interface ContentAttributes {
     tone: string;
   };
   translation?: string;
-  level: Level
+  level: Level;
+  key?: string;
   filePath?: {
     contentType: ContentDataType;
     filePath: string;
   }[];
-  totalLessons?: number;
-  totalContents?: number;
   createdAt?: Date;
   updatedAt?: Date;
+}
+
+export interface FileContentAttributes {
+  id: string;
+  contentId: string;
+  filePath: string;
+  fileType: ContentDataType;
 }
 
 export interface LanguageContentAtrributes {

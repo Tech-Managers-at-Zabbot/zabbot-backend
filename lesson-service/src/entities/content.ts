@@ -9,8 +9,7 @@ class Contents extends Model<ContentAttributes> implements ContentAttributes {
   public languageContentId!: string;
   public translation?: string;
   public level!: Level;
-  public totalLessons?: number;
-  public totalContents?: number;
+  public key?: string;
   public createdAt?: Date;
   public updatedAt?: Date;
 }
@@ -40,12 +39,8 @@ Contents.init(
       values: Object.values(Level),
       allowNull: false
     },
-    totalLessons: {
-      type: DataTypes.NUMBER,
-      allowNull: true
-    },
-    totalContents: {
-      type: DataTypes.NUMBER,
+    key: {
+      type: DataTypes.STRING,
       allowNull: true
     },
     createdAt: {
@@ -62,8 +57,8 @@ Contents.init(
     sequelize: users_service_db,
     modelName: 'Contents',
     tableName: 'contents',
-    // timestamps: true,
-    paranoid: true,
+    timestamps: true,
+    // paranoid: true,
   }
 );
 
