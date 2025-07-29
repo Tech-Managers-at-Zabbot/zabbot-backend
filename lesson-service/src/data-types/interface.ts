@@ -14,6 +14,7 @@ export interface LessonAttributes {
   title: string;
   description: string;
   courseId: string;
+  orderNumber: string;
   contents?: {
     id?: string;
     translation: string;
@@ -22,7 +23,12 @@ export interface LessonAttributes {
       filePath: string;
     };
   }[];
+  headLineTag?: string;
+  estimatedDuration: number;
   createdAt: Date;
+  totalContents?: number;
+  outcomes?: string;
+  objectives?: string;
   updatedAt?: Date;
 }
 
@@ -33,20 +39,21 @@ export interface ContentAttributes {
     name: string;
     description: string;
   }
-  languageContentId: string;
+  // languageContentId: string;
   languageContent?: {
     title: string;
     word: string;
     tone: string;
   };
   translation?: string;
-  level: Level
+  customText?: string;
+  isGrammarRule?: boolean
   filePath?: {
     contentType: ContentDataType;
     filePath: string;
   }[];
-  totalLessons?: number;
-  totalContents?: number;
+  ededunPhrases?: string;
+  sourceType: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -65,6 +72,7 @@ export interface ContentFileAttributes {
   id?: string;
   contentId: string;
   contentType: ContentDataType;
+  description?: string;
   filePath?: string;
   createdAt: Date;
 }
@@ -80,7 +88,7 @@ export interface DailyWordAttributes {
   languageText: string;
   englishText: string;
   isUsed: boolean;
-  pronunciationNote?:string;
+  pronunciationNote?: string;
 }
 
 export interface UserDailyGoalAttributes {
@@ -100,8 +108,10 @@ export interface CourseAttributes {
   description?: string;
   languageId: string;
   isActive: boolean;
+  level: Level
   estimatedDuration?: number; // in minutes
   totalLessons?: number;
+  totalContents?: number;
   thumbnailImage?: string;
   tags?: string[];
   prerequisites?: string[]; // course IDs

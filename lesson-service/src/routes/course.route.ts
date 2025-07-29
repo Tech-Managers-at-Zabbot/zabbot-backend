@@ -10,12 +10,13 @@ import {
     getUserCourseController,
     addUserCourseController,
     updateUserCourseController,
-    removeUserCourseController
+    removeUserCourseController,
+    createCourseWithLessonsController
 } from '../controllers/course.controller';
 
 const router = express.Router();
 
-router.get('/', getCoursesController);
+router.get('/:languageId', getCoursesController);
 router.get('/:id', getCourseController);
 router.get('/title/:title', getCourseByTitleController);
 router.post('/', addCourseController);
@@ -26,5 +27,6 @@ router.get('/users/:id', getUserCourseController);
 router.post('/:courseId/users/:userId', addUserCourseController);
 router.put('/users/:id', updateUserCourseController);
 router.delete('/users/:id', removeUserCourseController);
+router.post('/course-with-lesson/:languageId', createCourseWithLessonsController)
 
 export default router;

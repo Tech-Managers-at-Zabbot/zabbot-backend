@@ -9,6 +9,7 @@ class ContentFiles extends Model<ContentFileAttributes> implements ContentFileAt
   public contentType!: ContentDataType;
   public filePath?: string;
   public createdAt!: Date;
+  public description?: string;
 }
 
 ContentFiles.init(
@@ -30,6 +31,10 @@ ContentFiles.init(
     filePath: {
       type: DataTypes.STRING,
       allowNull: false
+    },
+     description: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     createdAt: {
       type: DataTypes.DATE,

@@ -13,6 +13,7 @@
   },
   "include": ["./**/*"],
   "references": [
-    { "path": "../user-service" }
+    { "path": "../user-service" },
+    { "path": "../lesson-service" }
   ]
 }
