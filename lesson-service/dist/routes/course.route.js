@@ -1,0 +1,20 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const course_controller_1 = require("../controllers/course.controller");
+const router = express_1.default.Router();
+router.get('/:languageId', course_controller_1.getCoursesController);
+router.get('/:id', course_controller_1.getCourseController);
+router.get('/title/:title', course_controller_1.getCourseByTitleController);
+router.post('/', course_controller_1.addCourseController);
+router.put('/:id', course_controller_1.updateCourseController);
+router.get('/users', course_controller_1.getUserCoursesController);
+router.get('/users/:id', course_controller_1.getUserCourseController);
+router.post('/:courseId/users/:userId', course_controller_1.addUserCourseController);
+router.put('/users/:id', course_controller_1.updateUserCourseController);
+router.delete('/users/:id', course_controller_1.removeUserCourseController);
+router.post('/course-with-lesson/:languageId', course_controller_1.createCourseWithLessonsController);
+exports.default = router;
