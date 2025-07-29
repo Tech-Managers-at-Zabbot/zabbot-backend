@@ -88,7 +88,16 @@ const contentRepositories = {
     } catch (error: any) {
       throw errorUtilities.createError(`Error fetching files for this content: ${error.message}`, 500);
     }
+  },
+
+  createContentFile: async (contentFileData: any, transaction?: Transaction) => {
+  try {
+    const newContentFile = await ContentFiles.create(contentFileData, { transaction });
+    return newContentFile;
+  } catch (error: any) {
+    throw errorUtilities.createError(`Error creating content file: ${error.message}`, 500);
   }
+},
 }
 
 export default contentRepositories;

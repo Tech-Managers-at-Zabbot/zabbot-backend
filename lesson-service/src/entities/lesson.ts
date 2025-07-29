@@ -9,6 +9,12 @@ class Lessons extends Model<LessonAttributes> implements LessonAttributes {
   public courseId!: string;
   public createdAt!: Date;
   public updatedAt?: Date;
+  public orderNumber!: string;
+  public totalContents?: number;
+  public headLineTag?: string;
+  public outcomes?: string;
+  public objectives?: string;
+  public estimatedDuration!: number;
 }
 
 Lessons.init(
@@ -26,9 +32,30 @@ Lessons.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    estimatedDuration: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    outcomes: {
+      type: DataTypes.TEXT('long'),
+      allowNull: true
+    },
+    objectives: {
+      type: DataTypes.TEXT('long'),
+      allowNull: true
+    },
+    headLineTag: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     courseId: {
       type: DataTypes.UUID,
       allowNull: false,
+    },
+    totalContents: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -39,6 +66,10 @@ Lessons.init(
       type: DataTypes.DATE,
       allowNull: true
     },
+    orderNumber: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    }
   },
   {
     sequelize: users_service_db,

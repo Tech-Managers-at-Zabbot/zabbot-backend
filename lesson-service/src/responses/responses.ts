@@ -24,3 +24,8 @@ export enum DailyGoalResponses {
     SUCCESSFUL_PROCESS = "Process successful",
     GOAL_ALREADY_COMPLETED = "Goal Completed already"
 }
+
+export enum CourseResponses {
+    COURSES_NOT_FETCHED = "Unable to fetch courses, try again",
+    PROCESS_SUCCESSFUL = "Process Successful"
+}

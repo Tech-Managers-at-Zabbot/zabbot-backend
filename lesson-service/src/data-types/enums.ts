@@ -1,14 +1,19 @@
 export enum ContentDataType {
-    TEXT = 'text',
+    // TEXT = 'text',
     VIDEO = 'video',
     AUDIO = 'audio',
     IMAGE = 'image',
 }
 
+export enum ContentSourceType {
+  NEW = 'new',
+  EDEDUN = 'ededun'
+}
+
 export enum Level {
-    BEGINNER = 'beginner',
-    INTERMEDIATE = 'intermediate',
-    ADVANCED = 'advanced',
+    FOUNDATION = 'foundation',
+    BUILDER = 'builder',
+    EXPLORER = 'explorer',
 }
 
 export enum LanguageCode {
