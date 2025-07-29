@@ -1,0 +1,20 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const lesson_route_1 = __importDefault(require("./lesson.route"));
+const language_route_1 = __importDefault(require("./language.route"));
+const dailyWord_route_1 = __importDefault(require("./dailyWord.route"));
+const content_route_1 = __importDefault(require("./content.route"));
+const dailyGoal_route_1 = __importDefault(require("./dailyGoal.route"));
+const course_route_1 = __importDefault(require("./course.route"));
+const rootRouter = express_1.default.Router();
+rootRouter.use('/lessons', lesson_route_1.default);
+rootRouter.use('/languages', language_route_1.default);
+rootRouter.use('/daily-words', dailyWord_route_1.default);
+rootRouter.use('/contents', content_route_1.default);
+rootRouter.use('/goals', dailyGoal_route_1.default);
+rootRouter.use('/courses', course_route_1.default);
+exports.default = rootRouter;
