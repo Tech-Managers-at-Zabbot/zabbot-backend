@@ -1,7 +1,7 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
 import { users_service_db } from '../../../config/databases';
 import { CourseAttributes } from '../data-types/interface';
-import { Level } from "../data-types/enums";
+
 
 class Courses extends Model<CourseAttributes> implements CourseAttributes {
   public id!: string;
@@ -77,7 +77,7 @@ Courses.init(
     modelName: 'Courses',
     tableName: 'courses',
     timestamps: true,
-    paranoid: true,
+    // paranoid: true,
   }
 );
 

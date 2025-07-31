@@ -141,10 +141,6 @@ const languageRepositories = {
 
   updateLanguageContent: async (id: string, languageContentData: any) => {
     try {
-      
-      // currentLanguageContent.title = languageContentData.title;
-      // currentLanguageContent.word = languageContentData.word;
-      // currentLanguageContent.tone = languageContentData.tone;
       languageContentData.updatedAt = new Date();
 
       // Update the language content

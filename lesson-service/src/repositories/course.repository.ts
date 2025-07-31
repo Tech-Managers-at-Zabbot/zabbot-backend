@@ -1,8 +1,6 @@
 import { Transaction } from "sequelize";
 import { errorUtilities } from "../../../shared/utilities";
 import Courses from "../entities/course";
-import LanguageContents from "../entities/language-content";
-
 
 const courseRepositories = {
 	getCourses: async (filter?: { isActive?: boolean }) => {

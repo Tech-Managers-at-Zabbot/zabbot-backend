@@ -1,5 +1,5 @@
 import e from "express";
-import { ContentDataType, Level } from "./enums";
+import { ContentDataType, Level, QuestionType } from "./enums";
 
 export interface LanguageAttributes {
   id?: string;
@@ -119,4 +119,26 @@ export interface UserCourseAttributes {
   userId: string;
   courseId: string;
   createdAt: Date;
+}
+
+export interface QuestionAttributes {
+  id: string;
+  name: string;
+  instruction?: string;
+  type: QuestionType;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface OptionAttributes {
+  id: string;
+  questionId: string;
+  name: string;
+  isCorrect: boolean;
+}
+
+export interface LessonQuestionAttributes {
+  id: string;
+  lessonId: string;
+  questionId: string;
 }
