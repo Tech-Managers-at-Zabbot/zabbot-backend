@@ -38,6 +38,5 @@ ContentFiles.init({
     modelName: 'ContentFiles',
     tableName: 'content_files',
     timestamps: true,
-    paranoid: true,
 });
 exports.default = ContentFiles;

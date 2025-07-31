@@ -23,11 +23,11 @@ Lessons.init({
         defaultValue: sequelize_1.DataTypes.UUIDV4,
     },
     title: {
-        type: sequelize_1.DataTypes.STRING,
+        type: sequelize_1.DataTypes.TEXT('long'),
         allowNull: false
     },
     description: {
-        type: sequelize_1.DataTypes.STRING,
+        type: sequelize_1.DataTypes.TEXT('long'),
         allowNull: false,
     },
     estimatedDuration: {
@@ -43,7 +43,7 @@ Lessons.init({
         allowNull: true
     },
     headLineTag: {
-        type: sequelize_1.DataTypes.STRING,
+        type: sequelize_1.DataTypes.TEXT('long'),
         allowNull: true,
     },
     courseId: {
@@ -73,6 +73,5 @@ Lessons.init({
     modelName: 'Lessons',
     tableName: 'lessons',
     timestamps: true,
-    paranoid: true,
 });
 exports.default = Lessons;
