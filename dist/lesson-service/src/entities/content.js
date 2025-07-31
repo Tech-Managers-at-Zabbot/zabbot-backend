@@ -60,6 +60,5 @@ Contents.init({
     sequelize: databases_1.users_service_db,
     modelName: 'Contents',
     tableName: 'contents',
-    paranoid: true,
 });
 exports.default = Contents;

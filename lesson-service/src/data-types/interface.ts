@@ -123,5 +123,11 @@ export interface UserCourseAttributes {
   id: string;
   userId: string;
   courseId: string;
-  createdAt: Date;
+  isCompleted: boolean;
+  lastAccessed?: Date;
+  progress?: number;
+  lastLessonId?: string;
+  lastContentId?: string;
+  languageId: string;
+  isActive: boolean
 }

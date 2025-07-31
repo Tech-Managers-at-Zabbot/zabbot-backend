@@ -7,7 +7,13 @@ class UserCourses extends Model<UserCourseAttributes> implements UserCourseAttri
   public id!: string;
   public userId!: string;
   public courseId!: string;
-  public createdAt!: Date;
+  public isCompleted!: boolean
+  public lastAccessed?: Date;
+  public progress?: number;
+  public lastLessonId?: string;
+  public lastContentId?: string;
+  public languageId!: string;
+  public isActive!: boolean;
 }
 
 UserCourses.init(
@@ -20,17 +26,42 @@ UserCourses.init(
     userId: {
       type: DataTypes.UUID,
       allowNull: false,
-      unique: true
+    },
+    languageId: {
+       type: DataTypes.UUID,
+      allowNull: false,
     },
     courseId: {
       type: DataTypes.UUID,
       allowNull: false,
-      unique: true
     },
-    createdAt: {
+    lastAccessed: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: DataTypes.DATE
+      defaultValue: DataTypes.NOW,
+    },
+    progress: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    lastLessonId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+    },
+    lastContentId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+    },
+    isCompleted: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    isActive: {
+       type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
     }
   },
   {
@@ -38,8 +69,14 @@ UserCourses.init(
     modelName: 'User_Courses',
     tableName: 'user_courses',
     timestamps: true,
-    paranoid: true,
+    indexes: [
+      {
+        unique: true,
+        fields: ['userId', 'courseId']
+      }
+    ]
   }
 );
+
 
 export default UserCourses;

@@ -55,7 +55,8 @@ exports.getUserCoursesController = utilities_1.errorUtilities.withControllerErro
 });
 // Controller to get user course
 exports.getUserCourseController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
-    const userCourse = await user_course_service_1.default.getUserCourse(req.params);
+    const { id } = req?.user;
+    const userCourse = await user_course_service_1.default.getUserCourse(id);
     return utilities_1.responseUtilities.responseHandler(res, userCourse.message, userCourse.statusCode, userCourse.data);
 });
 // Controller to add user to course

@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import courseService from '../services/lessonServices/course.service';
 import userCourseService from '../services/lessonServices/user-course.service';
 import { errorUtilities, responseUtilities } from '../../../shared/utilities';
-
+import { JwtPayload } from 'jsonwebtoken'
 
 // Controller to get all courses
 export const getCoursesController = errorUtilities.withControllerErrorHandling(
@@ -75,8 +75,9 @@ export const getUserCoursesController = errorUtilities.withControllerErrorHandli
 
 // Controller to get user course
 export const getUserCourseController = errorUtilities.withControllerErrorHandling(
-  async (req: Request, res: Response) => {
-    const userCourse = await userCourseService.getUserCourse(req.params);
+  async (req: JwtPayload, res: Response) => {
+    const { id }: string | any = req?.user;
+    const userCourse = await userCourseService.getUserCourse(id);
     return responseUtilities.responseHandler(res, userCourse.message, userCourse.statusCode, userCourse.data);
   }
 );

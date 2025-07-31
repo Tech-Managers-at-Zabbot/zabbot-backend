@@ -7,6 +7,7 @@ import {
     deleteLanguageController, 
     updateLanguageController 
 } from '../controllers/language.controller';
+import { generalAuthFunction, rolePermit } from '../../../shared/middleware/authorization.middleware';
 
 // import {
 //     getLanguageContentController,
@@ -21,10 +22,10 @@ const router = express.Router();
 // routes for language
 router.get('/', getLanguagesController);
 router.get('/:id', getLanguageController);
-router.post('/', createLanguageController);
-router.put('/:id', updateLanguageController);
-router.delete('/:id', deleteLanguageController);
-router.patch('/:id/status', changeLanguageStatusController);
+router.post('/', generalAuthFunction, rolePermit(["admin"]), createLanguageController);
+router.put('/:id', generalAuthFunction, rolePermit(["admin"]), updateLanguageController);
+router.delete('/:id', generalAuthFunction, rolePermit(["admin"]), deleteLanguageController);
+router.patch('/:id/status', generalAuthFunction, rolePermit(["admin"]), changeLanguageStatusController);
 
 // routes for language contents
 // router.get('/contents', getLanguageContentsController);

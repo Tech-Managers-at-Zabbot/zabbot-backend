@@ -13,7 +13,7 @@ const courseRepositories = {
                 isActive,
                 languageId
             };
-            const courses = await course_1.default.findAll(where);
+            const courses = await course_1.default.findAll({ where: where });
             return courses;
         }
         catch (error) {
