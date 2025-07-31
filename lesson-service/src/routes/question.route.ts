@@ -7,7 +7,9 @@ import {
     updateQuestionController,
     deleteQuestionController,
     mapLessonToQuestionsController,
-    deleteLessonToQuestionController
+    deleteLessonToQuestionController,
+    mapContentToQuestionsController,
+    deleteContentToQuestionController
 } from '../controllers/question.controller';
 
 const router = express.Router();
@@ -20,5 +22,7 @@ router.put('/:id', updateQuestionController);
 router.delete('/:id', deleteQuestionController);
 router.post('/:id/lessons/:lessonId', mapLessonToQuestionsController);
 router.delete('/:id/lessons/:lessonId', deleteLessonToQuestionController);
+router.post('/:id/contents/:contentId', mapContentToQuestionsController);
+router.delete('/:id/contents/:contentId', deleteContentToQuestionController);
 
 export default router;

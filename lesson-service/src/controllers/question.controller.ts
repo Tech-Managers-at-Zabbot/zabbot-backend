@@ -57,18 +57,35 @@ export const deleteQuestionController = errorUtilities.withControllerErrorHandli
 export const mapLessonToQuestionsController = errorUtilities.withControllerErrorHandling (
   async (req: Request, res: Response) => {
     const { payload } = req.body;
-    const languageContents = await questionService.mapQuestionToLesson(payload);
+    const map = await questionService.mapQuestionToLesson(payload);
 
-    return responseUtilities.responseHandler(res, languageContents.message, languageContents.statusCode, languageContents.data);
+    return responseUtilities.responseHandler(res, map.message, map.statusCode, map.data);
   }
 );
 
 export const deleteLessonToQuestionController = errorUtilities.withControllerErrorHandling (
   async (req: Request, res: Response) => {
     const { id } = req.params;
-    const languageContent = await questionService.deleteQuestionToLessonMap(id);
+    const deleteMap = await questionService.deleteQuestionToLessonMap(id);
 
-    return responseUtilities.responseHandler(res, languageContent.message, languageContent.statusCode, languageContent.data);
+    return responseUtilities.responseHandler(res, deleteMap.message, deleteMap.statusCode, deleteMap.data);
   }
 );
 
+export const mapContentToQuestionsController = errorUtilities.withControllerErrorHandling (
+  async (req: Request, res: Response) => {
+    const { payload } = req.body;
+    const map = await questionService.mapQuestionToContent(payload);
+
+    return responseUtilities.responseHandler(res, map.message, map.statusCode, map.data);
+  }
+);
+
+export const deleteContentToQuestionController = errorUtilities.withControllerErrorHandling (
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const deleteMap = await questionService.deleteQuestionToContentMap(id);
+
+    return responseUtilities.responseHandler(res, deleteMap.message, deleteMap.statusCode, deleteMap.data);
+  }
+);

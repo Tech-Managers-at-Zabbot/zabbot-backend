@@ -161,3 +161,9 @@ export interface LessonQuestionAttributes {
   lessonId: string;
   questionId: string;
 }
+
+export interface ContentQuestionAttributes {
+  id: string;
+  contentId: string;
+  questionId: string;
+}

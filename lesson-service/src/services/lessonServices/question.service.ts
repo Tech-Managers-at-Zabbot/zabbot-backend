@@ -103,6 +103,25 @@ const deleteQuestionToLessonMap = errorUtilities.withServiceErrorHandling(
   }
 );
 
+const mapQuestionToContent = errorUtilities.withServiceErrorHandling(
+  async (data: LessonQuestionAttributes) => {
+    const payload = {
+      ...data,
+      id: v4()
+    };
+ 
+    const newContentQuestionMap = await questionRepositories.mapContentToQuestion(payload);
+    return responseUtilities.handleServicesResponse(StatusCodes.Created, "Mapping Content to Question created successfully", newContentQuestionMap);
+  }
+);
+
+const deleteQuestionToContentMap = errorUtilities.withServiceErrorHandling(
+  async (id: string) => {
+    await questionRepositories.deleteContentToQuestionMap(id);
+    return responseUtilities.handleServicesResponse(StatusCodes.NoContent, "MappedQuestionToContent deleted successfully", null);
+  }
+);
+
 export default {
   getQuestions,
   getQuestion,
@@ -110,5 +129,7 @@ export default {
   updateQuestion,
   deleteQuestion,
   mapQuestionToLesson,
-  deleteQuestionToLessonMap
+  deleteQuestionToLessonMap,
+  mapQuestionToContent,
+  deleteQuestionToContentMap
 }

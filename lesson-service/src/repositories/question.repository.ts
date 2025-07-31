@@ -2,6 +2,7 @@ import { Transaction } from "sequelize";
 import { errorUtilities } from "../../../shared/utilities";
 import Questions from "../entities/question";
 import LessonQuestions from "../entities/lesson-question";
+import ContentQuestions from "../entities/content-question";
 
 
 const questionRepositories = {
@@ -99,6 +100,25 @@ const questionRepositories = {
       return { message: "Lesson to Question map deleted successfully" };
     } catch(error: any) {
       throw errorUtilities.createError(`Error deleting lesson to question map: ${error.message}`, 500);
+    }
+  },
+
+  mapContentToQuestion: async (mapData: any, transaction?: Transaction) => {
+    try {
+      const contentQuestion = await ContentQuestions.create(mapData, { transaction });
+      return contentQuestion;
+    } catch(error: any) {
+      throw errorUtilities.createError(`Error mapping content to a question: ${error.message}`, 500);
+    }
+  },
+
+  deleteContentToQuestionMap: async (id: string) => {
+    try {
+      await ContentQuestions.destroy({ where: { id } });
+
+      return { message: "Content to Question map deleted successfully" };
+    } catch(error: any) {
+      throw errorUtilities.createError(`Error deleting lesson to content map: ${error.message}`, 500);
     }
   }
 }
