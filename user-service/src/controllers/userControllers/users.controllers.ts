@@ -20,8 +20,20 @@ const getSingleUser = errorUtilities.withControllerErrorHandling(async (request:
     )
 })
 
+const getAllUsersCount = errorUtilities.withControllerErrorHandling(async (request: Request, response: Response) => {
+
+    const userCount = await userServices.getAllUserCountService()
+    return responseUtilities.responseHandler(
+        response,
+        userCount.message,
+        userCount.statusCode,
+        userCount.data
+    )
+})
+
 
 
 export default {
-    getSingleUser
+    getSingleUser,
+    getAllUsersCount
 }

@@ -73,7 +73,6 @@ const updateContent = errorUtilities.withServiceErrorHandling (
     content.lessonId = contentData.lessonId;
     content.languageContentId = contentData.languageContentId;
     content.translation = contentData.translation;
-    content.level = contentData.level;
     content.updatedAt = new Date();
 
     const updatedContent = await contentRepositories.updateContent(content);

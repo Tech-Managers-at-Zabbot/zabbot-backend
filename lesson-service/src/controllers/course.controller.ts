@@ -2,17 +2,19 @@ import { Request, Response } from 'express';
 import courseService from '../services/lessonServices/course.service';
 import userCourseService from '../services/lessonServices/user-course.service';
 import { errorUtilities, responseUtilities } from '../../../shared/utilities';
-
+import { JwtPayload } from 'jsonwebtoken'
 
 // Controller to get all courses
 export const getCoursesController = errorUtilities.withControllerErrorHandling(
   async (req: Request, res: Response) => {
-      // const {  } = req.query;
-      const isActive: boolean | null = req.query.isActive === 'true' ? true
-        : req.query.isActive === 'false' ? false
-        : null;
+
+    const { languageId } = req.params
+    const { isActive } = req.query
+      // const isActive: boolean | null = req.query.isActive === 'true' ? true
+      //   : req.query.isActive === 'false' ? false
+      //   : true;
         
-      const courses = await courseService.getCourses(req.query);
+      const courses = await courseService.getCoursesForLanguage(languageId, isActive);
       return responseUtilities.responseHandler(res, courses.message, courses.statusCode, courses.data);
   }
 );
@@ -73,8 +75,9 @@ export const getUserCoursesController = errorUtilities.withControllerErrorHandli
 
 // Controller to get user course
 export const getUserCourseController = errorUtilities.withControllerErrorHandling(
-  async (req: Request, res: Response) => {
-    const userCourse = await userCourseService.getUserCourse(req.params);
+  async (req: JwtPayload, res: Response) => {
+    const { id }: string | any = req?.user;
+    const userCourse = await userCourseService.getUserCourse(id);
     return responseUtilities.responseHandler(res, userCourse.message, userCourse.statusCode, userCourse.data);
   }
 );
@@ -105,5 +108,14 @@ export const removeUserCourseController = errorUtilities.withControllerErrorHand
     const removeUserFromCourse = await userCourseService.deleteUserCourse(id);
 
     return responseUtilities.responseHandler(res, removeUserFromCourse.message, removeUserFromCourse.statusCode, removeUserFromCourse.data);
+  }
+);
+
+export const createCourseWithLessonsController = errorUtilities.withControllerErrorHandling(
+  async (req: Request, res: Response) => {
+    const { courseData, lessons } = req.body;
+    const { languageId } = req.params;
+    const course = await courseService.createCourseWithLessons(courseData, lessons, languageId);
+    return responseUtilities.responseHandler(res, course.message, course.statusCode, course.data);
   }
 );

@@ -4,19 +4,22 @@ import UserCourses from "../entities/user-course";
 
 
 const userCourseRepositories = {
-  getUserCourses: async (filter?: { userId?: string, courseId?: string }) => {
+  getUserCourses: async (filter: { languageId: string; userId: string, courseId?: string }, projection?: string[]) => {
     try {
-      const where: any = {};
-      if (filter?.userId) {
-        where.userId = filter.userId;
-      }
+      const where: any = {
+        languageId: filter?.languageId, userId: filter?.userId, isActive:true
+      };
 
       if (filter?.courseId) {
         where.courseId = filter.courseId;
       }
 
-      // Pass it straight to Sequelize
-      const userCourses = await UserCourses.findAll({ where });
+      const userCourses = await UserCourses.findAll({
+        where,
+        attributes: projection,
+        order: [['lastAccessed', 'DESC']],
+        raw: true
+      });
 
       return userCourses;
     } catch (error: any) {

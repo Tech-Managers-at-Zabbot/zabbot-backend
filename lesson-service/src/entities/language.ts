@@ -43,7 +43,6 @@ Languages.init(
     modelName: 'Languages',
     tableName: 'languages',
     timestamps: true,
-    // paranoid: true,
   }
 );
 

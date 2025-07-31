@@ -78,6 +78,15 @@ const userRepositories = {
     }
   },
 
+  getAllCount: async () => {
+    try {
+      const { count } = await Users.findAndCountAll({});
+      return count;
+    } catch (error: any) {
+      console.log(`Count users error: ${error.message}`)
+    }
+  },
+
 
   getMany: async (filter: any, projection?: any, options?: any, order?: any) => {
     try {

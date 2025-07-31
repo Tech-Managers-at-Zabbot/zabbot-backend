@@ -1,15 +1,25 @@
-import { DailyWordResponses } from "../responses/responses";
+import { DailyWordResponses, LanguageResponses } from "../responses/responses";
 import { responseUtilities, errorUtilities } from "../../../shared/utilities";
 import { Request, Response } from "express";
 import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
 import { LanguageCode } from "../data-types/enums";
-import { fetchEdedunLanguage } from "../utilities/axiosCalls";
+import { fetchEdedunLanguage, fetchEdedunLanguageBatches } from "../utilities/axiosCalls";
 import { dailyWordsServices } from "../services";
 import { v4 } from "uuid";
+import languageRepositories from "../repositories/language.repository";
 
 
 const createDailyWordController = errorUtilities.withControllerErrorHandling(async (request: Request, response: Response) => {
     const { languageCode, englishText, languageText } = request.body;
+
+    const { languageId } = request.params;
+
+    const language = await languageRepositories.getLanguage(languageId)
+
+    if (!language) {
+        throw errorUtilities.createError(LanguageResponses.NOT_FOUND, StatusCodes.NotFound);
+    }
+
     if (!languageCode) {
         throw errorUtilities.createError(DailyWordResponses.REQUIRED_LANGUAGE_CODE, StatusCodes.BadRequest);
     }
@@ -30,15 +40,15 @@ const createDailyWordController = errorUtilities.withControllerErrorHandling(asy
 
         const { data } = fetchFromEdedun
 
-        const phraseData  = {
-            languageId: v4(),
-            //request.params.id,
+        const dailyWordData = {
+            languageId,
             audioUrls: data.recordings,
-            languageText:data.yorubaText,
-            englishText
+            languageText: data.yorubaText,
+            englishText,
+            pronunciationNote: data.pronunciationNote
         }
 
-        const createdWord = await dailyWordsServices.createWordForTheDayService(phraseData)
+        const createdWord = await dailyWordsServices.createWordForTheDayService(dailyWordData)
 
         return responseUtilities.responseHandler(
             response,
@@ -50,21 +60,69 @@ const createDailyWordController = errorUtilities.withControllerErrorHandling(asy
     }
 })
 
+const createManyDailyWordsController = errorUtilities.withControllerErrorHandling(async (request: Request, response: Response) => {
+    const { languageCode, wordArr } = request.body;
+
+    const { languageId } = request.params;
+
+    const language = await languageRepositories.getLanguage(languageId)
+
+    if (!wordArr || !Array.isArray(wordArr) || wordArr.length === 0) {
+        throw errorUtilities.createError(DailyWordResponses.PHRASES_ARRAY_NEEDED, StatusCodes.BadRequest);
+    }
+
+    if (!language) {
+        throw errorUtilities.createError(LanguageResponses.NOT_FOUND, StatusCodes.NotFound);
+    }
+
+    if (!languageCode) {
+        throw errorUtilities.createError(DailyWordResponses.REQUIRED_LANGUAGE_CODE, StatusCodes.BadRequest);
+    }
+
+    if (languageCode === LanguageCode.YORUBA) {
+        const fetchFromEdedun = await fetchEdedunLanguageBatches(wordArr);
+
+        if (!fetchFromEdedun.success) {
+            return responseUtilities.responseHandler(
+                response,
+                fetchFromEdedun.message,
+                fetchFromEdedun.statusCode
+            );
+        }
+
+        const { data } = fetchFromEdedun
+
+        const createdWord = await dailyWordsServices.createManyWordsForTheDayService(data, languageId)
+
+        return responseUtilities.responseHandler(
+            response,
+            createdWord.message,
+            createdWord.statusCode,
+            createdWord.data
+        );
+
+    }
+
+})
+
 const getWordOfTheDayController = errorUtilities.withControllerErrorHandling(async (request: Request, response: Response) => {
     const { languageId } = request.params
 
-    const getWord = await dailyWordsServices.getTodayWordService(languageId)
+    const { userId } = request.query
 
-      return responseUtilities.responseHandler(
-            response,
-            getWord.message,
-            getWord.statusCode,
-            getWord.data
-        );
+    const getWord = await dailyWordsServices.getTodayWordService(languageId, userId)
+
+    return responseUtilities.responseHandler(
+        response,
+        getWord.message,
+        getWord.statusCode,
+        getWord.data
+    );
 })
 
 
 export default {
     createDailyWordController,
-    getWordOfTheDayController
+    getWordOfTheDayController,
+    createManyDailyWordsController
 }

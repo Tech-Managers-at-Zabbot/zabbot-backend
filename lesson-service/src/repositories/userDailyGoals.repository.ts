@@ -35,6 +35,19 @@ const userDailyGoalRepositories = {
     }
   },
 
+  getCount: async (filter: Record<string, any>) => {
+    try {
+      const { count } = await UserDailyGoals.findAndCountAll({
+        where: filter,
+        raw: true
+      });
+      return count;
+    } catch (error: any) {
+      console.log(`Fetch Goals Count Error: ${error.message}`)
+      throw errorUtilities.createError(`Error fetching user goals, please try again`, 500);
+    }
+  },
+
   getOne: async (filter: Record<string, any>, projection: any = null) => {
     try {
       const userGoal = await UserDailyGoals.findOne({

@@ -3,6 +3,7 @@ import { LessonAttributes } from "../../data-types/interface"
 import lessonRepositories from "../../repositories/lesson.repository"
 import { errorUtilities, responseUtilities } from "../../../../shared/utilities";
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
+// import languageRepositories from "src/repositories/language.repository";
 
 const getLessons = errorUtilities.withServiceErrorHandling(
   async () => {
@@ -28,9 +29,12 @@ const createLesson = errorUtilities.withServiceErrorHandling(
       ...lessonData,
       id: v4(),
       createdAt: new Date(),
+      lessonOutcomes: lessonData.outcomes,
+      lessonObjectives: lessonData.objectives,
+      estimatedDuration: lessonData.estimatedDuration || 0,
     }
     const newLesson = await lessonRepositories.addLesson(payload);
-    return newLesson;
+    return responseUtilities.handleServicesResponse(StatusCodes.Created, "Lesson created successfully", newLesson);
   }
 );
 
@@ -60,10 +64,11 @@ const updateLesson = errorUtilities.withServiceErrorHandling(
 //     return deletedLesson;
 //   }
 // );
+// Add this to your course service exports:
 
 export default {
   getLessons,
   getLesson,
   createLesson,
-  updateLesson
+  updateLesson,
 }

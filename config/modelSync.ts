@@ -1,0 +1,10 @@
+import '../user-service/src/entities/users.entities';
+import '../user-service/src/entities/otp.entities';
+import '../lesson-service/src/entities/content';
+import '../lesson-service/src/entities/content-file';
+import '../lesson-service/src/entities/course';
+import '../lesson-service/src/entities/language';
+import '../lesson-service/src/entities/lesson';
+import '../lesson-service/src/entities/user-course';
+import '../lesson-service/src/entities/userDailyGoals';
+import '../lesson-service/src/entities/wordForTheDay';

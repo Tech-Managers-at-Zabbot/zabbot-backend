@@ -1,7 +1,7 @@
 import {Request, Response} from 'express';
 import { errorUtilities, responseUtilities } from '../../../shared/utilities';
 import languageService from '../services/languageServices/language.service';
-import languageContentService from '../services/languageServices/language-content.service';
+// import languageContentService from '../services/languageServices/language-content.service';
 
 // Controller to get all languages
 export const getLanguagesController = errorUtilities.withControllerErrorHandling(
@@ -64,48 +64,48 @@ export const deleteLanguageController = errorUtilities.withControllerErrorHandli
   }
 );
 
-export const getLanguageContentsController = errorUtilities.withControllerErrorHandling (
-  async (req: Request, res: Response) => {
-    const {languageId} = req.query;
-    const languageContents = await languageContentService.getLanguageContents({languageId});
+// export const getLanguageContentsController = errorUtilities.withControllerErrorHandling (
+//   async (req: Request, res: Response) => {
+//     const {languageId} = req.query;
+//     const languageContents = await languageContentService.getLanguageContents({languageId});
 
-    return responseUtilities.responseHandler(res, languageContents.message, languageContents.statusCode, languageContents.data);
-  }
-);
+//     return responseUtilities.responseHandler(res, languageContents.message, languageContents.statusCode, languageContents.data);
+//   }
+// );
 
-export const getLanguageContentController = errorUtilities.withControllerErrorHandling (
-  async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const languageContent = await languageContentService.getLanguageContent(id);
+// export const getLanguageContentController = errorUtilities.withControllerErrorHandling (
+//   async (req: Request, res: Response) => {
+//     const { id } = req.params;
+//     const languageContent = await languageContentService.getLanguageContent(id);
 
-    return responseUtilities.responseHandler(res, languageContent.message, languageContent.statusCode, languageContent.data);
-  }
-);
+//     return responseUtilities.responseHandler(res, languageContent.message, languageContent.statusCode, languageContent.data);
+//   }
+// );
 
-export const addLanguageContentController = errorUtilities.withControllerErrorHandling(
-  async (req: Request, res: Response) => {
-    const payload = req.body;
-    const newLanguageContent = await languageContentService.addLanguageContent(payload);
+// export const addLanguageContentController = errorUtilities.withControllerErrorHandling(
+//   async (req: Request, res: Response) => {
+//     const payload = req.body;
+//     const newLanguageContent = await languageContentService.addLanguageContent(payload);
 
-    return responseUtilities.responseHandler(res, newLanguageContent.message, newLanguageContent.statusCode, newLanguageContent.data);
-  }
-);
+//     return responseUtilities.responseHandler(res, newLanguageContent.message, newLanguageContent.statusCode, newLanguageContent.data);
+//   }
+// );
 
-export const updateLanguageContentController = errorUtilities.withControllerErrorHandling(
-  async (req: Request, res: Response) => {
-    const id = req.params;
-    const payload = req.body;
-    const updateLanguageContent = await languageContentService.updateLanguageContent(id, payload);
+// export const updateLanguageContentController = errorUtilities.withControllerErrorHandling(
+//   async (req: Request, res: Response) => {
+//     const id = req.params;
+//     const payload = req.body;
+//     const updateLanguageContent = await languageContentService.updateLanguageContent(id, payload);
 
-    return responseUtilities.responseHandler(res, updateLanguageContent.message, updateLanguageContent.statusCode, updateLanguageContent.data);
-  }
-);
+//     return responseUtilities.responseHandler(res, updateLanguageContent.message, updateLanguageContent.statusCode, updateLanguageContent.data);
+//   }
+// );
 
-export const deleteLanguageContentController = errorUtilities.withControllerErrorHandling(
-  async (req: Request, res: Response) => {
-    const id = req.params;
-    const deleteData = await languageContentService.deleteLanguageContent(id);
+// export const deleteLanguageContentController = errorUtilities.withControllerErrorHandling(
+//   async (req: Request, res: Response) => {
+//     const id = req.params;
+//     const deleteData = await languageContentService.deleteLanguageContent(id);
 
-    return responseUtilities.responseHandler(res, deleteData.message, deleteData.statusCode, deleteData.data);
-  }
-)
+//     return responseUtilities.responseHandler(res, deleteData.message, deleteData.statusCode, deleteData.data);
+//   }
+// )

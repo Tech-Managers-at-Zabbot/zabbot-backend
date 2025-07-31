@@ -16,6 +16,8 @@ class Courses extends Model<CourseAttributes> implements CourseAttributes {
   public prerequisites?: string[];
   public createdAt!: Date;
   public updatedAt?: Date;
+  public level!: Level
+  public totalContents?: number
 }
 
 Courses.init(
@@ -42,6 +44,11 @@ Courses.init(
       type: DataTypes.UUID,
       allowNull: false,
     },
+    level: {
+      type: DataTypes.ENUM,
+      values: Object.values(Level),
+      allowNull: false
+    },
     estimatedDuration: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -49,6 +56,12 @@ Courses.init(
     totalLessons: {
       type: DataTypes.INTEGER,
       allowNull: true,
+      defaultValue: 0
+    },
+     totalContents: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0
     },
     thumbnailImage: {
       type: DataTypes.STRING,
@@ -77,7 +90,10 @@ Courses.init(
     modelName: 'Courses',
     tableName: 'courses',
     timestamps: true,
+<<<<<<< HEAD
     // paranoid: true,
+=======
+>>>>>>> b059e1b24c77fc4a9d2566d6187e0933b861c4d9
   }
 );
 

@@ -1,7 +1,7 @@
 import { Transaction } from "sequelize";
 import { errorUtilities } from "../../../shared/utilities";
 import Languages from "../entities/language";
-import LanguageContents from "../entities/language-content";
+// import LanguageContents from "../entities/language-content";
 
 
 const languageRepositories = {
@@ -100,31 +100,31 @@ const languageRepositories = {
   },
 
   // SESSION FOR LANGUAGE CONTENTS
-  getLanguageContents: async (filter?: { languageId?: string}) => {
-    try {
-      const where: any = {}
-      if (typeof filter?.languageId === 'string')
-        where.languageId = filter?.languageId
+  // getLanguageContents: async (filter?: { languageId?: string}) => {
+  //   try {
+  //     const where: any = {}
+  //     if (typeof filter?.languageId === 'string')
+  //       where.languageId = filter?.languageId
       
-      const languageContents = await LanguageContents.findAll({ where });
+  //     const languageContents = await LanguageContents.findAll({ where });
     
-      return languageContents;
+  //     return languageContents;
 
-    } catch (error: any) {
-      throw errorUtilities.createError(`Error fetching language contents: ${error.message}`, 500);
-    }
-  },
+  //   } catch (error: any) {
+  //     throw errorUtilities.createError(`Error fetching language contents: ${error.message}`, 500);
+  //   }
+  // },
 
-  getLanguageContent: async (id: string) => {
-    try {
-      const languageContent = await LanguageContents.findByPk(id);
+  // getLanguageContent: async (id: string) => {
+  //   try {
+  //     const languageContent = await LanguageContents.findByPk(id);
 
-      return languageContent;
+  //     return languageContent;
 
-    } catch (error: any) {
-      throw errorUtilities.createError(`Error fetching contents for this language: ${error.message}`, 500);
-    }
-  },
+  //   } catch (error: any) {
+  //     throw errorUtilities.createError(`Error fetching contents for this language: ${error.message}`, 500);
+  //   }
+  // },
 
   addLanguageContent: async (languageContentData: any) => {
     try {
@@ -139,29 +139,39 @@ const languageRepositories = {
     }
   },
 
+<<<<<<< HEAD
   updateLanguageContent: async (id: string, languageContentData: any) => {
     try {
       languageContentData.updatedAt = new Date();
+=======
+  // updateLanguageContent: async (id: string, languageContentData: any) => {
+  //   try {
+      
+  //     // currentLanguageContent.title = languageContentData.title;
+  //     // currentLanguageContent.word = languageContentData.word;
+  //     // currentLanguageContent.tone = languageContentData.tone;
+  //     languageContentData.updatedAt = new Date();
+>>>>>>> b059e1b24c77fc4a9d2566d6187e0933b861c4d9
 
-      // Update the language content
-      const updatedLanguageContent = await LanguageContents.update( languageContentData, { where: { id } });
+  //     // Update the language content
+  //     const updatedLanguageContent = await LanguageContents.update( languageContentData, { where: { id } });
 
-      return updatedLanguageContent;
+  //     return updatedLanguageContent;
 
-    } catch (error: any) {
-      throw errorUtilities.createError(`Error Updating language content: ${error.message}`, 500);
-    }
-  },
+  //   } catch (error: any) {
+  //     throw errorUtilities.createError(`Error Updating language content: ${error.message}`, 500);
+  //   }
+  // },
 
-  deleteLanguageContent: async(id: string) => {
-    try{
-      await LanguageContents.destroy({ where: { id }});
-      return { message: "Language content deleted successfully"};
+  // deleteLanguageContent: async(id: string) => {
+  //   try{
+  //     await LanguageContents.destroy({ where: { id }});
+  //     return { message: "Language content deleted successfully"};
 
-    } catch (error) {
-      throw errorUtilities.createError(`Error deleting Language content`, 500);
-    }
-  }
+  //   } catch (error) {
+  //     throw errorUtilities.createError(`Error deleting Language content`, 500);
+  //   }
+  // }
   // END LANGUAGE CONTENTS SESSION
 }
 

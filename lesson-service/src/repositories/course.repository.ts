@@ -1,17 +1,20 @@
 import { Transaction } from "sequelize";
 import { errorUtilities } from "../../../shared/utilities";
 import Courses from "../entities/course";
+<<<<<<< HEAD
+=======
+// import LanguageContents from "../entities/language-content";
+
+>>>>>>> b059e1b24c77fc4a9d2566d6187e0933b861c4d9
 
 const courseRepositories = {
-	getCourses: async (filter?: { isActive?: boolean }) => {
+	getCourses: async (isActive: boolean = true, languageId: string) => {
 		try {
-			const where: any = {};
-			if (typeof filter?.isActive === 'boolean') {
-				where.isActive = filter.isActive;
-			}
-
-			// Pass it straight to Sequelize
-			const courses = await Courses.findAll({ where });
+			const where: any = {
+				isActive,
+				languageId
+			};
+			const courses = await Courses.findAll({where:where});
 
 			return courses;
 		} catch (error: any) {

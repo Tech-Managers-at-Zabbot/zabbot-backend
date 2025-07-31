@@ -410,7 +410,9 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
       }
     );
 
-    const userDetails = await usersRepositories.extractUserDetails(user);
+    const userDetails:Record<string, any> = await usersRepositories.extractUserDetails(user);
+
+    userDetails.languageId = config.YORUBA_LANGUAGE_ID!
 
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,

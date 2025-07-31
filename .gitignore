@@ -1,6 +1,5 @@
 node_modules
 .env
-dist
 DocumentLayout.json
 .wsuo
 VSWorkspaceState.json
@@ -9,3 +8,6 @@ yoruba-translator.js
 output.json
 docker-compose.yml
 keys.ts
+migrations
+migration-config
+.sequelizerc

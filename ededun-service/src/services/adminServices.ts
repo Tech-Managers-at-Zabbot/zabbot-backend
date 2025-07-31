@@ -308,7 +308,7 @@ const getPhraseWithAllRecordingsForZabbot = errorUtilities.withErrorHandling(
 
         const checkPhrase: Partial<PhraseAttributes> | any = await phraseRepository.phrasesRepository.getOne(
             filter,
-            ["id", "yoruba_text", "english_text"]
+            ["id", "yoruba_text", "english_text", "pronounciation_note"]
         );
 
         if (!checkPhrase) {
@@ -317,22 +317,16 @@ const getPhraseWithAllRecordingsForZabbot = errorUtilities.withErrorHandling(
 
         const findRecordings = await recordingRepository.recordingRepository.getMany({ phrase_id: checkPhrase.id })
 
-        console.log('find', findRecordings)
-
         const recordingsUrl = findRecordings
             .filter((recording: any) => recording.recording_url)
             .map((recording: any) => recording.recording_url);
 
-
-        console.log('Text', recordingsUrl)
-
         const fullrecodingDetails = {
             recordings: recordingsUrl,
             englishText: checkPhrase.english_text,
-            yorubaText: checkPhrase.yoruba_text
+            yorubaText: checkPhrase.yoruba_text,
+            pronunciationNote: checkPhrase.pronounciation_note
         }
-
-        console.log('Texts', fullrecodingDetails)
 
         return responseUtilities.handleServicesResponse(
             201,
@@ -342,6 +336,85 @@ const getPhraseWithAllRecordingsForZabbot = errorUtilities.withErrorHandling(
     }
 );
 
+
+const getPhrasesWithAllRecordingsForZabbotParallel = errorUtilities.withErrorHandling(
+    async (phrases: Array<{englishText?: string, yorubaText?: string}>): Promise<any> => {
+
+        if (!phrases || !Array.isArray(phrases) || phrases.length === 0) {
+            throw errorUtilities.createError("Phrases array must be provided and cannot be empty", 400);
+        }
+
+        const processPhrasePromises = phrases.map(async (phrase) => {
+            const { englishText, yorubaText } = phrase;
+
+            if (!englishText && !yorubaText) {
+                return {
+                    error: "Either English Text or Yoruba Text must be provided",
+                    englishText: englishText || null,
+                    yorubaText: yorubaText || null,
+                    recordings: []
+                };
+            }
+
+            try {
+                const filter: Record<string, any> = {};
+
+                if (yorubaText) {
+                    filter.yoruba_text = yorubaText;
+                } else if (englishText) {
+                    filter.english_text = englishText;
+                }
+
+                const checkPhrase: Partial<PhraseAttributes> | any = await phraseRepository.phrasesRepository.getOne(
+                    filter,
+                    ["id", "yoruba_text", "english_text", "pronounciation_note"]
+                );
+
+                if (!checkPhrase) {
+                    return {
+                        error: "This phrase does not have a recording in our database",
+                        englishText: englishText || null,
+                        yorubaText: yorubaText || null,
+                        recordings: []
+                    };
+                }
+
+                const findRecordings = await recordingRepository.recordingRepository.getMany({ 
+                    phrase_id: checkPhrase.id 
+                });
+
+                const recordingsUrl = findRecordings
+                    .filter((recording: any) => recording.recording_url)
+                    .map((recording: any) => recording.recording_url);
+
+                return {
+                    recordings: recordingsUrl,
+                    englishText: checkPhrase.english_text,
+                    yorubaText: checkPhrase.yoruba_text,
+                    pronunciationNote: checkPhrase.pronounciation_note
+                };
+
+            } catch (error: any) {
+                return {
+                    error: error.message || "An error occurred while processing this phrase",
+                    englishText: englishText || null,
+                    yorubaText: yorubaText || null,
+                    recordings: []
+                };
+            }
+        });
+
+        const results = await Promise.all(processPhrasePromises);
+
+        console.log('Batch Results', results);
+
+        return responseUtilities.handleServicesResponse(
+            200,
+            'Batch recordings fetched successfully',
+            results
+        );
+    }
+);
 
 
 export default {
@@ -353,5 +426,6 @@ export default {
     findOrphanedFilesService,
     getAllDatabaseAudioFilesService,
     deleteOrphanedFilesService,
-    getPhraseWithAllRecordingsForZabbot
+    getPhraseWithAllRecordingsForZabbot,
+    getPhrasesWithAllRecordingsForZabbotParallel
 }
