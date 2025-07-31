@@ -90,7 +90,6 @@ Courses.init(
     modelName: 'Courses',
     tableName: 'courses',
     timestamps: true,
-    paranoid: true,
   }
 );
 

@@ -65,7 +65,6 @@ Contents.init(
     modelName: 'Contents',
     tableName: 'contents',
     // timestamps: true,
-    paranoid: true,
   }
 );
 

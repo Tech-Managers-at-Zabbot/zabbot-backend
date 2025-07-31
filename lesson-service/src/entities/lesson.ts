@@ -25,11 +25,11 @@ Lessons.init(
       defaultValue: DataTypes.UUIDV4,
     },
     title: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT('long'),
       allowNull: false
     },
     description: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT('long'),
       allowNull: false,
     },
     estimatedDuration: {
@@ -45,7 +45,7 @@ Lessons.init(
       allowNull: true
     },
     headLineTag: {
-      type: DataTypes.STRING,
+      type: DataTypes.TEXT('long'),
       allowNull: true,
     },
     courseId: {
@@ -76,7 +76,6 @@ Lessons.init(
     modelName: 'Lessons',
     tableName: 'lessons',
     timestamps: true,
-    paranoid: true,
   }
 );
 

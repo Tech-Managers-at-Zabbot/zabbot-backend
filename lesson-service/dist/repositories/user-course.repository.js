@@ -6,17 +6,20 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const utilities_1 = require("../../../shared/utilities");
 const user_course_1 = __importDefault(require("../entities/user-course"));
 const userCourseRepositories = {
-    getUserCourses: async (filter) => {
+    getUserCourses: async (filter, projection) => {
         try {
-            const where = {};
-            if (filter?.userId) {
-                where.userId = filter.userId;
-            }
+            const where = {
+                languageId: filter?.languageId, userId: filter?.userId, isActive: true
+            };
             if (filter?.courseId) {
                 where.courseId = filter.courseId;
             }
-            // Pass it straight to Sequelize
-            const userCourses = await user_course_1.default.findAll({ where });
+            const userCourses = await user_course_1.default.findAll({
+                where,
+                attributes: projection,
+                order: [['lastAccessed', 'DESC']],
+                raw: true
+            });
             return userCourses;
         }
         catch (error) {

@@ -27,5 +27,6 @@ export enum DailyGoalResponses {
 
 export enum CourseResponses {
     COURSES_NOT_FETCHED = "Unable to fetch courses, try again",
-    PROCESS_SUCCESSFUL = "Process Successful"
+    PROCESS_SUCCESSFUL = "Process Successful",
+    USER_COURSE_NOT_FOUND = "User course not found"
 }

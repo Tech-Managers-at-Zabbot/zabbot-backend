@@ -1,12 +1,13 @@
 import courseRepositories from "../../repositories/course.repository";
 import userCourseRepositories from "../../repositories/user-course.repository";
-import { errorUtilities } from "../../../../shared/utilities";
+import { errorUtilities, responseUtilities } from "../../../../shared/utilities";
+import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
+import { CourseResponses } from "../../responses/responses";
 
 const getUserCourses = errorUtilities.withServiceErrorHandling (
-  async (userId?: string, isActive?: boolean) => {
-    const payload = { userId, isActive };
+  async (userId: string, languageId:string, courseId:string) => {
+    const payload = { languageId, userId, courseId };
     const userCourses = await userCourseRepositories.getUserCourses(payload);
-
     return userCourses;
   }
 );
@@ -15,10 +16,13 @@ const getUserCourse = errorUtilities.withServiceErrorHandling (
   async (id: string) => {
     const userCourse = await userCourseRepositories.getUserCourse(id);
     if (!userCourse) {
-        throw errorUtilities.createError(`User course not found`, 404);
+        throw errorUtilities.createError(CourseResponses.USER_COURSE_NOT_FOUND, StatusCodes.NotFound);
     }
-
-    return userCourse;
+     return responseUtilities.handleServicesResponse(
+          StatusCodes.OK,
+          CourseResponses.PROCESS_SUCCESSFUL,
+          userCourse
+        );
   }
 );
 
@@ -26,7 +30,8 @@ const addUserCourse = errorUtilities.withServiceErrorHandling (
   async (userCourseData: any) => {
     const existingUserCourse = await userCourseRepositories.getUserCourses({
       userId: userCourseData.userId,
-      courseId: userCourseData.courseId
+      courseId: userCourseData.courseId,
+      languageId: userCourseData.languageId
     });
 
     if (existingUserCourse.length > 0) {
