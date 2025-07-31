@@ -14,7 +14,7 @@ exports.getCoursesController = utilities_1.errorUtilities.withControllerErrorHan
     // const isActive: boolean | null = req.query.isActive === 'true' ? true
     //   : req.query.isActive === 'false' ? false
     //   : true;
-    const courses = await course_service_1.default.getCoursesForLanguage(isActive, languageId);
+    const courses = await course_service_1.default.getCoursesForLanguage(languageId, isActive);
     return utilities_1.responseUtilities.responseHandler(res, courses.message, courses.statusCode, courses.data);
 });
 // Controller to get a single course

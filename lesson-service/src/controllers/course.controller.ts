@@ -14,7 +14,7 @@ export const getCoursesController = errorUtilities.withControllerErrorHandling(
       //   : req.query.isActive === 'false' ? false
       //   : true;
         
-      const courses = await courseService.getCoursesForLanguage(isActive, languageId);
+      const courses = await courseService.getCoursesForLanguage(languageId, isActive);
       return responseUtilities.responseHandler(res, courses.message, courses.statusCode, courses.data);
   }
 );
