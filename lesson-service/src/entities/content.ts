@@ -8,12 +8,7 @@ class Contents extends Model<ContentAttributes> implements ContentAttributes {
   public lessonId!: string;
   public languageContentId!: string;
   public translation?: string;
-<<<<<<< HEAD
-  public level!: Level;
-  public key?: string;
-=======
   // public totalContents?: number;
->>>>>>> b059e1b24c77fc4a9d2566d6187e0933b861c4d9
   public createdAt?: Date;
   public updatedAt?: Date;
   public isGrammarRule?: boolean;
@@ -55,18 +50,15 @@ Contents.init(
       type: DataTypes.STRING,
       allowNull: false
     },
-<<<<<<< HEAD
-    level: {
-      type: DataTypes.ENUM,
-      values: Object.values(Level),
-      allowNull: false
-    },
-    key: {
-      type: DataTypes.STRING,
-      allowNull: true
-    },
-=======
->>>>>>> b059e1b24c77fc4a9d2566d6187e0933b861c4d9
+    // level: {
+    //   type: DataTypes.ENUM,
+    //   values: Object.values(Level),
+    //   allowNull: false
+    // },
+    // key: {
+    //   type: DataTypes.STRING,
+    //   allowNull: true
+    // },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -81,12 +73,7 @@ Contents.init(
     sequelize: users_service_db,
     modelName: 'Contents',
     tableName: 'contents',
-<<<<<<< HEAD
-    timestamps: true,
-    // paranoid: true,
-=======
     // timestamps: true,
->>>>>>> b059e1b24c77fc4a9d2566d6187e0933b861c4d9
   }
 );
 

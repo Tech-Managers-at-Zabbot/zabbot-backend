@@ -139,11 +139,6 @@ const languageRepositories = {
     }
   },
 
-<<<<<<< HEAD
-  updateLanguageContent: async (id: string, languageContentData: any) => {
-    try {
-      languageContentData.updatedAt = new Date();
-=======
   // updateLanguageContent: async (id: string, languageContentData: any) => {
   //   try {
       
@@ -151,7 +146,6 @@ const languageRepositories = {
   //     // currentLanguageContent.word = languageContentData.word;
   //     // currentLanguageContent.tone = languageContentData.tone;
   //     languageContentData.updatedAt = new Date();
->>>>>>> b059e1b24c77fc4a9d2566d6187e0933b861c4d9
 
   //     // Update the language content
   //     const updatedLanguageContent = await LanguageContents.update( languageContentData, { where: { id } });

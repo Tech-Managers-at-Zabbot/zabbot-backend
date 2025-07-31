@@ -1,0 +1,11 @@
+import { Request, Response } from 'express';
+export declare const getCoursesController: (req: Request, res: Response, next: import("express").NextFunction) => Promise<void>;
+export declare const getCourseController: (req: Request, res: Response, next: import("express").NextFunction) => Promise<void>;
+export declare const getCourseByTitleController: (req: Request, res: Response, next: import("express").NextFunction) => Promise<void>;
+export declare const addCourseController: (req: Request, res: Response, next: import("express").NextFunction) => Promise<void>;
+export declare const updateCourseController: (req: Request, res: Response, next: import("express").NextFunction) => Promise<void>;
+export declare const deleteCourseController: (req: Request, res: Response, next: import("express").NextFunction) => Promise<void>;
+export declare const getUserCoursesController: (req: Request, res: Response, next: import("express").NextFunction) => Promise<void>;
+export declare const getUserCourseController: (req: Request, res: Response, next: import("express").NextFunction) => Promise<void>;
+export declare const addUserCourseController: (req: Request, res: Response, next: import("express").NextFunction) => Promise<void>;
+export declare const updateUserCourseController: (req: Request, res: Response, next: import("express").NextFunction) => Promise<void>;
