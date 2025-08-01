@@ -101,7 +101,7 @@ exports.generalAuthFunction = generalAuthFunction;
 function rolePermit(roles) {
     return async (request, response, next) => {
         const userRole = request.user.role;
-        const userId = request.user.id;
+        const { userId } = request.user;
         if (!userRole || !userId) {
             return response.status(403).json({
                 status: 'error',
