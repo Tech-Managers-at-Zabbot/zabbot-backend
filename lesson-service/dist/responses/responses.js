@@ -31,4 +31,5 @@ var CourseResponses;
     CourseResponses["COURSES_NOT_FETCHED"] = "Unable to fetch courses, try again";
     CourseResponses["PROCESS_SUCCESSFUL"] = "Process Successful";
     CourseResponses["USER_COURSE_NOT_FOUND"] = "User course not found";
+    CourseResponses["COURSE_NOT_FOUND"] = "COurse not found, please try again";
 })(CourseResponses || (exports.CourseResponses = CourseResponses = {}));

@@ -38,3 +38,10 @@ export const updateLessonController = errorUtilities.withControllerErrorHandling
     return responseUtilities.responseHandler(res, lesson.message, lesson.statusCode, lesson.data);
   }
 );
+
+export const getLessonWithContentsController = errorUtilities.withControllerErrorHandling(
+  async (req: Request, res: Response) => {
+    const { lessonId } = req.params;
+    const lesson = await lessonService.getLessonWithContents(lessonId);
+    return responseUtilities.responseHandler(res, lesson.message, lesson.statusCode, lesson.data);
+  })

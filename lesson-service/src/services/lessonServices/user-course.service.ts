@@ -3,6 +3,7 @@ import userCourseRepositories from "../../repositories/user-course.repository";
 import { errorUtilities, responseUtilities } from "../../../../shared/utilities";
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
 import { CourseResponses } from "../../responses/responses";
+// import courseService from "./course.service";
 
 const getUserCourses = errorUtilities.withServiceErrorHandling (
   async (userId: string, languageId:string, courseId:string) => {
@@ -25,6 +26,21 @@ const getUserCourse = errorUtilities.withServiceErrorHandling (
         );
   }
 );
+
+// const getUserCourseAndLessons = errorUtilities.withServiceErrorHandling (
+//   async (courseId: string, userId:string) => {
+//     const userCourse = await userCourseRepositories.getUserCourseWithUserId(courseId, userId);
+//     if (!userCourse) {
+//         throw errorUtilities.createError(CourseResponses.USER_COURSE_NOT_FOUND, StatusCodes.NotFound);
+//     }
+//     const course = await courseService.getCourseWithLessons(userCourse.courseId);
+//      return responseUtilities.handleServicesResponse(
+//           StatusCodes.OK,
+//           CourseResponses.PROCESS_SUCCESSFUL,
+//           course.data
+//         );
+//   }
+// );
 
 const addUserCourse = errorUtilities.withServiceErrorHandling (
   async (userCourseData: any) => {
@@ -70,5 +86,6 @@ export default {
   getUserCourse,
   addUserCourse,
   updateUserCourse,
-  deleteUserCourse
+  deleteUserCourse,
+  // getUserCourseAndLessons
 };

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createCourseWithLessonsController = exports.removeUserCourseController = exports.updateUserCourseController = exports.addUserCourseController = exports.getUserCourseController = exports.getUserCoursesController = exports.deleteCourseController = exports.updateCourseController = exports.addCourseController = exports.getCourseByTitleController = exports.getCourseController = exports.getCoursesController = void 0;
+exports.createCourseWithLessonsController = exports.removeUserCourseController = exports.getCourseWithLessonsController = exports.updateUserCourseController = exports.addUserCourseController = exports.getUserCourseController = exports.getUserCoursesController = exports.deleteCourseController = exports.updateCourseController = exports.addCourseController = exports.getCourseByTitleController = exports.getCourseController = exports.getCoursesController = void 0;
 const course_service_1 = __importDefault(require("../services/lessonServices/course.service"));
 const user_course_service_1 = __importDefault(require("../services/lessonServices/user-course.service"));
 const utilities_1 = require("../../../shared/utilities");
@@ -71,6 +71,11 @@ exports.updateUserCourseController = utilities_1.errorUtilities.withControllerEr
     const { userCourseData } = req.body;
     const updateUserCourse = await user_course_service_1.default.updateUserCourse(id, userCourseData);
     return utilities_1.responseUtilities.responseHandler(res, updateUserCourse.message, updateUserCourse.statusCode, updateUserCourse.data);
+});
+exports.getCourseWithLessonsController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
+    const { languageId } = req.params;
+    const courseWithLessons = await course_service_1.default.getCourseWithLessonsService(languageId);
+    return utilities_1.responseUtilities.responseHandler(res, courseWithLessons.message, courseWithLessons.statusCode, courseWithLessons.data);
 });
 exports.removeUserCourseController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
     const { id } = req.params;

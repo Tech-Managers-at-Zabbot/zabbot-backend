@@ -3,6 +3,7 @@ import { LessonAttributes } from "../../data-types/interface"
 import lessonRepositories from "../../repositories/lesson.repository"
 import { errorUtilities, responseUtilities } from "../../../../shared/utilities";
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
+import contentRepositories from "../../repositories/content.repository";
 // import languageRepositories from "src/repositories/language.repository";
 
 const getLessons = errorUtilities.withServiceErrorHandling(
@@ -19,7 +20,20 @@ const getLesson = errorUtilities.withServiceErrorHandling (
       throw errorUtilities.createError(`Lesson not found`, 404);
     }
 
-    return lesson;
+    return responseUtilities.handleServicesResponse(StatusCodes.OK, "", lesson);
+  }
+);
+
+const getLessonWithContents = errorUtilities.withServiceErrorHandling (
+  async (lessonId: string) => {
+    const lesson = await lessonRepositories.getLesson(lessonId);
+    if (!lesson) {
+      throw errorUtilities.createError(`Lesson not found`, 404);
+    }
+
+    const contents = await contentRepositories.getLessonContents(lessonId)
+
+    return responseUtilities.handleServicesResponse(StatusCodes.OK, "Successful", {lesson, contents});
   }
 );
 
@@ -71,4 +85,5 @@ export default {
   getLesson,
   createLesson,
   updateLesson,
+  getLessonWithContents
 }

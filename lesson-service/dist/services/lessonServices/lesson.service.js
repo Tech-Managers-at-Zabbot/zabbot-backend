@@ -7,6 +7,7 @@ const uuid_1 = require("uuid");
 const lesson_repository_1 = __importDefault(require("../../repositories/lesson.repository"));
 const utilities_1 = require("../../../../shared/utilities");
 const statusCodes_responses_1 = require("../../../../shared/statusCodes/statusCodes.responses");
+const content_repository_1 = __importDefault(require("../../repositories/content.repository"));
 // import languageRepositories from "src/repositories/language.repository";
 const getLessons = utilities_1.errorUtilities.withServiceErrorHandling(async () => {
     const lessons = await lesson_repository_1.default.getLessons();
@@ -17,7 +18,15 @@ const getLesson = utilities_1.errorUtilities.withServiceErrorHandling(async (id)
     if (!lesson) {
         throw utilities_1.errorUtilities.createError(`Lesson not found`, 404);
     }
-    return lesson;
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, "", lesson);
+});
+const getLessonWithContents = utilities_1.errorUtilities.withServiceErrorHandling(async (lessonId) => {
+    const lesson = await lesson_repository_1.default.getLesson(lessonId);
+    if (!lesson) {
+        throw utilities_1.errorUtilities.createError(`Lesson not found`, 404);
+    }
+    const contents = await content_repository_1.default.getLessonContents(lessonId);
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, "Successful", { lesson, contents });
 });
 const createLesson = utilities_1.errorUtilities.withServiceErrorHandling(async (lessonData) => {
     const payload = {
@@ -57,4 +66,5 @@ exports.default = {
     getLesson,
     createLesson,
     updateLesson,
+    getLessonWithContents
 };
