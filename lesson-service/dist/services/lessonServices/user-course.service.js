@@ -7,6 +7,7 @@ const user_course_repository_1 = __importDefault(require("../../repositories/use
 const utilities_1 = require("../../../../shared/utilities");
 const statusCodes_responses_1 = require("../../../../shared/statusCodes/statusCodes.responses");
 const responses_1 = require("../../responses/responses");
+// import courseService from "./course.service";
 const getUserCourses = utilities_1.errorUtilities.withServiceErrorHandling(async (userId, languageId, courseId) => {
     const payload = { languageId, userId, courseId };
     const userCourses = await user_course_repository_1.default.getUserCourses(payload);
@@ -19,6 +20,20 @@ const getUserCourse = utilities_1.errorUtilities.withServiceErrorHandling(async 
     }
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.CourseResponses.PROCESS_SUCCESSFUL, userCourse);
 });
+// const getUserCourseAndLessons = errorUtilities.withServiceErrorHandling (
+//   async (courseId: string, userId:string) => {
+//     const userCourse = await userCourseRepositories.getUserCourseWithUserId(courseId, userId);
+//     if (!userCourse) {
+//         throw errorUtilities.createError(CourseResponses.USER_COURSE_NOT_FOUND, StatusCodes.NotFound);
+//     }
+//     const course = await courseService.getCourseWithLessons(userCourse.courseId);
+//      return responseUtilities.handleServicesResponse(
+//           StatusCodes.OK,
+//           CourseResponses.PROCESS_SUCCESSFUL,
+//           course.data
+//         );
+//   }
+// );
 const addUserCourse = utilities_1.errorUtilities.withServiceErrorHandling(async (userCourseData) => {
     const existingUserCourse = await user_course_repository_1.default.getUserCourses({
         userId: userCourseData.userId,
@@ -50,5 +65,6 @@ exports.default = {
     getUserCourse,
     addUserCourse,
     updateUserCourse,
-    deleteUserCourse
+    deleteUserCourse,
+    // getUserCourseAndLessons
 };

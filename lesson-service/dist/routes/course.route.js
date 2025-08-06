@@ -18,5 +18,6 @@ router.post('/:courseId/users/:userId', authorization_middleware_1.generalAuthFu
 router.put('/users/:id', authorization_middleware_1.generalAuthFunction, course_controller_1.updateUserCourseController);
 router.delete('/users/:id', authorization_middleware_1.generalAuthFunction, course_controller_1.removeUserCourseController);
 router.post('/course-with-lesson/:languageId', course_controller_1.createCourseWithLessonsController);
+router.get('/get-course-with-lesson/:languageId', authorization_middleware_1.generalAuthFunction, course_controller_1.getCourseWithLessonsController);
 //generalAuthFunction, rolePermit(["admin"]),
 exports.default = router;

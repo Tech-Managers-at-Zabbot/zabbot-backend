@@ -102,6 +102,14 @@ export const updateUserCourseController = errorUtilities.withControllerErrorHand
   }
 );
 
+export const getCourseWithLessonsController = errorUtilities.withControllerErrorHandling(
+  async(req: JwtPayload, res: Response) => {
+    const { languageId } = req.params
+    const courseWithLessons = await courseService.getCourseWithLessonsService(languageId);
+    return responseUtilities.responseHandler(res, courseWithLessons.message, courseWithLessons.statusCode, courseWithLessons.data);
+
+  })
+
 export const removeUserCourseController = errorUtilities.withControllerErrorHandling(
   async(req: Request, res: Response) => {
     const {id} = req.params;

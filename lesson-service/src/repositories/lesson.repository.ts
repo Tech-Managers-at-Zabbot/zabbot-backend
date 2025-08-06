@@ -21,6 +21,17 @@ const lessonRepositories = {
     }
   },
 
+  getLessonsOnly: async (courseId: string) => {
+    try {
+      const lessons = await Lessons.findAll({ where: {courseId }, order: [['orderNumber', 'ASC']], raw:true});
+
+      return lessons;
+
+    } catch (error: any) {
+        throw errorUtilities.createError(`Error Fetching lessons: ${error.message}`, 500);
+    }
+  },
+
   getLesson: async (id: string) => {
     try {
       const lesson = await Lessons.findByPk(id);

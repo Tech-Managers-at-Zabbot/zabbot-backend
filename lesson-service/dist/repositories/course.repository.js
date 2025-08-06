@@ -29,6 +29,18 @@ const courseRepositories = {
             throw utilities_1.errorUtilities.createError(`Error Fetching course: ${error.message}`, 500);
         }
     },
+    getCourseWithLanguageId: async (languageId) => {
+        try {
+            const course = await course_1.default.findOne({
+                where: { languageId },
+                raw: true
+            });
+            return course;
+        }
+        catch (error) {
+            throw utilities_1.errorUtilities.createError(`Error Fetching course: ${error.message}`, 500);
+        }
+    },
     getCourseByTitle: async (title) => {
         try {
             const course = await course_1.default.findOne({ where: { title } });
