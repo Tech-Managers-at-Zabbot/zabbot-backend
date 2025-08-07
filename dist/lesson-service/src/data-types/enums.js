@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LanguageCode = exports.Level = exports.ContentSourceType = exports.ContentDataType = void 0;
+exports.QuestionType = exports.LanguageCode = exports.Level = exports.ContentSourceType = exports.ContentDataType = void 0;
 var ContentDataType;
 (function (ContentDataType) {
     ContentDataType["VIDEO"] = "video";
@@ -37,3 +37,9 @@ var LanguageCode;
     LanguageCode["HAUSA"] = "HA";
     LanguageCode["SWAHILI"] = "SW";
 })(LanguageCode || (exports.LanguageCode = LanguageCode = {}));
+var QuestionType;
+(function (QuestionType) {
+    QuestionType["SINGLE"] = "Single";
+    QuestionType["Multiple"] = "Multiple";
+    QuestionType["THEORY"] = "Theory";
+})(QuestionType || (exports.QuestionType = QuestionType = {}));
