@@ -12,7 +12,8 @@ import {
     addUserCourseController,
     updateUserCourseController,
     removeUserCourseController,
-    createCourseWithLessonsController
+    createCourseWithLessonsController,
+    getCourseWithLessonsController
 } from '../controllers/course.controller';
 
 const router = express.Router();
@@ -28,6 +29,7 @@ router.get('/users/:id', generalAuthFunction, getUserCourseController);
 router.post('/:courseId/users/:userId', generalAuthFunction, addUserCourseController);
 router.put('/users/:id', generalAuthFunction, updateUserCourseController);
 router.delete('/users/:id', generalAuthFunction, removeUserCourseController);
-router.post('/course-with-lesson/:languageId', generalAuthFunction, rolePermit(["admin"]), createCourseWithLessonsController)
-
+router.post('/course-with-lesson/:languageId', createCourseWithLessonsController)
+router.get('/get-course-with-lesson/:languageId', generalAuthFunction, getCourseWithLessonsController)
+//generalAuthFunction, rolePermit(["admin"]),
 export default router;

@@ -9,3 +9,6 @@ export declare const getUserCoursesController: (req: Request, res: Response, nex
 export declare const getUserCourseController: (req: Request, res: Response, next: import("express").NextFunction) => Promise<void>;
 export declare const addUserCourseController: (req: Request, res: Response, next: import("express").NextFunction) => Promise<void>;
 export declare const updateUserCourseController: (req: Request, res: Response, next: import("express").NextFunction) => Promise<void>;
+export declare const getCourseWithLessonsController: (req: Request, res: Response, next: import("express").NextFunction) => Promise<void>;
+export declare const removeUserCourseController: (req: Request, res: Response, next: import("express").NextFunction) => Promise<void>;
+export declare const createCourseWithLessonsController: (req: Request, res: Response, next: import("express").NextFunction) => Promise<void>;

@@ -54,6 +54,14 @@ const deleteCourse = utilities_1.errorUtilities.withServiceErrorHandling(async (
     await course_repository_1.default.deleteCourse(id);
     return { message: "Course deleted successfully" };
 });
+const getCourseWithLessonsService = utilities_1.errorUtilities.withServiceErrorHandling(async (languageId) => {
+    const course = await course_repository_1.default.getCourseWithLanguageId(languageId);
+    if (!course) {
+        throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.COURSE_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
+    }
+    const lessons = await lesson_repository_1.default.getLessonsOnly(course.id);
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.CourseResponses.PROCESS_SUCCESSFUL, { course, lessons });
+});
 const createCourseWithLessons = utilities_1.errorUtilities.withServiceErrorHandling(async (courseData, lessons, languageId) => {
     // const { lessons, languageId, ...courseData } = coursePayload;
     // Create course
@@ -128,5 +136,6 @@ exports.default = {
     addCourse,
     updateCourse,
     deleteCourse,
-    createCourseWithLessons
+    createCourseWithLessons,
+    getCourseWithLessonsService
 };

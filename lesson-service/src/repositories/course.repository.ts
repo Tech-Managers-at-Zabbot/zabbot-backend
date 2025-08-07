@@ -11,7 +11,7 @@ const courseRepositories = {
 				isActive,
 				languageId
 			};
-			const courses = await Courses.findAll({where:where});
+			const courses = await Courses.findAll({ where: where });
 
 			return courses;
 		} catch (error: any) {
@@ -22,6 +22,20 @@ const courseRepositories = {
 	getCourse: async (id: string) => {
 		try {
 			const course = await Courses.findByPk(id);
+
+			return course;
+
+		} catch (error: any) {
+			throw errorUtilities.createError(`Error Fetching course: ${error.message}`, 500);
+		}
+	},
+
+	getCourseWithLanguageId: async (languageId: string) => {
+		try {
+			const course = await Courses.findOne({ 
+				where: { languageId }, 
+				raw: true
+			});
 
 			return course;
 
