@@ -1,12 +1,41 @@
 import lessonRepositories from "../../repositories/lesson.repository";
-import { errorUtilities } from "../../../../shared/utilities";
+import { errorUtilities, responseUtilities } from "../../../../shared/utilities";
 import contentRepositories from "../../repositories/content.repository"
+import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
+import { CourseResponses } from "../../responses/responses";
 
 const getContents = errorUtilities.withServiceErrorHandling (
     async () => {
         const getContents = await contentRepositories.getContents();
-        return getContents;
+         if (!getContents) {
+              throw errorUtilities.createError(
+                CourseResponses.CONTENTS_NOT_FOUND,
+                StatusCodes.NotFound
+              );
+            }
+            return responseUtilities.handleServicesResponse(
+              StatusCodes.OK,
+              CourseResponses.PROCESS_SUCCESSFUL,
+              getContents
+            );
     }
+);
+
+const getContentsForLanguage = errorUtilities.withServiceErrorHandling (
+  async (languageId:string) => {
+      const getLanguageContents = await contentRepositories.getLanguageContents(languageId);
+       if (!getLanguageContents) {
+            throw errorUtilities.createError(
+              CourseResponses.CONTENTS_NOT_FOUND,
+              StatusCodes.NotFound
+            );
+          }
+          return responseUtilities.handleServicesResponse(
+            StatusCodes.OK,
+            CourseResponses.PROCESS_SUCCESSFUL,
+            getLanguageContents
+          );
+  }
 );
 
 const getContent = errorUtilities.withServiceErrorHandling (
@@ -39,7 +68,7 @@ const addContent = errorUtilities.withServiceErrorHandling (
 
     const payload = {
       lessonId: contentData.lessonId,
-      languageContentId: contentData.languageContentId,
+      languageId: contentData.languageId,
       translation: contentData.translation,
       level: contentData.level,
       createdAt: new Date()
@@ -58,7 +87,7 @@ const updateContent = errorUtilities.withServiceErrorHandling (
     }
 
     content.lessonId = contentData.lessonId;
-    content.languageContentId = contentData.languageContentId;
+    content.languageId = contentData.languageId;
     content.translation = contentData.translation;
     content.updatedAt = new Date();
 
@@ -86,5 +115,6 @@ export default {
   getLessonContents,
   addContent,
   updateContent,
-  deleteContent
+  deleteContent,
+  getContentsForLanguage
 }

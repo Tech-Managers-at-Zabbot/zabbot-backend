@@ -28,6 +28,15 @@ const lessonRepositories = {
             throw utilities_1.errorUtilities.createError(`Error Fetching lessons: ${error.message}`, 500);
         }
     },
+    getLanguageLessons: async (languageId) => {
+        try {
+            const lessons = await lesson_1.default.findAll({ where: { languageId }, order: [['orderNumber', 'ASC']], raw: true });
+            return lessons;
+        }
+        catch (error) {
+            throw utilities_1.errorUtilities.createError(`Error Fetching lessons: ${error.message}`, 500);
+        }
+    },
     getLesson: async (id) => {
         try {
             const lesson = await lesson_1.default.findByPk(id);

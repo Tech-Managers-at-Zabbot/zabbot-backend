@@ -36,6 +36,16 @@ const contentRepositories = {
     }
   },
 
+  getLanguageContents: async (languageId: string) => {
+    try {
+      const contents = await Contents.findAll({ where: { languageId } });
+      return contents;
+
+    } catch (error: any) {
+      throw errorUtilities.createError(`Error fetching contents for this language: ${error.message}`, 500);
+    }
+  },
+
   createContent: async (contentData: any, transaction?: Transaction) => {
     try {
       // Create a new content

@@ -103,6 +103,7 @@ const createCourseWithLessons = utilities_1.errorUtilities.withServiceErrorHandl
                         lessonId: newLessonData.id,
                         translation: contentData.translation,
                         isGrammarRule: false,
+                        languageId,
                         sourceType: contentData.sourceType,
                         customText: contentData.customText,
                         ededunPhrases: contentData.ededunPhrases,

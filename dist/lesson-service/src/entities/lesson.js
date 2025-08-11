@@ -11,6 +11,7 @@ class Lessons extends sequelize_1.Model {
     updatedAt;
     orderNumber;
     totalContents;
+    languageId;
     headLineTag;
     outcomes;
     objectives;
@@ -41,6 +42,10 @@ Lessons.init({
     objectives: {
         type: sequelize_1.DataTypes.TEXT('long'),
         allowNull: true
+    },
+    languageId: {
+        type: sequelize_1.DataTypes.UUID,
+        allowNull: false,
     },
     headLineTag: {
         type: sequelize_1.DataTypes.TEXT('long'),
