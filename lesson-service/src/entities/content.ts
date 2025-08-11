@@ -6,7 +6,7 @@ import { ContentSourceType } from '../data-types/enums';
 class Contents extends Model<ContentAttributes> implements ContentAttributes {
   public id!: string;
   public lessonId!: string;
-  public languageContentId!: string;
+  public languageId!: string;
   public translation?: string;
   // public totalContents?: number;
   public createdAt?: Date;
@@ -25,6 +25,10 @@ Contents.init(
       defaultValue: DataTypes.UUIDV4,
     },
     lessonId: {
+      type: DataTypes.UUID,
+      allowNull: false
+    },
+    languageId: {
       type: DataTypes.UUID,
       allowNull: false
     },

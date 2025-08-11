@@ -24,6 +24,7 @@ export interface LessonAttributes {
     };
   }[];
   headLineTag?: string;
+  languageId: string;
   estimatedDuration: number;
   createdAt: Date;
   totalContents?: number;
@@ -52,6 +53,7 @@ export interface ContentAttributes {
     contentType: ContentDataType;
     filePath: string;
   }[];
+  languageId: string;
   ededunPhrases?: string;
   sourceType: string;
   createdAt?: Date;

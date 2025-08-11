@@ -224,7 +224,7 @@ const loginUserService = utilities_1.errorUtilities.withServiceErrorHandling(asy
             email: user.email,
             role: user.role,
         },
-        expires: "2h",
+        expires: stayLoggedIn ? "30d" : "2h",
     };
     const refreshTokenData = {
         data: {
@@ -232,7 +232,7 @@ const loginUserService = utilities_1.errorUtilities.withServiceErrorHandling(asy
             email: user.email,
             role: user.role,
         },
-        expires: "30d",
+        expires: "60d",
     };
     const accessToken = index_1.helperFunctions.generateToken(accessTokenData);
     const refreshToken = index_1.helperFunctions.generateToken(refreshTokenData);

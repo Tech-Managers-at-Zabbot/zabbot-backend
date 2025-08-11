@@ -6,7 +6,7 @@ const enums_1 = require("../data-types/enums");
 class Contents extends sequelize_1.Model {
     id;
     lessonId;
-    languageContentId;
+    languageId;
     translation;
     createdAt;
     updatedAt;
@@ -22,6 +22,10 @@ Contents.init({
         defaultValue: sequelize_1.DataTypes.UUIDV4,
     },
     lessonId: {
+        type: sequelize_1.DataTypes.UUID,
+        allowNull: false
+    },
+    languageId: {
         type: sequelize_1.DataTypes.UUID,
         allowNull: false
     },

@@ -20,6 +20,14 @@ export const getLessonContentsController = errorUtilities.withControllerErrorHan
   }
 );
 
+export const getLanguageContentsController = errorUtilities.withControllerErrorHandling(
+  async (req: Request, res: Response) => {
+    const { languageId } = req.params;
+    const contents = await contentService.getContentsForLanguage(languageId);
+    return responseUtilities.responseHandler(res, contents.message, contents.statusCode, contents.data);
+  }
+);
+
 // Controller to get a single content
 export const getContentController = errorUtilities.withControllerErrorHandling(
   async (req: Request, res: Response) => {

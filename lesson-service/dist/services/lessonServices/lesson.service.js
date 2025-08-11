@@ -8,6 +8,7 @@ const lesson_repository_1 = __importDefault(require("../../repositories/lesson.r
 const utilities_1 = require("../../../../shared/utilities");
 const statusCodes_responses_1 = require("../../../../shared/statusCodes/statusCodes.responses");
 const content_repository_1 = __importDefault(require("../../repositories/content.repository"));
+const responses_1 = require("../../responses/responses");
 // import languageRepositories from "src/repositories/language.repository";
 const getLessons = utilities_1.errorUtilities.withServiceErrorHandling(async () => {
     const lessons = await lesson_repository_1.default.getLessons();
@@ -19,6 +20,13 @@ const getLesson = utilities_1.errorUtilities.withServiceErrorHandling(async (id)
         throw utilities_1.errorUtilities.createError(`Lesson not found`, 404);
     }
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, "", lesson);
+});
+const getLessonsForLanguage = utilities_1.errorUtilities.withServiceErrorHandling(async (languageId) => {
+    const getLanguageLessons = await lesson_repository_1.default.getLanguageLessons(languageId);
+    if (!getLanguageLessons) {
+        throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.LESSONS_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
+    }
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.CourseResponses.PROCESS_SUCCESSFUL, getLanguageLessons);
 });
 const getLessonWithContents = utilities_1.errorUtilities.withServiceErrorHandling(async (lessonId) => {
     const lesson = await lesson_repository_1.default.getLesson(lessonId);
@@ -66,5 +74,6 @@ exports.default = {
     getLesson,
     createLesson,
     updateLesson,
-    getLessonWithContents
+    getLessonWithContents,
+    getLessonsForLanguage
 };

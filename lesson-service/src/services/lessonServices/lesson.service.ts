@@ -4,6 +4,7 @@ import lessonRepositories from "../../repositories/lesson.repository"
 import { errorUtilities, responseUtilities } from "../../../../shared/utilities";
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
 import contentRepositories from "../../repositories/content.repository";
+import { CourseResponses } from "../../responses/responses";
 // import languageRepositories from "src/repositories/language.repository";
 
 const getLessons = errorUtilities.withServiceErrorHandling(
@@ -21,6 +22,23 @@ const getLesson = errorUtilities.withServiceErrorHandling (
     }
 
     return responseUtilities.handleServicesResponse(StatusCodes.OK, "", lesson);
+  }
+);
+
+const getLessonsForLanguage = errorUtilities.withServiceErrorHandling (
+  async (languageId:string) => {
+      const getLanguageLessons = await lessonRepositories.getLanguageLessons(languageId);
+       if (!getLanguageLessons) {
+            throw errorUtilities.createError(
+              CourseResponses.LESSONS_NOT_FOUND,
+              StatusCodes.NotFound
+            );
+          }
+          return responseUtilities.handleServicesResponse(
+            StatusCodes.OK,
+            CourseResponses.PROCESS_SUCCESSFUL,
+            getLanguageLessons
+          );
   }
 );
 
@@ -85,5 +103,6 @@ export default {
   getLesson,
   createLesson,
   updateLesson,
-  getLessonWithContents
+  getLessonWithContents,
+  getLessonsForLanguage
 }

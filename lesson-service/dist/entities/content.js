@@ -15,6 +15,10 @@ Contents.init({
         type: sequelize_1.DataTypes.UUID,
         allowNull: false
     },
+    languageId: {
+        type: sequelize_1.DataTypes.UUID,
+        allowNull: false
+    },
     isGrammarRule: {
         type: sequelize_1.DataTypes.BOOLEAN,
         allowNull: false,

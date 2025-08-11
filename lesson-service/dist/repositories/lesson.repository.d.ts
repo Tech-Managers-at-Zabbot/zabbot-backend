@@ -5,6 +5,7 @@ declare const lessonRepositories: {
         courseId: string;
     }) => Promise<Lessons[]>;
     getLessonsOnly: (courseId: string) => Promise<Lessons[]>;
+    getLanguageLessons: (languageId: string) => Promise<Lessons[]>;
     getLesson: (id: string) => Promise<Lessons | null>;
     addLesson: (lessonData: any, transaction?: Transaction) => Promise<Lessons>;
     updateLesson: (lessonData: any, transaction?: Transaction) => Promise<any>;
