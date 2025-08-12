@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { comparePronounciation } from "../controllers/speakingController";
+import { comparePronounciation } from "../controllers/pronunciationFeedback";
 import multer from "multer";
 import path from "path";
 

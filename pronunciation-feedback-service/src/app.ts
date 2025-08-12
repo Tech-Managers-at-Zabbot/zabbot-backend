@@ -16,7 +16,7 @@
 import express from "express";
 import bodyParser from "body-parser";
 import cors from "cors";
-import speakingRotes from "./routes/speakingRoutes";
+import pronunciationFeedbackRoutes from "./routes/pronunciationFeedbackRoutes";
 import helmet from "helmet";
 import compression from "compression";
 import logger from "morgan";
@@ -31,7 +31,7 @@ const app = express();
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 export const config = {
-  port: process.env.SPEAKING_SERVICE_SERVER_PORT || 3004,
+  port: process.env.PRONUNCIATION_FEEDBACK_SERVICE_SERVER_PORT || 3004,
   // dbUrl: process.env.DB_URL,
   // jwtSecret: process.env.AUTH_SERVICE_JWT_SECRET
 };
@@ -48,12 +48,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Routes
-app.use("/", speakingRotes);
+app.use("/", pronunciationFeedbackRoutes);
 
 // Health check endpoint
 app.get("/", (req, res) => {
   res.json({
-    service: "speaking-service",
+    service: "pronunciation-feedback-service",
     status: "ok",
   });
 });
@@ -65,7 +65,9 @@ app.use(errorUtilities.globalErrorHandler as any);
 if (require.main === module) {
   const PORT = config.port;
   app.listen(PORT, () => {
-    console.log(`Speaking Service Server running on port ${PORT}`);
+    console.log(
+      `Pronunciation Feedback Service Server running on port ${PORT}`
+    );
   });
 }
 

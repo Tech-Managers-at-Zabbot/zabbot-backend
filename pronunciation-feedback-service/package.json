@@ -1,7 +1,7 @@
 {
-  "name": "speaking-service",
+  "name": "pronunciation-feedback-service",
   "version": "1.0.0",
-  "description": "Service for speaking with Owe",
+  "description": "Pronunciation feedback",
   "main": "dist/app.js",
   "keywords": [],
   "author": "Olaide Agboola",
@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@tensorflow/tfjs": "^4.22.0",
+    "axios": "^1.11.0",
     "canvas": "^2.11.2",
     "chart.js": "^4.4.1",
     "chartjs-node-canvas": "^5.0.0",

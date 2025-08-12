@@ -14,6 +14,7 @@ import { writeFile } from "fs/promises";
 import DynamicTimeWarping from "dynamic-time-warping";
 import { getEmbedding } from "../services/whisperEncoding";
 import { v2 as cloudinary } from "cloudinary";
+import axios from "axios";
 
 const sampleRate = 16000;
 const openai = new OpenAI({
@@ -77,6 +78,7 @@ export const comparePronounciation = async (req: Request, res: Response) => {
   );
 
   try {
+    await getMasterFile("", masterRawFilePath);
     const { tensor: userTensor, raw: userRawAudio } = await loadAndTrimAudio({
       rawFilePath: userRawFilePath,
       wavFilePath: userWavFilePath,
@@ -160,15 +162,13 @@ export const comparePronounciation = async (req: Request, res: Response) => {
     } else {
       remark = "Needs improvement — listen and try again.";
     }
-    console.log(remark);
 
     const plotDTWResult = await cloudinary.uploader.upload(plotDTWPath, {
       folder: "plots",
     });
-    const plotResult = await cloudinary.uploader.upload(plotPath);
-
-    console.log("plotdtw cloudinary result", plotDTWResult);
-    console.log("plot cloudinary result", plotResult);
+    const plotResult = await cloudinary.uploader.upload(plotPath, {
+      folder: "plots",
+    });
 
     fsPromises.unlink(userRawFilePath);
     fsPromises.unlink(userTrimmedFilePath);
@@ -202,6 +202,16 @@ export const comparePronounciation = async (req: Request, res: Response) => {
     fsPromises.unlink(normalisedMasterWavPath);
     res.status(500).json({ error });
   }
+};
+
+const getMasterFile = async (url: string, outputPath: string) => {
+  const response = await axios.get(url, { responseType: "stream" });
+  response.data.pipe(fs.createWriteStream(outputPath));
+
+  return new Promise((resolve, reject) => {
+    response.data.on("end", resolve);
+    response.data.on("error", reject);
+  });
 };
 
 // Helper: Promisify ffmpeg save process
