@@ -37,9 +37,13 @@ const lessonRepositories = {
             throw utilities_1.errorUtilities.createError(`Error Fetching lessons: ${error.message}`, 500);
         }
     },
-    getLesson: async (id, attributes = []) => {
+    getLesson: async (id, attributes) => {
         try {
-            const lesson = await lesson_1.default.findOne({ where: { id }, attributes, raw: true });
+            const lesson = await lesson_1.default.findOne({
+                where: { id },
+                attributes: attributes ? attributes : undefined,
+                raw: true
+            });
             return lesson;
         }
         catch (error) {

@@ -44,9 +44,15 @@ const lessonRepositories = {
     }
   },
 
-  getLesson: async (id: string, attributes:string[]=[]) => {
+  getLesson: async (id: string, attributes?:string[]) => {
     try {
-      const lesson = await Lessons.findOne({ where: { id }, attributes, raw: true });
+      const lesson = await Lessons.findOne(
+        { 
+        where: { id }, 
+        attributes: attributes ? attributes : undefined, 
+        raw: true 
+      }
+    );
 
       return lesson;
 
