@@ -26,7 +26,7 @@ ContentFiles.init(
     contentType: {
       type: DataTypes.ENUM(...Object.values(ContentDataType)),
       allowNull: false,
-      defaultValue: ContentDataType.AUDIO, // Default to AUDIO
+      defaultValue: ContentDataType.AUDIO,
     },
     filePath: {
       type: DataTypes.STRING,

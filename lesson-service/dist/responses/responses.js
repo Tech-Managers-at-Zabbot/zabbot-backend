@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CourseResponses = exports.DailyGoalResponses = exports.LanguageResponses = exports.DailyWordResponses = void 0;
+exports.QuizResponses = exports.CourseResponses = exports.DailyGoalResponses = exports.LanguageResponses = exports.DailyWordResponses = void 0;
 var DailyWordResponses;
 (function (DailyWordResponses) {
     DailyWordResponses["NOT_FOUND"] = "This word does not exist, please check and try again";
@@ -36,3 +36,15 @@ var CourseResponses;
     CourseResponses["LESSONS_NOT_FOUND"] = "Lessons not found, please try again";
     CourseResponses["CONTENT_NOT_FOUND"] = "Content not found, please try again";
 })(CourseResponses || (exports.CourseResponses = CourseResponses = {}));
+var QuizResponses;
+(function (QuizResponses) {
+    QuizResponses["QUIZ_NOT_FOUND"] = "Quiz not found, please try again";
+    QuizResponses["QUIZZES_NOT_FOUND"] = "Quizzes not found for this course";
+    QuizResponses["QUIZ_ALREADY_EXISTS"] = "Quiz already exists for this course and language";
+    QuizResponses["QUIZ_CREATED_SUCCESSFULLY"] = "Quiz created successfully";
+    QuizResponses["QUIZ_UPDATED_SUCCESSFULLY"] = "Quiz updated successfully";
+    QuizResponses["QUIZ_DELETED_SUCCESSFULLY"] = "Quiz deleted successfully";
+    QuizResponses["QUIZ_SUBMITTED_SUCCESSFULLY"] = "Quiz submitted successfully";
+    QuizResponses["QUIZ_SUBMISSION_FAILED"] = "Quiz submission failed, please try again";
+    QuizResponses["SUCCESSFUL_PROCESS"] = "Process successful";
+})(QuizResponses || (exports.QuizResponses = QuizResponses = {}));

@@ -1,4 +1,4 @@
-import { ContentDataType, Level } from "./enums";
+import { ContentDataType, Level, QuizType } from "./enums";
 export interface LanguageAttributes {
     id?: string;
     code: string;
@@ -121,4 +121,31 @@ export interface UserCourseAttributes {
     lastContentId?: string;
     languageId: string;
     isActive: boolean;
+}
+export interface QuizAttributes {
+    id: string;
+    courseId: string;
+    lessonId?: string;
+    contentId?: string;
+    languageId: string;
+    quizType: QuizType;
+    instruction: string;
+    question: string;
+    options?: string[];
+    correctOption?: string;
+    correctAnswer?: string;
+    createdAt: Date;
+    updatedAt?: Date;
+}
+export interface UserQuizAnswerAttributes {
+    id: string;
+    userId: string;
+    quizId: string;
+    courseId: string;
+    lessonId?: string;
+    contentId?: string;
+    userAnswer: string;
+    isCorrect: boolean;
+    createdAt: Date;
+    updatedAt?: Date;
 }

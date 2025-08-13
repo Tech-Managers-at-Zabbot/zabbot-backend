@@ -89,6 +89,7 @@ const createCourseWithLessons = utilities_1.errorUtilities.withServiceErrorHandl
                 courseId: newCourseData.id,
                 createdAt: new Date(),
                 totalContents: contents?.length || 0,
+                languageId,
                 outcomes: lesson.outcomes,
                 objectives: lesson.objectives,
                 estimatedDuration: lesson.estimatedTime || 0,
@@ -138,5 +139,5 @@ exports.default = {
     updateCourse,
     deleteCourse,
     createCourseWithLessons,
-    getCourseWithLessonsService
+    getCourseWithLessonsService,
 };

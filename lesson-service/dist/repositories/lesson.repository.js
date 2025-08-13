@@ -12,7 +12,7 @@ const lessonRepositories = {
             if (typeof filter?.courseId === 'string') {
                 where.courseId = filter.courseId;
             }
-            const lessons = await lesson_1.default.findAll({ where });
+            const lessons = await lesson_1.default.findAll({ where, raw: true, order: [['orderNumber', 'ASC']] });
             return lessons;
         }
         catch (error) {
@@ -37,9 +37,9 @@ const lessonRepositories = {
             throw utilities_1.errorUtilities.createError(`Error Fetching lessons: ${error.message}`, 500);
         }
     },
-    getLesson: async (id) => {
+    getLesson: async (id, attributes = []) => {
         try {
-            const lesson = await lesson_1.default.findByPk(id);
+            const lesson = await lesson_1.default.findOne({ where: { id }, attributes, raw: true });
             return lesson;
         }
         catch (error) {

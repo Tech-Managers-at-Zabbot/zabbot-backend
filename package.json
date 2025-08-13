@@ -31,6 +31,7 @@
     "express": "^5.1.0",
     "fs-extra": "^11.3.0",
     "http-proxy-middleware": "^3.0.5",
+    "joi": "^18.0.0",
     "jsonwebtoken": "^9.0.2",
     "lodash.merge": "^4.6.2",
     "mailchimp_transactional": "^0.0.1-security",
