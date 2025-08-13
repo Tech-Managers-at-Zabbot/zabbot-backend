@@ -1,14 +1,14 @@
 import process from "process";
 
-process.on("uncaughtException", (err) => {
-  console.error("💥 UNCAUGHT EXCEPTION:", err);
-  shutdown(1);
-});
+// process.on("uncaughtException", (err) => {
+//   console.error("💥 UNCAUGHT EXCEPTION:", err);
+//   shutdown(1);
+// });
 
-process.on("unhandledRejection", (reason, promise) => {
-  console.error("💥 UNHANDLED REJECTION:", reason);
-  shutdown(1);
-});
+// process.on("unhandledRejection", (reason, promise) => {
+//   console.error("💥 UNHANDLED REJECTION:", reason);
+//   shutdown(1);
+// });
 
 import "./cronJob-services/lessonServiceJobs";
 import express from "express";
@@ -78,6 +78,21 @@ const services: ServiceConfig[] = [
     entryPoint: {
       dev: path.resolve(__dirname, "./ededun-service/src/app.ts"),
       prod: path.resolve(__dirname, "../ededun-service/dist/app.js"),
+    },
+  },
+  {
+    name: "pronunciation-feedback-service",
+    path: "/api/v1/pronunciation",
+    port: 3007,
+    entryPoint: {
+      dev: path.resolve(
+        __dirname,
+        "./pronunciation-feedback-service/src/app.ts"
+      ),
+      prod: path.resolve(
+        __dirname,
+        "../pronunciation-feedback-service/dist/app.js"
+      ),
     },
   },
 ];

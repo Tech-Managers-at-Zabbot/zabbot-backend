@@ -89,6 +89,18 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
       `${masterFileName}.wav`
     );
 
+    // Plots
+    const plotPath = path.join(
+      __dirname,
+      "../utilities/audioFiles/plots",
+      `${userfileName}_plot.png`
+    );
+    const plotDTWPath = path.join(
+      __dirname,
+      "../utilities/audioFiles/plots",
+      `${userfileName}_plotDTW.png`
+    );
+
     try {
       const masterPronunciation =
         await referenePronunciationRepositories.getPronunciation(
@@ -169,19 +181,8 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         Math.round((0.05 * embeddingSimilarity + 0.95 * textSimilarity) * 100) /
         100;
 
-      // Plots
-      const plotPath = path.join(
-        __dirname,
-        "../utilities/audioFiles/plots",
-        `${userfileName}_plot.png`
-      );
       await plotOverlay(masterRawAudio, userRawAudio, plotPath);
 
-      const plotDTWPath = path.join(
-        __dirname,
-        "../utilities/audioFiles/plots",
-        `${userfileName}_plotDTW.png`
-      );
       await plotDTW(masterAudioEmbedding, userAudioEmbedding, plotDTWPath);
 
       let remark = "";
@@ -227,6 +228,9 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
       fsPromises.unlink(masterTrimmedFilePath);
       fsPromises.unlink(normalisedMasterWavPath);
 
+      fsPromises.unlink(plotDTWPath);
+      fsPromises.unlink(plotPath);
+
       return responseUtilities.handleServicesResponse(
         StatusCodes.Created,
         "Pronunciation completed",
@@ -252,6 +256,9 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
       fsPromises.unlink(masterWavFilePath);
       fsPromises.unlink(masterTrimmedFilePath);
       fsPromises.unlink(normalisedMasterWavPath);
+
+      fsPromises.unlink(plotDTWPath);
+      fsPromises.unlink(plotPath);
       throw errorUtilities.createError(
         `Error comparing pronunciation: ${error.message}`,
         500
