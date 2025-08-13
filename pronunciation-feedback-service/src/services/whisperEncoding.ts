@@ -155,7 +155,10 @@ export const getEmbedding = async (
   audioFilePath: string
 ): Promise<tf.Tensor2D> => {
   // Assume the ONNX model is in the same directory as this script.
-  const onnxModelPath = path.join(__dirname, "whisperEncoder.onnx");
+  const onnxModelPath = path.join(
+    __dirname,
+    "../utilities/whisperEncoder.onnx"
+  );
 
   try {
     // 1. Load the ONNX model session
