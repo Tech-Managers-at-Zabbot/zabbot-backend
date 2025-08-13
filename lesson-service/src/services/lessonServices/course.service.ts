@@ -192,5 +192,5 @@ export default {
   updateCourse,
   deleteCourse,
   createCourseWithLessons,
-  getCourseWithLessonsService
+  getCourseWithLessonsService,
 };

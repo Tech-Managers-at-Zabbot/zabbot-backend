@@ -8,45 +8,45 @@ const lessonRepositories = {
   getLessons: async (filter?: { courseId: string }) => {
     try {
       const where: any = {};
-			if (typeof filter?.courseId === 'string') {
-				where.courseId = filter.courseId;
-			}
+      if (typeof filter?.courseId === 'string') {
+        where.courseId = filter.courseId;
+      }
 
-      const lessons = await Lessons.findAll({ where });
+      const lessons = await Lessons.findAll({ where, raw: true, order: [['orderNumber', 'ASC']] });
 
       return lessons;
 
     } catch (error: any) {
-        throw errorUtilities.createError(`Error Fetching lessons: ${error.message}`, 500);
+      throw errorUtilities.createError(`Error Fetching lessons: ${error.message}`, 500);
     }
   },
 
   getLessonsOnly: async (courseId: string) => {
     try {
-      const lessons = await Lessons.findAll({ where: {courseId }, order: [['orderNumber', 'ASC']], raw:true});
+      const lessons = await Lessons.findAll({ where: { courseId }, order: [['orderNumber', 'ASC']], raw: true });
 
       return lessons;
 
     } catch (error: any) {
-        throw errorUtilities.createError(`Error Fetching lessons: ${error.message}`, 500);
+      throw errorUtilities.createError(`Error Fetching lessons: ${error.message}`, 500);
     }
   },
 
 
   getLanguageLessons: async (languageId: string) => {
     try {
-      const lessons = await Lessons.findAll({ where: {languageId }, order: [['orderNumber', 'ASC']], raw:true});
+      const lessons = await Lessons.findAll({ where: { languageId }, order: [['orderNumber', 'ASC']], raw: true });
 
       return lessons;
 
     } catch (error: any) {
-        throw errorUtilities.createError(`Error Fetching lessons: ${error.message}`, 500);
+      throw errorUtilities.createError(`Error Fetching lessons: ${error.message}`, 500);
     }
   },
 
-  getLesson: async (id: string) => {
+  getLesson: async (id: string, attributes:string[]=[]) => {
     try {
-      const lesson = await Lessons.findByPk(id);
+      const lesson = await Lessons.findOne({ where: { id }, attributes, raw: true });
 
       return lesson;
 
@@ -70,7 +70,7 @@ const lessonRepositories = {
   updateLesson: async (lessonData: any, transaction?: Transaction) => {
     try {
       // Update the language
-      const updatedLesson = await lessonData.update( lessonData, { transaction });
+      const updatedLesson = await lessonData.update(lessonData, { transaction });
 
       return updatedLesson;
 

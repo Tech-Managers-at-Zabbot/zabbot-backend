@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getLessonWithContentsController = exports.updateLessonController = exports.createLessonController = exports.getLanguageLessonsController = exports.getLessonController = exports.getLessonsController = void 0;
+exports.getLessonWithContentsController = exports.updateLessonController = exports.createLessonController = exports.getCourseLessonsController = exports.getLanguageLessonsController = exports.getLessonController = exports.getLessonsController = void 0;
 const lesson_service_1 = __importDefault(require("../services/lessonServices/lesson.service"));
 const utilities_1 = require("../../../shared/utilities");
 // Controller to get all lessons
@@ -22,6 +22,12 @@ exports.getLanguageLessonsController = utilities_1.errorUtilities.withController
     const { languageId } = req.params;
     const lesson = await lesson_service_1.default.getLessonsForLanguage(languageId);
     return utilities_1.responseUtilities.responseHandler(res, lesson.message, lesson.statusCode, lesson.data);
+});
+exports.getCourseLessonsController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
+    const { courseId } = req.params;
+    console.log('id', courseId);
+    const lessons = await lesson_service_1.default.getLessonsForCourse(courseId);
+    return utilities_1.responseUtilities.responseHandler(res, lessons.message, lessons.statusCode, lessons.data);
 });
 // Controller to create a new lesson
 exports.createLessonController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {

@@ -20,7 +20,6 @@ exports.getLessonContentsController = utilities_1.errorUtilities.withControllerE
 });
 exports.getLanguageContentsController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
     const { languageId } = req.params;
-    console.log('par', languageId);
     const contents = await content_service_1.default.getContentsForLanguage(languageId);
     return utilities_1.responseUtilities.responseHandler(res, contents.message, contents.statusCode, contents.data);
 });

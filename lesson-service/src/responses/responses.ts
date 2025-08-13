@@ -34,3 +34,15 @@ export enum CourseResponses {
     LESSONS_NOT_FOUND = "Lessons not found, please try again",
     CONTENT_NOT_FOUND = "Content not found, please try again",
 }
+
+export enum QuizResponses {
+    QUIZ_NOT_FOUND = "Quiz not found, please try again",
+    QUIZZES_NOT_FOUND = "Quizzes not found for this course",
+    QUIZ_ALREADY_EXISTS = "Quiz already exists for this course and language",
+    QUIZ_CREATED_SUCCESSFULLY = "Quiz created successfully",
+    QUIZ_UPDATED_SUCCESSFULLY = "Quiz updated successfully",
+    QUIZ_DELETED_SUCCESSFULLY = "Quiz deleted successfully",
+    QUIZ_SUBMITTED_SUCCESSFULLY = "Quiz submitted successfully",
+    QUIZ_SUBMISSION_FAILED = "Quiz submission failed, please try again",
+    SUCCESSFUL_PROCESS = "Process successful",
+}

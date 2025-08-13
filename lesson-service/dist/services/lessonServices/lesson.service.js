@@ -28,6 +28,20 @@ const getLessonsForLanguage = utilities_1.errorUtilities.withServiceErrorHandlin
     }
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.CourseResponses.PROCESS_SUCCESSFUL, getLanguageLessons);
 });
+const getLessonsForCourse = utilities_1.errorUtilities.withServiceErrorHandling(async (courseId) => {
+    const getCourseLessons = await lesson_repository_1.default.getLessons({ courseId });
+    if (!getCourseLessons) {
+        throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.LESSONS_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
+    }
+    const getLessonsContents = await Promise.all(getCourseLessons.map(async (lesson) => {
+        const contents = await content_repository_1.default.getLessonContents(lesson?.id);
+        return {
+            ...lesson,
+            contents: contents || []
+        };
+    }));
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.CourseResponses.PROCESS_SUCCESSFUL, getLessonsContents);
+});
 const getLessonWithContents = utilities_1.errorUtilities.withServiceErrorHandling(async (lessonId) => {
     const lesson = await lesson_repository_1.default.getLesson(lessonId);
     if (!lesson) {
@@ -75,5 +89,6 @@ exports.default = {
     createLesson,
     updateLesson,
     getLessonWithContents,
-    getLessonsForLanguage
+    getLessonsForLanguage,
+    getLessonsForCourse
 };

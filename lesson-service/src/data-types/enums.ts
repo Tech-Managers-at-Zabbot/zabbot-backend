@@ -34,3 +34,8 @@ export enum LanguageCode {
     HAUSA = 'HA',
     SWAHILI = 'SW'
 }
+
+export enum QuizType {
+  MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
+  FILL_IN_BLANK = 'FILL_IN_BLANK'
+}

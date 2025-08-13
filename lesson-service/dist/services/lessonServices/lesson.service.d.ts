@@ -5,5 +5,6 @@ declare const _default: {
     updateLesson: (...args: any[]) => Promise<any>;
     getLessonWithContents: (...args: any[]) => Promise<any>;
     getLessonsForLanguage: (...args: any[]) => Promise<any>;
+    getLessonsForCourse: (...args: any[]) => Promise<any>;
 };
 export default _default;
