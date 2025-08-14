@@ -9,6 +9,7 @@ const utilities_1 = require("../../../../shared/utilities");
 const statusCodes_responses_1 = require("../../../../shared/statusCodes/statusCodes.responses");
 const content_repository_1 = __importDefault(require("../../repositories/content.repository"));
 const responses_1 = require("../../responses/responses");
+const quiz_repository_1 = __importDefault(require("../../repositories/quiz.repository"));
 // import languageRepositories from "src/repositories/language.repository";
 const getLessons = utilities_1.errorUtilities.withServiceErrorHandling(async () => {
     const lessons = await lesson_repository_1.default.getLessons();
@@ -55,7 +56,8 @@ const getLessonWithContents = utilities_1.errorUtilities.withServiceErrorHandlin
             files: contentFiles
         };
     }));
-    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, "Successful", { lesson, contents });
+    const lessonQuizzes = await quiz_repository_1.default.getQuizzes({ lessonId });
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, "Successful", { lesson, contents, lessonQuizzes });
 });
 const createLesson = utilities_1.errorUtilities.withServiceErrorHandling(async (lessonData) => {
     const payload = {

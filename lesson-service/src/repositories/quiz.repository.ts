@@ -12,7 +12,7 @@ const quizRepositories = {
 				...filter,
 				// isActive,
 			};
-			const quizzes = await Quiz.findAll({ where: where, raw: true, order: [['createdAt', 'DESC']] });
+			const quizzes = await Quiz.findAll({ where: where, raw: true, order: [['createdAt', 'ASC']] });
 
 			return quizzes;
 		} catch (error: any) {
