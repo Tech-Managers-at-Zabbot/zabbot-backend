@@ -28,7 +28,7 @@ const contentRepositories = {
     },
     getLessonContents: async (lessonId) => {
         try {
-            const contents = await content_1.default.findAll({ where: { lessonId } });
+            const contents = await content_1.default.findAll({ where: { lessonId }, raw: true });
             return contents;
         }
         catch (error) {
@@ -37,7 +37,7 @@ const contentRepositories = {
     },
     getLanguageContents: async (languageId) => {
         try {
-            const contents = await content_1.default.findAll({ where: { languageId } });
+            const contents = await content_1.default.findAll({ where: { languageId }, raw: true });
             return contents;
         }
         catch (error) {
@@ -82,8 +82,8 @@ const contentRepositories = {
     // CRUD CONTENTS SESSION END
     getContentFiles: async (contentId) => {
         try {
-            const contentFiles = await content_file_1.default.findAll({ where: { contentId } });
-            return contentFiles || [];
+            const contentFiles = await content_file_1.default.findAll({ where: { contentId }, raw: true });
+            return contentFiles;
         }
         catch (error) {
             throw utilities_1.errorUtilities.createError(`Error fetching files for this content: ${error.message}`, 500);

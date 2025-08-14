@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.syncDatabases = void 0;
+exports.syncDatabases = syncDatabases;
 const databases_1 = require("./databases");
 require("./modelSync");
 async function syncDatabases() {
@@ -19,4 +19,3 @@ async function syncDatabases() {
         throw error;
     }
 }
-exports.syncDatabases = syncDatabases;

@@ -11,3 +11,5 @@ keys.ts
 migrations
 migration-config
 .sequelizerc
+contents.json
+store.ts

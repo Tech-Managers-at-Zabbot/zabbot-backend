@@ -8,6 +8,7 @@ const utilities_1 = require("../../../../shared/utilities");
 const content_repository_1 = __importDefault(require("../../repositories/content.repository"));
 const statusCodes_responses_1 = require("../../../../shared/statusCodes/statusCodes.responses");
 const responses_1 = require("../../responses/responses");
+const uuid_1 = require("uuid");
 const getContents = utilities_1.errorUtilities.withServiceErrorHandling(async () => {
     const getContents = await content_repository_1.default.getContents();
     if (!getContents) {
@@ -70,6 +71,37 @@ const deleteContent = utilities_1.errorUtilities.withServiceErrorHandling(async 
     await content_repository_1.default.deleteContent(id);
     return { message: "Content deleted successfully" };
 });
+const addContentFile = utilities_1.errorUtilities.withServiceErrorHandling(async (contentData) => {
+    if (Array.isArray(contentData)) {
+        const created = [];
+        const failed = [];
+        await Promise.all(contentData.map(async (data) => {
+            try {
+                const createdFile = await content_repository_1.default.createContentFile({ ...data, id: (0, uuid_1.v4)(), createdAt: new Date() });
+                if (createdFile) {
+                    created.push(createdFile);
+                }
+                else {
+                    failed.push({ data, reason: 'Unknown creation failure (no result returned)' });
+                }
+            }
+            catch (error) {
+                failed.push({
+                    data,
+                    reason: error?.message || 'Unknown error during creation',
+                });
+            }
+        }));
+        return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.MultiStatus, responses_1.CourseResponses.PROCESS_COMPLETED, { created, failed });
+    }
+    else {
+        const newContentFile = await content_repository_1.default.createContentFile(contentData);
+        if (!newContentFile) {
+            throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.PROCESS_UNSUCCESSFUL, statusCodes_responses_1.StatusCodes.NotImplemented);
+        }
+        return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.Created, responses_1.CourseResponses.PROCESS_SUCCESSFUL, newContentFile);
+    }
+});
 exports.default = {
     getContents,
     getContent,
@@ -77,5 +109,6 @@ exports.default = {
     addContent,
     updateContent,
     deleteContent,
-    getContentsForLanguage
+    getContentsForLanguage,
+    addContentFile
 };

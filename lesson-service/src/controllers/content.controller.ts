@@ -55,3 +55,10 @@ export const updateContentController = errorUtilities.withControllerErrorHandlin
     return responseUtilities.responseHandler(res, content.message, content.statusCode, content.data);
   }
 );
+
+export const addContentFileController = errorUtilities.withControllerErrorHandling(
+  async (request: Request, response: Response) => {
+    const contentFileDetails = await contentService.addContentFile(request.body);
+    return responseUtilities.responseHandler(response, contentFileDetails.message, contentFileDetails.statusCode, contentFileDetails.data);
+  }
+);

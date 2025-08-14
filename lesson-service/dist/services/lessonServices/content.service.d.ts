@@ -6,5 +6,6 @@ declare const _default: {
     updateContent: (...args: any[]) => Promise<any>;
     deleteContent: (...args: any[]) => Promise<any>;
     getContentsForLanguage: (...args: any[]) => Promise<any>;
+    addContentFile: (...args: any[]) => Promise<any>;
 };
 export default _default;

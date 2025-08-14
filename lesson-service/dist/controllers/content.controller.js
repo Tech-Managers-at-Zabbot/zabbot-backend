@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateContentController = exports.addContentController = exports.getContentController = exports.getLanguageContentsController = exports.getLessonContentsController = exports.getContentsController = void 0;
+exports.addContentFileController = exports.updateContentController = exports.addContentController = exports.getContentController = exports.getLanguageContentsController = exports.getLessonContentsController = exports.getContentsController = void 0;
 const content_service_1 = __importDefault(require("../services/lessonServices/content.service"));
 const utilities_1 = require("../../../shared/utilities");
 // Controller to get all contents
@@ -41,4 +41,8 @@ exports.updateContentController = utilities_1.errorUtilities.withControllerError
     const payload = req.body;
     const content = await content_service_1.default.updateContent(id, payload);
     return utilities_1.responseUtilities.responseHandler(res, content.message, content.statusCode, content.data);
+});
+exports.addContentFileController = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {
+    const contentFileDetails = await content_service_1.default.addContentFile(request.body);
+    return utilities_1.responseUtilities.responseHandler(response, contentFileDetails.message, contentFileDetails.statusCode, contentFileDetails.data);
 });
