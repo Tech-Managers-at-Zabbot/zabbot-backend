@@ -76,7 +76,16 @@ const getLessonWithContents = errorUtilities.withServiceErrorHandling(
       throw errorUtilities.createError(`Lesson not found`, 404);
     }
 
-    const contents = await contentRepositories.getLessonContents(lessonId)
+    const contentsData = await contentRepositories.getLessonContents(lessonId)
+
+    const contents = await Promise.all(
+      contentsData.map(async (content) => {
+        const contentFiles = await contentRepositories.getContentFiles(content.id);
+        return {
+          ...content,
+          files: contentFiles
+        };
+      }))
 
     return responseUtilities.handleServicesResponse(StatusCodes.OK, "Successful", { lesson, contents });
   }

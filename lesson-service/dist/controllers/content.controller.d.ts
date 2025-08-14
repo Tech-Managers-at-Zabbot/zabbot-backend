@@ -5,3 +5,4 @@ export declare const getLanguageContentsController: (req: Request, res: Response
 export declare const getContentController: (req: Request, res: Response, next: import("express").NextFunction) => Promise<void>;
 export declare const addContentController: (req: Request, res: Response, next: import("express").NextFunction) => Promise<void>;
 export declare const updateContentController: (req: Request, res: Response, next: import("express").NextFunction) => Promise<void>;
+export declare const addContentFileController: (req: Request, res: Response, next: import("express").NextFunction) => Promise<void>;

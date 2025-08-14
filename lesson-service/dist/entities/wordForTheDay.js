@@ -14,8 +14,8 @@ WordForTheDay.init({
         type: sequelize_1.DataTypes.UUID,
         allowNull: false,
         references: {
-            model: 'languages',
-            key: 'id',
+            model: "languages",
+            key: "id",
         },
     },
     dateUsed: {
@@ -50,13 +50,13 @@ WordForTheDay.init({
     },
 }, {
     sequelize: databases_1.users_service_db,
-    modelName: 'WordForTheDay',
-    tableName: 'wordForTheDay',
+    modelName: "WordForTheDay",
+    tableName: "wordForTheDay",
     timestamps: true,
     indexes: [
         {
             unique: true,
-            fields: ['languageId', 'dateUsed'],
+            fields: ["languageId", "dateUsed"],
         },
     ],
 });

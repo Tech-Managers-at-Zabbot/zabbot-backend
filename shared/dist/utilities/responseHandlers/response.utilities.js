@@ -13,11 +13,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const responseHandler = (response, message, statusCode, data, details, info) => {
     return response.status(statusCode).json({
-        status: statusCode === 201 || statusCode === 200 || statusCode === 207 ? "success" : "error",
+        status: statusCode === 201 || statusCode === 200 || statusCode === 207
+            ? "success"
+            : "error",
         message: message,
         data: data || null,
         details,
-        info
+        info,
     });
 };
 const handleServicesResponse = (statusCode, message, data) => {
@@ -33,5 +35,5 @@ const handleServicesResponse = (statusCode, message, data) => {
 };
 exports.default = {
     responseHandler,
-    handleServicesResponse
+    handleServicesResponse,
 };

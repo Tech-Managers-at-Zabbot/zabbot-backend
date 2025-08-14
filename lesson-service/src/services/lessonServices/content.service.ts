@@ -3,53 +3,55 @@ import { errorUtilities, responseUtilities } from "../../../../shared/utilities"
 import contentRepositories from "../../repositories/content.repository"
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
 import { CourseResponses } from "../../responses/responses";
+import { v4 } from "uuid";
+import { create } from "ts-node";
 
-const getContents = errorUtilities.withServiceErrorHandling (
-    async () => {
-        const getContents = await contentRepositories.getContents();
-         if (!getContents) {
-              throw errorUtilities.createError(
-                CourseResponses.CONTENTS_NOT_FOUND,
-                StatusCodes.NotFound
-              );
-            }
-            return responseUtilities.handleServicesResponse(
-              StatusCodes.OK,
-              CourseResponses.PROCESS_SUCCESSFUL,
-              getContents
-            );
+const getContents = errorUtilities.withServiceErrorHandling(
+  async () => {
+    const getContents = await contentRepositories.getContents();
+    if (!getContents) {
+      throw errorUtilities.createError(
+        CourseResponses.CONTENTS_NOT_FOUND,
+        StatusCodes.NotFound
+      );
     }
-);
-
-const getContentsForLanguage = errorUtilities.withServiceErrorHandling (
-  async (languageId:string) => {
-      const getLanguageContents = await contentRepositories.getLanguageContents(languageId);
-       if (!getLanguageContents) {
-            throw errorUtilities.createError(
-              CourseResponses.CONTENTS_NOT_FOUND,
-              StatusCodes.NotFound
-            );
-          }
-          return responseUtilities.handleServicesResponse(
-            StatusCodes.OK,
-            CourseResponses.PROCESS_SUCCESSFUL,
-            getLanguageContents
-          );
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.OK,
+      CourseResponses.PROCESS_SUCCESSFUL,
+      getContents
+    );
   }
 );
 
-const getContent = errorUtilities.withServiceErrorHandling (
+const getContentsForLanguage = errorUtilities.withServiceErrorHandling(
+  async (languageId: string) => {
+    const getLanguageContents = await contentRepositories.getLanguageContents(languageId);
+    if (!getLanguageContents) {
+      throw errorUtilities.createError(
+        CourseResponses.CONTENTS_NOT_FOUND,
+        StatusCodes.NotFound
+      );
+    }
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.OK,
+      CourseResponses.PROCESS_SUCCESSFUL,
+      getLanguageContents
+    );
+  }
+);
+
+const getContent = errorUtilities.withServiceErrorHandling(
   async (id: string) => {
     const content = await contentRepositories.getContent(id);
     if (!content) {
-        throw errorUtilities.createError(`Content not found`, 404);
+      throw errorUtilities.createError(`Content not found`, 404);
     }
 
     return content;
   }
 );
 
-const getLessonContents = errorUtilities.withServiceErrorHandling (
+const getLessonContents = errorUtilities.withServiceErrorHandling(
   async (lessonId: string) => {
     const lesson = await lessonRepositories.getLesson(lessonId);
     if (!lesson)
@@ -60,10 +62,10 @@ const getLessonContents = errorUtilities.withServiceErrorHandling (
   }
 );
 
-const addContent = errorUtilities.withServiceErrorHandling (
+const addContent = errorUtilities.withServiceErrorHandling(
   async (contentData: any) => {
     const lesson = await lessonRepositories.getLesson(contentData.lessonId);
-    if (!lesson) 
+    if (!lesson)
       throw errorUtilities.createError(`Lesson not found`, 404);
 
     const payload = {
@@ -79,7 +81,7 @@ const addContent = errorUtilities.withServiceErrorHandling (
   }
 );
 
-const updateContent = errorUtilities.withServiceErrorHandling (
+const updateContent = errorUtilities.withServiceErrorHandling(
   async (id: string, contentData: any) => {
     const content = await contentRepositories.getContent(id);
     if (!content) {
@@ -96,7 +98,7 @@ const updateContent = errorUtilities.withServiceErrorHandling (
   }
 );
 
-const deleteContent = errorUtilities.withServiceErrorHandling (
+const deleteContent = errorUtilities.withServiceErrorHandling(
   async (id: string) => {
     const content = await contentRepositories.getContent(id);
     if (!content) {
@@ -104,8 +106,54 @@ const deleteContent = errorUtilities.withServiceErrorHandling (
     }
 
     await contentRepositories.deleteContent(id);
-    
+
     return { message: "Content deleted successfully" };
+  }
+);
+
+const addContentFile = errorUtilities.withServiceErrorHandling(
+  async (contentData: any) => {
+    if (Array.isArray(contentData)) {
+      const created: Record<string, any>[] = []
+      const failed: { data: Record<string, any>; reason: string }[] = [];
+      await Promise.all(
+        contentData.map(async (data) => {
+          try {
+            const createdFile = await contentRepositories.createContentFile({...data, id: v4(), createdAt: new Date()});
+            if (createdFile) {
+              created.push(createdFile);
+            } else {
+              failed.push({ data, reason: 'Unknown creation failure (no result returned)' });
+            }
+          } catch (error: any) {
+            failed.push({
+              data,
+              reason: error?.message || 'Unknown error during creation',
+            });
+          }
+        })
+      );
+
+      return responseUtilities.handleServicesResponse(
+        StatusCodes.MultiStatus,
+        CourseResponses.PROCESS_COMPLETED,
+        { created, failed }
+      );
+
+    } else {
+      const newContentFile = await contentRepositories.createContentFile(contentData);
+      if (!newContentFile) {
+        throw errorUtilities.createError(
+          CourseResponses.PROCESS_UNSUCCESSFUL,
+          StatusCodes.NotImplemented
+        );
+      }
+      return responseUtilities.handleServicesResponse(
+        StatusCodes.Created,
+        CourseResponses.PROCESS_SUCCESSFUL,
+        newContentFile
+      );
+    }
   }
 );
 
@@ -116,5 +164,6 @@ export default {
   addContent,
   updateContent,
   deleteContent,
-  getContentsForLanguage
+  getContentsForLanguage,
+  addContentFile
 }

@@ -47,7 +47,14 @@ const getLessonWithContents = utilities_1.errorUtilities.withServiceErrorHandlin
     if (!lesson) {
         throw utilities_1.errorUtilities.createError(`Lesson not found`, 404);
     }
-    const contents = await content_repository_1.default.getLessonContents(lessonId);
+    const contentsData = await content_repository_1.default.getLessonContents(lessonId);
+    const contents = await Promise.all(contentsData.map(async (content) => {
+        const contentFiles = await content_repository_1.default.getContentFiles(content.id);
+        return {
+            ...content,
+            files: contentFiles
+        };
+    }));
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, "Successful", { lesson, contents });
 });
 const createLesson = utilities_1.errorUtilities.withServiceErrorHandling(async (lessonData) => {

@@ -12,4 +12,5 @@ router.get('/:id', content_controller_1.getContentController);
 router.post('/', content_controller_1.addContentController);
 router.put('/:id', content_controller_1.updateContentController);
 router.get('/language-contents/:languageId', content_controller_1.getLanguageContentsController);
+router.post('/add-file', content_controller_1.addContentFileController);
 exports.default = router;

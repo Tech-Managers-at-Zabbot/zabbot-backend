@@ -5,7 +5,8 @@ import {
     getContentController, 
     addContentController, 
     updateContentController,
-    getLanguageContentsController 
+    getLanguageContentsController, 
+    addContentFileController
 } from '../controllers/content.controller';
 
 const router = express.Router();
@@ -16,5 +17,6 @@ router.get('/:id', getContentController);
 router.post('/', addContentController);
 router.put('/:id', updateContentController);
 router.get('/language-contents/:languageId', getLanguageContentsController);
+router.post('/add-file', addContentFileController);
 
 export default router;
