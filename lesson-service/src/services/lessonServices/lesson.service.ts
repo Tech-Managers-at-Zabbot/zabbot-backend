@@ -5,6 +5,7 @@ import { errorUtilities, responseUtilities } from "../../../../shared/utilities"
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
 import contentRepositories from "../../repositories/content.repository";
 import { CourseResponses } from "../../responses/responses";
+import quizRepositories from "../../repositories/quiz.repository";
 // import languageRepositories from "src/repositories/language.repository";
 
 const getLessons = errorUtilities.withServiceErrorHandling(
@@ -87,7 +88,9 @@ const getLessonWithContents = errorUtilities.withServiceErrorHandling(
         };
       }))
 
-    return responseUtilities.handleServicesResponse(StatusCodes.OK, "Successful", { lesson, contents });
+    const lessonQuizzes = await quizRepositories.getQuizzes({ lessonId });
+
+    return responseUtilities.handleServicesResponse(StatusCodes.OK, "Successful", { lesson, contents, lessonQuizzes });
   }
 );
 
