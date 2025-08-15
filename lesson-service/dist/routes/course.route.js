@@ -8,7 +8,7 @@ const authorization_middleware_1 = require("../../../shared/middleware/authoriza
 const course_controller_1 = require("../controllers/course.controller");
 const router = express_1.default.Router();
 router.get('/:languageId', course_controller_1.getCoursesController);
-router.get('/:id', course_controller_1.getCourseController);
+router.get('/single-course/:courseId', course_controller_1.getCourseController);
 router.get('/title/:title', course_controller_1.getCourseByTitleController);
 router.post('/', authorization_middleware_1.generalAuthFunction, (0, authorization_middleware_1.rolePermit)(["admin"]), course_controller_1.addCourseController);
 router.put('/:id', authorization_middleware_1.generalAuthFunction, (0, authorization_middleware_1.rolePermit)(["admin"]), course_controller_1.updateCourseController);

@@ -8,10 +8,10 @@ import { Transaction } from "sequelize";
 import { CourseResponses } from "../../responses/responses";
 
 const getCoursesForLanguage = errorUtilities.withServiceErrorHandling(
-  async ( languageId:string, isActive?: boolean) => {
-    const payload = { isActive, languageId };
+  async (languageId: string, isActive?: boolean) => {
+    // const payload = { isActive, languageId };
     const courses = await courseRepositories.getCourses(isActive, languageId);
-     if (!courses) {
+    if (!courses) {
       throw errorUtilities.createError(
         CourseResponses.COURSES_NOT_FETCHED,
         StatusCodes.NotFound
@@ -26,13 +26,17 @@ const getCoursesForLanguage = errorUtilities.withServiceErrorHandling(
 );
 
 const getCourse = errorUtilities.withServiceErrorHandling(
-  async (id: string) => {
-    const course = await courseRepositories.getCourse(id);
+  async (id: string, projections?: string[]) => {
+    const course = await courseRepositories.getCourse(id, projections);
     if (!course) {
-      throw errorUtilities.createError(`Course not found`, 404);
+      throw errorUtilities.createError(CourseResponses.COURSE_NOT_FOUND, StatusCodes.NotFound);
     }
 
-    return course;
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.OK,
+      CourseResponses.PROCESS_SUCCESSFUL,
+      course
+    );
   }
 );
 
@@ -86,100 +90,100 @@ const getCourseWithLessonsService = errorUtilities.withServiceErrorHandling(
     const course = await courseRepositories.getCourseWithLanguageId(languageId);
     if (!course) {
       throw errorUtilities.createError(CourseResponses.COURSE_NOT_FOUND, StatusCodes.NotFound);
-      }
-      const lessons = await lessonRepositories.getLessonsOnly(course.id);
-      return responseUtilities.handleServicesResponse(
-        StatusCodes.OK,
-        CourseResponses.PROCESS_SUCCESSFUL,
-        { course, lessons }
-      );
+    }
+    const lessons = await lessonRepositories.getLessonsOnly(course.id);
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.OK,
+      CourseResponses.PROCESS_SUCCESSFUL,
+      { course, lessons }
+    );
   })
 
 
 const createCourseWithLessons = errorUtilities.withServiceErrorHandling(
   async (courseData, lessons, languageId) => {
-      // const { lessons, languageId, ...courseData } = coursePayload;
-      // Create course
-      const newCourseData = {
-        title: courseData.title,
-        description: courseData.description,
-        level: courseData.level,
-        estimatedDuration: courseData.estimatedDuration,
-        thumbnailImage: courseData.thumbnailImage,
-        id: v4(),
-        isActive: true,
-        languageId,
-        createdAt: new Date(),
-        totalLessons: lessons?.length || 0,
-        totalContents: lessons?.reduce((total: number, lesson: any) =>
-          total + (lesson.contents?.length || 0), 0) || 0
-      };
+    // const { lessons, languageId, ...courseData } = coursePayload;
+    // Create course
+    const newCourseData = {
+      title: courseData.title,
+      description: courseData.description,
+      level: courseData.level,
+      estimatedDuration: courseData.estimatedDuration,
+      thumbnailImage: courseData.thumbnailImage,
+      id: v4(),
+      isActive: true,
+      languageId,
+      createdAt: new Date(),
+      totalLessons: lessons?.length || 0,
+      totalContents: lessons?.reduce((total: number, lesson: any) =>
+        total + (lesson.contents?.length || 0), 0) || 0
+    };
 
-      
-      const newCourse = await courseRepositories.addCourse(newCourseData);
-      
-      if (lessons && lessons.length > 0) {
-        for (const lessonData of lessons) {
-          const { contents, ...lesson } = lessonData;
 
-          // Create lesson
-          const newLessonData = {
-            ...lesson,
-            id: v4(),
-            courseId: newCourseData.id,
-            createdAt: new Date(),
-            totalContents: contents?.length || 0,
-            languageId,
-            outcomes: lesson.outcomes,
-            objectives: lesson.objectives,
-            estimatedDuration: lesson.estimatedTime || 0,
-            headLineTag: lesson.headlineTag
-          };
+    const newCourse = await courseRepositories.addCourse(newCourseData);
 
-          const createdLesson = await lessonRepositories.addLesson(newLessonData);
+    if (lessons && lessons.length > 0) {
+      for (const lessonData of lessons) {
+        const { contents, ...lesson } = lessonData;
 
-          if (contents && contents.length > 0) {
-            for (const contentData of contents) {
-              // Create content
-              const newContentData = {
-                id: v4(),
-                lessonId: newLessonData.id,
-                translation: contentData.translation,
-                isGrammarRule: false,
-                languageId,
-                sourceType: contentData.sourceType,
-                customText: contentData.customText,
-                ededunPhrases: contentData.ededunPhrases,
-                createdAt: new Date()
-              };
+        // Create lesson
+        const newLessonData = {
+          ...lesson,
+          id: v4(),
+          courseId: newCourseData.id,
+          createdAt: new Date(),
+          totalContents: contents?.length || 0,
+          languageId,
+          outcomes: lesson.outcomes,
+          objectives: lesson.objectives,
+          estimatedDuration: lesson.estimatedTime || 0,
+          headLineTag: lesson.headlineTag
+        };
 
-              const createdContent = await contentRepositories.createContent(newContentData);
+        const createdLesson = await lessonRepositories.addLesson(newLessonData);
 
-              // Create content files
-              if (contentData.contentFiles && contentData.contentFiles.length > 0) {
-                for (const fileData of contentData.contentFiles) {
-                  const contentFileData = {
-                    id: v4(),
-                    contentId: newContentData.id,
-                    contentType: fileData.contentType,
-                    filePath: fileData.filePath,
-                    description: fileData.description || null,
-                    createdAt: new Date()
-                  };
+        if (contents && contents.length > 0) {
+          for (const contentData of contents) {
+            // Create content
+            const newContentData = {
+              id: v4(),
+              lessonId: newLessonData.id,
+              translation: contentData.translation,
+              isGrammarRule: false,
+              languageId,
+              sourceType: contentData.sourceType,
+              customText: contentData.customText,
+              ededunPhrases: contentData.ededunPhrases,
+              createdAt: new Date()
+            };
 
-                  await contentRepositories.createContentFile(contentFileData);
-                }
+            const createdContent = await contentRepositories.createContent(newContentData);
+
+            // Create content files
+            if (contentData.contentFiles && contentData.contentFiles.length > 0) {
+              for (const fileData of contentData.contentFiles) {
+                const contentFileData = {
+                  id: v4(),
+                  contentId: newContentData.id,
+                  contentType: fileData.contentType,
+                  filePath: fileData.filePath,
+                  description: fileData.description || null,
+                  createdAt: new Date()
+                };
+
+                await contentRepositories.createContentFile(contentFileData);
               }
             }
           }
         }
       }
+    }
 
-      return responseUtilities.handleServicesResponse(
-        StatusCodes.Created,
-        "Course created successfully with lessons",
-        newCourse
-      );
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.Created,
+      "Course created successfully with lessons",
+      newCourse
+    );
   }
 );
 
