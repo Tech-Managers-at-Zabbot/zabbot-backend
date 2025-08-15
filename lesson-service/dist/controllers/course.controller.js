@@ -19,8 +19,13 @@ exports.getCoursesController = utilities_1.errorUtilities.withControllerErrorHan
 });
 // Controller to get a single course
 exports.getCourseController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
-    const { id } = req.params;
-    const course = await course_service_1.default.getCourse(id);
+    const { courseId } = req.params;
+    let { projections } = req.query;
+    const newProjections = JSON.parse(projections);
+    if (!Array.isArray(newProjections)) {
+        projections = projections ? [projections] : undefined;
+    }
+    const course = await course_service_1.default.getCourse(courseId, newProjections);
     return utilities_1.responseUtilities.responseHandler(res, course.message, course.statusCode, course.data);
 });
 // Controller to get a course by title
