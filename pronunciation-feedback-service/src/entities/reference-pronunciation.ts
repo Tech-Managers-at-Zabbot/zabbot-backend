@@ -8,8 +8,11 @@ class ReferencePronunciation
 {
   public id!: string;
   public word!: string;
+public english_word!: string;
+  public yoruba_word!: string;
   public femaleVoice!: string;
   public maleVoice!: string;
+  public tone!: string;
 }
 
 ReferencePronunciation.init(
@@ -19,7 +22,11 @@ ReferencePronunciation.init(
       primaryKey: true,
       allowNull: false,
     },
-    word: {
+    english_word: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+     yoruba_word: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -28,6 +35,10 @@ ReferencePronunciation.init(
       allowNull: false,
     },
     maleVoice: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+     tone: {
       type: DataTypes.STRING,
       allowNull: false,
     },

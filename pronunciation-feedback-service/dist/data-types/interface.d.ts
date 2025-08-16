@@ -1,6 +1,7 @@
 export interface ReferencePronunciationAttributes {
     id: string;
-    word: string;
+    english_word: string;
+    yoruba_word: string;
     maleVoice: string;
     femaleVoice: string;
     createdAt?: Date;
