@@ -10,11 +10,11 @@ ReferencePronunciation.init({
         primaryKey: true,
         allowNull: false,
     },
-    english_word: {
+    englishWord: {
         type: sequelize_1.DataTypes.STRING,
         allowNull: false,
     },
-    yoruba_word: {
+    yorubaWord: {
         type: sequelize_1.DataTypes.STRING,
         allowNull: false,
     },
@@ -23,6 +23,10 @@ ReferencePronunciation.init({
         allowNull: false,
     },
     maleVoice: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: false,
+    },
+    tone: {
         type: sequelize_1.DataTypes.STRING,
         allowNull: false,
     },

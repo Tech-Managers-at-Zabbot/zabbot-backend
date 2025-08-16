@@ -16,13 +16,45 @@ const getPronunciation = utilities_1.errorUtilities.withServiceErrorHandling(asy
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, "success", pronunciation);
 });
 const addPronunciation = utilities_1.errorUtilities.withServiceErrorHandling(async (pronunciationData) => {
-    const newPronunciaitonData = {
-        ...pronunciationData,
-        id: (0, uuid_1.v4)(),
-        createdAt: new Date(),
-    };
-    const newPronunciation = await reference_pronunciation_repository_1.default.addPronunciation(newPronunciaitonData);
-    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.Created, "Pronunciation created successfully", newPronunciation);
+    if (Array.isArray(pronunciationData)) {
+        const created = [];
+        const failed = [];
+        const newPronunciations = await Promise.all(pronunciationData.map(async (data) => {
+            try {
+                const newPronunciationData = {
+                    ...data,
+                    id: (0, uuid_1.v4)(),
+                    createdAt: new Date(),
+                };
+                const createdData = await reference_pronunciation_repository_1.default.addPronunciation(newPronunciationData);
+                if (createdData) {
+                    created.push(createdData);
+                    return createdData;
+                }
+                else {
+                    failed.push({ data, reason: 'Unknown creation failure (no result returned)' });
+                    return null;
+                }
+            }
+            catch (error) {
+                failed.push({
+                    data,
+                    reason: error?.message || 'Unknown error during creation',
+                });
+                return null;
+            }
+        }));
+        return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.Created, "Pronunciations created successfully", newPronunciations);
+    }
+    else {
+        const newPronunciaitonData = {
+            ...pronunciationData,
+            id: (0, uuid_1.v4)(),
+            createdAt: new Date(),
+        };
+        const newPronunciation = await reference_pronunciation_repository_1.default.addPronunciation(newPronunciaitonData);
+        return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.Created, "Pronunciation created successfully", newPronunciation);
+    }
 });
 const updatePronunciation = utilities_1.errorUtilities.withServiceErrorHandling(async (id, pronunciationData) => {
     const pronunciation = await reference_pronunciation_repository_1.default.getPronunciation(id);
