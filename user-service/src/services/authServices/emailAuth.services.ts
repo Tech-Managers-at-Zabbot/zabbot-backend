@@ -385,7 +385,7 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
         email: user.email,
         role: user.role,
       },
-      expires: "2h",
+      expires: stayLoggedIn ? "30d" : "2h",
     };
 
     const refreshTokenData = {
@@ -394,7 +394,7 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
         email: user.email,
         role: user.role,
       },
-      expires: "30d",
+      expires: "60d",
     };
 
     const accessToken = helperFunctions.generateToken(accessTokenData);

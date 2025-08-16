@@ -20,9 +20,15 @@ const courseRepositories = {
             throw utilities_1.errorUtilities.createError(`Error Fetching courses: ${error.message}`, 500);
         }
     },
-    getCourse: async (id) => {
+    getCourse: async (id, projections) => {
         try {
-            const course = await course_1.default.findByPk(id);
+            const course = await course_1.default.findOne({
+                where: {
+                    id
+                },
+                raw: true,
+                attributes: projections ? projections : undefined
+            });
             return course;
         }
         catch (error) {

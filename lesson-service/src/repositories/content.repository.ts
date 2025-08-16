@@ -28,11 +28,21 @@ const contentRepositories = {
 
   getLessonContents: async (lessonId: string) => {
     try {
-      const contents = await Contents.findAll({ where: { lessonId } });
+      const contents = await Contents.findAll({ where: { lessonId }, raw: true });
       return contents;
 
     } catch (error: any) {
       throw errorUtilities.createError(`Error fetching contents for this lesson: ${error.message}`, 500);
+    }
+  },
+
+  getLanguageContents: async (languageId: string) => {
+    try {
+      const contents = await Contents.findAll({ where: { languageId }, raw: true });
+      return contents;
+
+    } catch (error: any) {
+      throw errorUtilities.createError(`Error fetching contents for this language: ${error.message}`, 500);
     }
   },
 
@@ -92,9 +102,9 @@ const contentRepositories = {
 
   getContentFiles: async (contentId: string) => {
     try {
-      const contentFiles = await ContentFiles.findAll({ where: { contentId } });
+      const contentFiles = await ContentFiles.findAll({ where: { contentId }, raw: true });
 
-      return contentFiles || [];
+      return contentFiles;
 
     } catch (error: any) {
       throw errorUtilities.createError(`Error fetching files for this content: ${error.message}`, 500);

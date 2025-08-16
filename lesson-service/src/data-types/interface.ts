@@ -1,5 +1,9 @@
 import e from "express";
+<<<<<<< HEAD
 import { ContentDataType, Level, QuestionType } from "./enums";
+=======
+import { ContentDataType, Level, QuizType } from "./enums";
+>>>>>>> 2f02c363aeb6a6515fd726c55e0d04a284f89bdb
 
 export interface LanguageAttributes {
   id?: string;
@@ -24,6 +28,7 @@ export interface LessonAttributes {
     };
   }[];
   headLineTag?: string;
+  languageId: string;
   estimatedDuration: number;
   createdAt: Date;
   totalContents?: number;
@@ -53,6 +58,7 @@ export interface ContentAttributes {
     contentType: ContentDataType;
     filePath: string;
   }[];
+  languageId: string;
   ededunPhrases?: string;
   sourceType: string;
   createdAt?: Date;
@@ -140,6 +146,7 @@ export interface UserCourseAttributes {
   isActive: boolean
 }
 
+<<<<<<< HEAD
 export interface QuestionAttributes {
   id: string;
   name: string;
@@ -166,4 +173,34 @@ export interface ContentQuestionAttributes {
   id: string;
   contentId: string;
   questionId: string;
+=======
+
+export interface QuizAttributes {
+  id: string;
+  courseId: string;
+  lessonId?: string;
+  contentId?: string;
+  languageId: string;
+  quizType: QuizType;
+  instruction: string;
+  question: string;
+  options?: string[];
+  correctOption?: string;
+  correctAnswer?: string;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+export interface UserQuizAnswerAttributes {
+  id: string;
+  userId: string;
+  quizId: string;
+  courseId: string;
+  lessonId?: string;
+  contentId?: string;
+  userAnswer: string;
+  isCorrect: boolean;
+  createdAt: Date;
+  updatedAt?: Date;
+>>>>>>> 2f02c363aeb6a6515fd726c55e0d04a284f89bdb
 }

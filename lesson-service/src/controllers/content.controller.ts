@@ -20,6 +20,14 @@ export const getLessonContentsController = errorUtilities.withControllerErrorHan
   }
 );
 
+export const getLanguageContentsController = errorUtilities.withControllerErrorHandling(
+  async (req: Request, res: Response) => {
+    const { languageId } = req.params;
+    const contents = await contentService.getContentsForLanguage(languageId);
+    return responseUtilities.responseHandler(res, contents.message, contents.statusCode, contents.data);
+  }
+);
+
 // Controller to get a single content
 export const getContentController = errorUtilities.withControllerErrorHandling(
   async (req: Request, res: Response) => {
@@ -45,5 +53,12 @@ export const updateContentController = errorUtilities.withControllerErrorHandlin
     const payload = req.body;
     const content = await contentService.updateContent(id, payload);
     return responseUtilities.responseHandler(res, content.message, content.statusCode, content.data);
+  }
+);
+
+export const addContentFileController = errorUtilities.withControllerErrorHandling(
+  async (request: Request, response: Response) => {
+    const contentFileDetails = await contentService.addContentFile(request.body);
+    return responseUtilities.responseHandler(response, contentFileDetails.message, contentFileDetails.statusCode, contentFileDetails.data);
   }
 );

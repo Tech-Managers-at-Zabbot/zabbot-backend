@@ -19,7 +19,7 @@ import {
 const router = express.Router();
 
 router.get('/:languageId', getCoursesController);
-router.get('/:id', getCourseController);
+router.get('/single-course/:courseId', getCourseController);
 router.get('/title/:title', getCourseByTitleController);
 router.post('/', generalAuthFunction, rolePermit(["admin"]), addCourseController);
 router.put('/:id', generalAuthFunction, rolePermit(["admin"]), updateCourseController);

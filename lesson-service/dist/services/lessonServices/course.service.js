@@ -11,19 +11,19 @@ const content_repository_1 = __importDefault(require("../../repositories/content
 const lesson_repository_1 = __importDefault(require("../../repositories/lesson.repository"));
 const responses_1 = require("../../responses/responses");
 const getCoursesForLanguage = utilities_1.errorUtilities.withServiceErrorHandling(async (languageId, isActive) => {
-    const payload = { isActive, languageId };
+    // const payload = { isActive, languageId };
     const courses = await course_repository_1.default.getCourses(isActive, languageId);
     if (!courses) {
         throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.COURSES_NOT_FETCHED, statusCodes_responses_1.StatusCodes.NotFound);
     }
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.CourseResponses.PROCESS_SUCCESSFUL, courses);
 });
-const getCourse = utilities_1.errorUtilities.withServiceErrorHandling(async (id) => {
-    const course = await course_repository_1.default.getCourse(id);
+const getCourse = utilities_1.errorUtilities.withServiceErrorHandling(async (id, projections) => {
+    const course = await course_repository_1.default.getCourse(id, projections);
     if (!course) {
-        throw utilities_1.errorUtilities.createError(`Course not found`, 404);
+        throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.COURSE_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
     }
-    return course;
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.CourseResponses.PROCESS_SUCCESSFUL, course);
 });
 const getCourseByTitle = utilities_1.errorUtilities.withServiceErrorHandling(async (title) => {
     const course = await course_repository_1.default.getCourseByTitle(title);
@@ -89,6 +89,7 @@ const createCourseWithLessons = utilities_1.errorUtilities.withServiceErrorHandl
                 courseId: newCourseData.id,
                 createdAt: new Date(),
                 totalContents: contents?.length || 0,
+                languageId,
                 outcomes: lesson.outcomes,
                 objectives: lesson.objectives,
                 estimatedDuration: lesson.estimatedTime || 0,
@@ -103,6 +104,7 @@ const createCourseWithLessons = utilities_1.errorUtilities.withServiceErrorHandl
                         lessonId: newLessonData.id,
                         translation: contentData.translation,
                         isGrammarRule: false,
+                        languageId,
                         sourceType: contentData.sourceType,
                         customText: contentData.customText,
                         ededunPhrases: contentData.ededunPhrases,
@@ -137,5 +139,5 @@ exports.default = {
     updateCourse,
     deleteCourse,
     createCourseWithLessons,
-    getCourseWithLessonsService
+    getCourseWithLessonsService,
 };

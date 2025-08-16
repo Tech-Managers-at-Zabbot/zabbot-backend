@@ -8,3 +8,5 @@ import '../lesson-service/src/entities/lesson';
 import '../lesson-service/src/entities/user-course';
 import '../lesson-service/src/entities/userDailyGoals';
 import '../lesson-service/src/entities/wordForTheDay';
+import '../lesson-service/src/entities/quiz';
+import '../lesson-service/src/entities/user-quiz';

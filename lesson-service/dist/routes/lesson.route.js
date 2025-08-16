@@ -12,4 +12,6 @@ router.get('/:id', lesson_controller_1.getLessonController);
 router.post('/', authorization_middleware_1.generalAuthFunction, (0, authorization_middleware_1.rolePermit)(["admin"]), lesson_controller_1.createLessonController);
 router.put('/:id', authorization_middleware_1.generalAuthFunction, (0, authorization_middleware_1.rolePermit)(["admin"]), lesson_controller_1.updateLessonController);
 router.get('/lesson-with-contents/:lessonId', authorization_middleware_1.generalAuthFunction, lesson_controller_1.getLessonWithContentsController);
+router.get('/language-lessons/:languageId', authorization_middleware_1.generalAuthFunction, lesson_controller_1.getLanguageLessonsController);
+router.get('/course-lessons/:courseId', authorization_middleware_1.generalAuthFunction, lesson_controller_1.getCourseLessonsController);
 exports.default = router;

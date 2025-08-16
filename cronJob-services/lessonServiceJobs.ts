@@ -24,12 +24,12 @@ const pickWordOfTheDay = async () => {
     console.log(`[${new Date().toISOString()}] ✅ Daily word selection finished.`);
 };
 
-// 🔁 Schedule it to run every day at 00:00 (midnight) UTC
+// 🔁 Runs every day at 00:00 (midnight) UTC
 cron.schedule('0 0 * * *', async () => {
     await pickWordOfTheDay();
 });
 
-// Run once immediately on app start
+// Runs once immediately on app start
 (async () => {
     await pickWordOfTheDay();
 })();

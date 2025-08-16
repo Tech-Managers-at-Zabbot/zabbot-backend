@@ -18,7 +18,7 @@ ContentFiles.init({
     contentType: {
         type: sequelize_1.DataTypes.ENUM(...Object.values(enums_1.ContentDataType)),
         allowNull: false,
-        defaultValue: enums_1.ContentDataType.AUDIO, // Default to AUDIO
+        defaultValue: enums_1.ContentDataType.AUDIO,
     },
     filePath: {
         type: sequelize_1.DataTypes.STRING,

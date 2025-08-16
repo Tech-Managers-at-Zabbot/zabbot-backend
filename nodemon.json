@@ -13,7 +13,8 @@
     "installAll.ts",
     "package.json",
     ".env",
-    "tsconfig.json"
+    "tsconfig.json",
+    "pronunciation-feedback-service"
   ],
   "ext": "ts,json",
   "verbose": true,

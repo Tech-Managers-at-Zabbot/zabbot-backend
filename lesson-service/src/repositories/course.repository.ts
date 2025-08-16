@@ -19,9 +19,17 @@ const courseRepositories = {
 		}
 	},
 
-	getCourse: async (id: string) => {
+	getCourse: async (id: string, projections?: string[]) => {
 		try {
-			const course = await Courses.findByPk(id);
+			const course = await Courses.findOne(
+				{
+					where: {
+						id
+					},
+					raw: true,
+					attributes: projections ? projections : undefined
+				}
+			);
 
 			return course;
 
@@ -32,8 +40,8 @@ const courseRepositories = {
 
 	getCourseWithLanguageId: async (languageId: string) => {
 		try {
-			const course = await Courses.findOne({ 
-				where: { languageId }, 
+			const course = await Courses.findOne({
+				where: { languageId },
 				raw: true
 			});
 

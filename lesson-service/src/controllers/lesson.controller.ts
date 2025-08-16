@@ -20,6 +20,24 @@ export const getLessonController = errorUtilities.withControllerErrorHandling(
   }
 );
 
+export const getLanguageLessonsController = errorUtilities.withControllerErrorHandling(
+  async (req: Request, res: Response) => {
+    const { languageId } = req.params;
+    const lesson = await lessonService.getLessonsForLanguage(languageId);
+    return responseUtilities.responseHandler(res, lesson.message, lesson.statusCode, lesson.data);
+  }
+);
+
+export const getCourseLessonsController = errorUtilities.withControllerErrorHandling(
+  async (req: Request, res: Response) => {
+    const { courseId } = req.params;
+
+    console.log('id', courseId)
+    const lessons = await lessonService.getLessonsForCourse(courseId);
+    return responseUtilities.responseHandler(res, lessons.message, lessons.statusCode, lessons.data);
+  }
+);
+
 // Controller to create a new lesson
 export const createLessonController = errorUtilities.withControllerErrorHandling(
   async (req: Request, res: Response) => {

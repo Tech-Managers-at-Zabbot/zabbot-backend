@@ -1,4 +1,4 @@
-import { Sequelize } from 'sequelize';
+import { Sequelize } from "sequelize";
 declare const founders_list_db: Sequelize;
 declare const ededun_database: Sequelize;
 declare const users_service_db: Sequelize;

@@ -10,20 +10,25 @@ export const getCoursesController = errorUtilities.withControllerErrorHandling(
 
     const { languageId } = req.params
     const { isActive } = req.query
-      // const isActive: boolean | null = req.query.isActive === 'true' ? true
-      //   : req.query.isActive === 'false' ? false
-      //   : true;
-        
-      const courses = await courseService.getCoursesForLanguage(languageId, isActive);
-      return responseUtilities.responseHandler(res, courses.message, courses.statusCode, courses.data);
+    // const isActive: boolean | null = req.query.isActive === 'true' ? true
+    //   : req.query.isActive === 'false' ? false
+    //   : true;
+
+    const courses = await courseService.getCoursesForLanguage(languageId, isActive);
+    return responseUtilities.responseHandler(res, courses.message, courses.statusCode, courses.data);
   }
 );
 
 // Controller to get a single course
 export const getCourseController = errorUtilities.withControllerErrorHandling(
   async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const course = await courseService.getCourse(id);
+    const { courseId } = req.params;
+    let { projections }: any = req.query;
+    const newProjections = JSON.parse(projections)
+    if (!Array.isArray(newProjections)) {
+      projections = projections ? [projections] : undefined;
+    }
+    const course = await courseService.getCourse(courseId, newProjections);
     return responseUtilities.responseHandler(res, course.message, course.statusCode, course.data);
   }
 );
@@ -95,15 +100,15 @@ export const addUserCourseController = errorUtilities.withControllerErrorHandlin
 // Controller to update user course
 export const updateUserCourseController = errorUtilities.withControllerErrorHandling(
   async (req: Request, res: Response) => {
-    const {id} = req.params;
-    const {userCourseData} = req.body;
+    const { id } = req.params;
+    const { userCourseData } = req.body;
     const updateUserCourse = await userCourseService.updateUserCourse(id, userCourseData);
     return responseUtilities.responseHandler(res, updateUserCourse.message, updateUserCourse.statusCode, updateUserCourse.data);
   }
 );
 
 export const getCourseWithLessonsController = errorUtilities.withControllerErrorHandling(
-  async(req: JwtPayload, res: Response) => {
+  async (req: JwtPayload, res: Response) => {
     const { languageId } = req.params
     const courseWithLessons = await courseService.getCourseWithLessonsService(languageId);
     return responseUtilities.responseHandler(res, courseWithLessons.message, courseWithLessons.statusCode, courseWithLessons.data);
@@ -111,8 +116,8 @@ export const getCourseWithLessonsController = errorUtilities.withControllerError
   })
 
 export const removeUserCourseController = errorUtilities.withControllerErrorHandling(
-  async(req: Request, res: Response) => {
-    const {id} = req.params;
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
     const removeUserFromCourse = await userCourseService.deleteUserCourse(id);
 
     return responseUtilities.responseHandler(res, removeUserFromCourse.message, removeUserFromCourse.statusCode, removeUserFromCourse.data);

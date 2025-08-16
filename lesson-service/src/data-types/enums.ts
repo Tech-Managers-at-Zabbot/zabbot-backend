@@ -40,3 +40,8 @@ export enum QuestionType {
   Multiple = 'Multiple',
   THEORY = 'Theory'
 }
+
+export enum QuizType {
+  MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
+  FILL_IN_BLANK = 'FILL_IN_BLANK'
+}

@@ -1,12 +1,12 @@
 import { Response } from "express";
-
+import { stat } from "fs-extra";
 
 export interface ResponseDetails {
-    message: string;
-    statusCode: number;
-    data?: any
-    details?: any
-    info?: any
+  message: string;
+  statusCode: number;
+  data?: any;
+  details?: any;
+  info?: any;
 }
 
 /**
@@ -29,31 +29,36 @@ const responseHandler = (
   details?: any,
   info?: any
 ) => {
-
   return response.status(statusCode).json({
-    status: statusCode === 201 || statusCode === 200 || statusCode === 207 ? "success" : "error",
+    status:
+      statusCode === 201 || statusCode === 200 || statusCode === 207
+        ? "success"
+        : "error",
     message: message,
     data: data || null,
     details,
-    info
+    info,
   });
 };
 
-
-
-const handleServicesResponse = (statusCode: number, message: string, data?: any) => {
+const handleServicesResponse = (
+  statusCode: number,
+  message: string,
+  data?: any
+) => {
   const responseHandler: ResponseDetails = {
     statusCode: 0,
     message: "",
     data: {},
   };
+
   responseHandler.message = message;
   responseHandler.statusCode = statusCode;
-  responseHandler.data = data
-  return responseHandler
+  responseHandler.data = data;
+  return responseHandler;
 };
 
 export default {
   responseHandler,
-  handleServicesResponse
+  handleServicesResponse,
 };
