@@ -5,8 +5,8 @@ const databases_1 = require("../../../config/databases");
 class ReferencePronunciation extends sequelize_1.Model {
     id;
     word;
-    english_word;
-    yoruba_word;
+    englishWord;
+    yorubaWord;
     femaleVoice;
     maleVoice;
     tone;
@@ -17,11 +17,11 @@ ReferencePronunciation.init({
         primaryKey: true,
         allowNull: false,
     },
-    english_word: {
+    englishWord: {
         type: sequelize_1.DataTypes.STRING,
         allowNull: false,
     },
-    yoruba_word: {
+    yorubaWord: {
         type: sequelize_1.DataTypes.STRING,
         allowNull: false,
     },
