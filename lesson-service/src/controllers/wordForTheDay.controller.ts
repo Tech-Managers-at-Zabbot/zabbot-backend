@@ -7,6 +7,7 @@ import { fetchEdedunLanguage, fetchEdedunLanguageBatches } from "../utilities/ax
 import { dailyWordsServices } from "../services";
 import { v4 } from "uuid";
 import languageRepositories from "../repositories/language.repository";
+import { JwtPayload } from "jsonwebtoken";
 
 
 const createDailyWordController = errorUtilities.withControllerErrorHandling(async (request: Request, response: Response) => {
@@ -105,10 +106,10 @@ const createManyDailyWordsController = errorUtilities.withControllerErrorHandlin
 
 })
 
-const getWordOfTheDayController = errorUtilities.withControllerErrorHandling(async (request: Request, response: Response) => {
+const getWordOfTheDayController = errorUtilities.withControllerErrorHandling(async (request: JwtPayload, response: Response) => {
     const { languageId } = request.params
 
-    const { userId } = request.query
+    const { userId } = request.user
 
     const getWord = await dailyWordsServices.getTodayWordService(languageId, userId)
 

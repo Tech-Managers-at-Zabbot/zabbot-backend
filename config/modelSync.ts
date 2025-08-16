@@ -10,3 +10,5 @@ import '../lesson-service/src/entities/userDailyGoals';
 import '../lesson-service/src/entities/wordForTheDay';
 import '../lesson-service/src/entities/quiz';
 import '../lesson-service/src/entities/user-quiz';
+import '../pronunciation-feedback-service/src/entities/reference-pronunciation';
+import '../pronunciation-feedback-service/src/entities/user-pronunciation';

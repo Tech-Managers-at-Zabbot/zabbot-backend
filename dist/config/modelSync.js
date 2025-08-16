@@ -12,3 +12,5 @@ require("../lesson-service/src/entities/userDailyGoals");
 require("../lesson-service/src/entities/wordForTheDay");
 require("../lesson-service/src/entities/quiz");
 require("../lesson-service/src/entities/user-quiz");
+require("../pronunciation-feedback-service/src/entities/reference-pronunciation");
+require("../pronunciation-feedback-service/src/entities/user-pronunciation");

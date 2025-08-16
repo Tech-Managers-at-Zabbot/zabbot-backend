@@ -1,11 +1,13 @@
 import { Request, Response } from 'express';
 import { errorUtilities, responseUtilities } from '../../../shared/utilities';
 import { dailyGoalsServices } from '../services';
+import { JwtPayload } from 'jsonwebtoken';
 
 
 const getUserDailyGoals = errorUtilities.withControllerErrorHandling(
-    async (request: Request, response: Response) => {
-        const { userId, languageId } = request.params;
+    async (request: JwtPayload, response: Response) => {
+        const { languageId } = request.params;
+        const { userId } = request.user;
         const dailyGoals = await dailyGoalsServices.getDailyGoalService(userId, languageId);
         return responseUtilities.responseHandler(
             response,

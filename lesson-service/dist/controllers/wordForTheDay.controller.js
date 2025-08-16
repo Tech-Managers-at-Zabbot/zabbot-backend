@@ -65,7 +65,7 @@ const createManyDailyWordsController = utilities_1.errorUtilities.withController
 });
 const getWordOfTheDayController = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {
     const { languageId } = request.params;
-    const { userId } = request.query;
+    const { userId } = request.user;
     const getWord = await services_1.dailyWordsServices.getTodayWordService(languageId, userId);
     return utilities_1.responseUtilities.responseHandler(response, getWord.message, getWord.statusCode, getWord.data);
 });
