@@ -1,15 +1,11 @@
 import lessonRepositories from "../../repositories/lesson.repository";
 import { errorUtilities, responseUtilities } from "../../../../shared/utilities";
 import contentRepositories from "../../repositories/content.repository"
-<<<<<<< HEAD
-import { v4 } from "uuid";
-import { FileContentAttributes } from "../../data-types/interface";
-=======
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
 import { CourseResponses } from "../../responses/responses";
 import { v4 } from "uuid";
 import { create } from "ts-node";
->>>>>>> 2f02c363aeb6a6515fd726c55e0d04a284f89bdb
+import { FileContentAttributes } from "../../data-types/interface";
 
 const getContents = errorUtilities.withServiceErrorHandling(
   async () => {

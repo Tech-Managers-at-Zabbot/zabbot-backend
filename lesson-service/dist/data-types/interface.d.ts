@@ -1,27 +1,17 @@
-<<<<<<< HEAD
-import { ContentDataType, Level } from "./enums";
-=======
 import { ContentDataType, Level, QuizType } from "./enums";
->>>>>>> 2f02c363aeb6a6515fd726c55e0d04a284f89bdb
 export interface LanguageAttributes {
     id?: string;
     code: string;
     title: string;
     isActive?: boolean;
-<<<<<<< HEAD
-=======
     flagIcon?: string;
->>>>>>> 2f02c363aeb6a6515fd726c55e0d04a284f89bdb
 }
 export interface LessonAttributes {
     id?: string;
     title: string;
     description: string;
-<<<<<<< HEAD
-=======
     courseId: string;
     orderNumber: string;
->>>>>>> 2f02c363aeb6a6515fd726c55e0d04a284f89bdb
     contents?: {
         id?: string;
         translation: string;
@@ -30,13 +20,6 @@ export interface LessonAttributes {
             filePath: string;
         };
     }[];
-<<<<<<< HEAD
-    createdAt: Date;
-    updatedAt?: Date;
-}
-export interface ContentAttributes {
-    id?: string;
-=======
     headLineTag?: string;
     languageId: string;
     estimatedDuration: number;
@@ -48,40 +31,27 @@ export interface ContentAttributes {
 }
 export interface ContentAttributes {
     id: string;
->>>>>>> 2f02c363aeb6a6515fd726c55e0d04a284f89bdb
     lessonId: string;
     lesson?: {
         name: string;
         description: string;
     };
-<<<<<<< HEAD
-    languageContentId: string;
-=======
->>>>>>> 2f02c363aeb6a6515fd726c55e0d04a284f89bdb
     languageContent?: {
         title: string;
         word: string;
         tone: string;
     };
     translation?: string;
-<<<<<<< HEAD
-    level: Level;
-=======
     customText?: string;
     isGrammarRule?: boolean;
->>>>>>> 2f02c363aeb6a6515fd726c55e0d04a284f89bdb
     filePath?: {
         contentType: ContentDataType;
         filePath: string;
     }[];
-<<<<<<< HEAD
-    createdAt: Date;
-=======
     languageId: string;
     ededunPhrases?: string;
     sourceType: string;
     createdAt?: Date;
->>>>>>> 2f02c363aeb6a6515fd726c55e0d04a284f89bdb
     updatedAt?: Date;
 }
 export interface LanguageContentAtrributes {
@@ -97,11 +67,6 @@ export interface ContentFileAttributes {
     id?: string;
     contentId: string;
     contentType: ContentDataType;
-<<<<<<< HEAD
-    filePath?: string;
-    createdAt: Date;
-}
-=======
     description?: string;
     filePath?: string;
     createdAt: Date;
@@ -184,4 +149,3 @@ export interface UserQuizAnswerAttributes {
     createdAt: Date;
     updatedAt?: Date;
 }
->>>>>>> 2f02c363aeb6a6515fd726c55e0d04a284f89bdb

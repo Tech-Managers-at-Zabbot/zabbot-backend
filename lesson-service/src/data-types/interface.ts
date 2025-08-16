@@ -1,9 +1,5 @@
 import e from "express";
-<<<<<<< HEAD
-import { ContentDataType, Level, QuestionType } from "./enums";
-=======
 import { ContentDataType, Level, QuizType } from "./enums";
->>>>>>> 2f02c363aeb6a6515fd726c55e0d04a284f89bdb
 
 export interface LanguageAttributes {
   id?: string;
@@ -146,34 +142,6 @@ export interface UserCourseAttributes {
   isActive: boolean
 }
 
-<<<<<<< HEAD
-export interface QuestionAttributes {
-  id: string;
-  name: string;
-  instruction?: string;
-  type: QuestionType;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-export interface OptionAttributes {
-  id: string;
-  questionId: string;
-  name: string;
-  isCorrect: boolean;
-}
-
-export interface LessonQuestionAttributes {
-  id: string;
-  lessonId: string;
-  questionId: string;
-}
-
-export interface ContentQuestionAttributes {
-  id: string;
-  contentId: string;
-  questionId: string;
-=======
 
 export interface QuizAttributes {
   id: string;
@@ -202,5 +170,4 @@ export interface UserQuizAnswerAttributes {
   isCorrect: boolean;
   createdAt: Date;
   updatedAt?: Date;
->>>>>>> 2f02c363aeb6a6515fd726c55e0d04a284f89bdb
 }
