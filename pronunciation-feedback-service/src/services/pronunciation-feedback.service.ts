@@ -2,7 +2,7 @@ import fsPromises from "fs/promises";
 import { decode } from "node-wav";
 import Ffmpeg from "fluent-ffmpeg";
 import path from "path";
-import * as tf from "@tensorflow/tfjs";
+import * as tf from "@tensorflow/tfjs-node";
 import { WaveFile } from "wavefile";
 import { OpenAI } from "openai";
 import fs from "fs";
