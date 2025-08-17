@@ -1,5 +1,4 @@
 import process from 'process';
-
 process.on('uncaughtException', (err) => {
   console.error('💥 UNCAUGHT EXCEPTION:', err);
   shutdown(1);
@@ -123,7 +122,6 @@ function startSingleService(service: ServiceConfig) {
   const isTypeScript = entryPoint.endsWith('.ts');
   let command: string;
   let args: string[];
-
   if (NODE_ENV === 'production' || !isTypeScript) {
     // For production or JS files, use node
     command = 'node';
@@ -184,7 +182,6 @@ services.forEach(service => {
     // @ts-ignore - logLevel exists in runtime but not in type definitions
     logLevel: 'warn'
   };
-
   app.use(service.path, createProxyMiddleware(proxyOptions));
 });
 
@@ -196,7 +193,6 @@ app.get('/health', (req, res) => {
       running: serviceProcesses.has(service.name)
     };
   });
-
   res.json({
     status: 'ok',
     uptime: process.uptime(),
