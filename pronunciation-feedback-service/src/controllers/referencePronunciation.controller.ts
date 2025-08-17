@@ -92,12 +92,14 @@ export const comparePronunciation = errorUtilities.withControllerErrorHandling(
     }
 
     const referencePronunciationId = req.params.id;
+    const { voice } = req.body;
 
     const pronunciation =
       await pronunciationFeedbackService.comparePronounciation({
         file: req.file,
         userId: user.userId,
         referencePronunciationId,
+        voice,
       });
 
     return responseUtilities.responseHandler(
