@@ -1,6 +1,5 @@
 node_modules
 .env
-dist
 DocumentLayout.json
 .wsuo
 VSWorkspaceState.json
@@ -9,3 +8,5 @@ Yoruba_Dataset.xlsx
 yoruba-translator.js
 output.json
 docker-compose.yml
+store.ts
+contents.json
