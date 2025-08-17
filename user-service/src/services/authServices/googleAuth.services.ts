@@ -3,15 +3,16 @@ import usersRepositories from "../../repositories/userRepositories/users.reposit
 import { v4 } from "uuid";
 import { RegisterMethods, UserRoles } from "../../types/users.types";
 import axios from "axios";
-import { Response } from 'express'
+import { Request, Response } from 'express'
 import { GeneralResponses } from "../../responses/generalResponses/general.responses";
-import { StatusCodes } from "../../responses/statusCodes/statusCodes.responses";
+import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
 import { responseUtilities, errorUtilities } from "../../../../shared/utilities";
 import { helperFunctions, endpointCallsUtilities } from "../../utilities/index";
 import config from '../../../../config/config';
 import userRepositories from '../../repositories/userRepositories/users.repositories';
 
 const googleOAuthRegister = async (
+    request: Request,
     accessToken: string,
     refreshToken: string,
     profile: Profile,
@@ -79,7 +80,8 @@ const googleOAuthRegister = async (
             profilePicture: profile?.photos?.[0].value,
             googleAccessToken: accessToken,
             googleRefreshToken: refreshToken,
-            registerMethod: RegisterMethods.GOOGLE
+            registerMethod: RegisterMethods.GOOGLE,
+            timeZone: request.query?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
         };
 
         await usersRepositories.create(createUserPayload);
@@ -116,7 +118,9 @@ const googleOAuthRegister = async (
             }
         );
 
-        const userDetails = await usersRepositories.extractUserDetails(newUser);
+        const userDetails:any = await usersRepositories.extractUserDetails(newUser);
+
+        userDetails.languageId = config.YORUBA_LANGUAGE_ID!
 
         const emailData = {
             email: createUserPayload.email,
@@ -139,6 +143,7 @@ const googleOAuthRegister = async (
 };
 
 const googleOAuthLogin = async (
+    request: Request,
     accessToken: string,
     refreshToken: string,
     profile: Profile,
@@ -186,11 +191,14 @@ const googleOAuthLogin = async (
             {
                 googleAccessToken: accessToken,
                 googleRefreshToken: refreshToken,
-                refreshToken: appRefreshToken
+                refreshToken: appRefreshToken,
+                timeZone: request.query?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
             }
         );
 
-        const userDetails = await usersRepositories.extractUserDetails(newUser);
+        const userDetails:any = await usersRepositories.extractUserDetails(newUser);
+
+        userDetails.languageId = config.YORUBA_LANGUAGE_ID!
 
 
         done(null, { token: appAccessToken, user: userDetails, authType: 'login' });

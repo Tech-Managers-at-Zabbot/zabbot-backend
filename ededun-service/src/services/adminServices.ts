@@ -5,6 +5,7 @@ import { CloudinaryResponse, CloudinaryResource } from "../types/generalTypes";
 import { v4 } from 'uuid';
 import { cloudinary } from '../utilities/cloudinary';
 import Recordings from "../models/recordings/recordingModel";
+import recordingRepository from "../repositories/recordingRepository";
 
 const addPhrase = errorUtilities.withErrorHandling(
     async (phrasePayload: Record<string, any>): Promise<Record<string, any>> => {
@@ -208,58 +209,58 @@ const getAllClouinaryRecordingsService = errorUtilities.withErrorHandling(
 
     })
 
-    const findOrphanedFilesService = errorUtilities.withErrorHandling(
-        async (cloudinaryFiles: CloudinaryResource[],
-            databaseFiles: string[]): Promise<CloudinaryResource[]> => {
-    
-            console.log('cloudinaryFiles length:', cloudinaryFiles.length);
-            console.log('databaseFiles length:', databaseFiles.length);
-            
-            return cloudinaryFiles.filter(cloudFile => {
-                // For each Cloudinary file, check if it exists in the database
-                
-                // If you store public_ids directly in the DB
-                if (databaseFiles.includes(cloudFile.public_id)) {
-                    return false; // Not orphaned, keep it
-                }
-    
-                // If you store full URLs in the DB
-                if (databaseFiles.includes(cloudFile.url) || databaseFiles.includes(cloudFile.secure_url)) {
-                    return false; // Not orphaned, keep it
-                }
-    
-                // If the URL might be stored differently, check for partial matches
-                const isReferenced = databaseFiles.some(dbUrl => {
-                    return dbUrl.includes(cloudFile.public_id);
-                });
-    
-                // If not found in the database, it's orphaned
-                return !isReferenced; // Return true if it's orphaned
+const findOrphanedFilesService = errorUtilities.withErrorHandling(
+    async (cloudinaryFiles: CloudinaryResource[],
+        databaseFiles: string[]): Promise<CloudinaryResource[]> => {
+
+        console.log('cloudinaryFiles length:', cloudinaryFiles.length);
+        console.log('databaseFiles length:', databaseFiles.length);
+
+        return cloudinaryFiles.filter(cloudFile => {
+            // For each Cloudinary file, check if it exists in the database
+
+            // If you store public_ids directly in the DB
+            if (databaseFiles.includes(cloudFile.public_id)) {
+                return false; // Not orphaned, keep it
+            }
+
+            // If you store full URLs in the DB
+            if (databaseFiles.includes(cloudFile.url) || databaseFiles.includes(cloudFile.secure_url)) {
+                return false; // Not orphaned, keep it
+            }
+
+            // If the URL might be stored differently, check for partial matches
+            const isReferenced = databaseFiles.some(dbUrl => {
+                return dbUrl.includes(cloudFile.public_id);
             });
-        }
-    );
+
+            // If not found in the database, it's orphaned
+            return !isReferenced; // Return true if it's orphaned
+        });
+    }
+);
 
 const getAllDatabaseAudioFilesService = errorUtilities.withErrorHandling(
     async (): Promise<Record<string, any>> => {
 
-      // Using Sequelize syntax for PostgreSQL
-  const audioRecords = await Recordings.findAll({
-    attributes: ['recording_url']
-  });
-  
-  return audioRecords.map(record => {
-    const plainRecord:any = record instanceof Recordings ? record.get({ plain: true }) : record;
-    const url = plainRecord.recording_url;
-    
-    // Extract the full path after the version number
-    // This pattern specifically targets your URL format
-    const matches = url.match(/\/v\d+\/(.+?)$/);
-    if (matches && matches[1]) {
-      return matches[1]; // This will be "Ededun/Audio/idlenh9jgx2bli2aiefl.wav"
-    }
-    
-    return url;
-  });
+        // Using Sequelize syntax for PostgreSQL
+        const audioRecords = await Recordings.findAll({
+            attributes: ['recording_url']
+        });
+
+        return audioRecords.map(record => {
+            const plainRecord: any = record instanceof Recordings ? record.get({ plain: true }) : record;
+            const url = plainRecord.recording_url;
+
+            // Extract the full path after the version number
+            // This pattern specifically targets your URL format
+            const matches = url.match(/\/v\d+\/(.+?)$/);
+            if (matches && matches[1]) {
+                return matches[1]; // This will be "Ededun/Audio/idlenh9jgx2bli2aiefl.wav"
+            }
+
+            return url;
+        });
 
     })
 
@@ -286,6 +287,136 @@ const deleteOrphanedFilesService = errorUtilities.withErrorHandling(
 )
 
 
+const getPhraseWithAllRecordingsForZabbot = errorUtilities.withErrorHandling(
+    async (englishText: string, yorubaText: string): Promise<any> => {
+
+        if (!englishText && !yorubaText) {
+            throw errorUtilities.createError("Either English Text or Yoruba Text must be provided", 400);
+        }
+
+        const filter: Record<string, any> = {};
+
+        if (yorubaText) {
+
+            filter.yoruba_text = yorubaText;
+
+        } else if (englishText) {
+
+            filter.english_text = englishText;
+
+        }
+
+        const checkPhrase: Partial<PhraseAttributes> | any = await phraseRepository.phrasesRepository.getOne(
+            filter,
+            ["id", "yoruba_text", "english_text", "pronounciation_note"]
+        );
+
+        if (!checkPhrase) {
+            throw errorUtilities.createError("This phrase does not have a recording in our database", 404);
+        }
+
+        const findRecordings = await recordingRepository.recordingRepository.getMany({ phrase_id: checkPhrase.id })
+
+        const recordingsUrl = findRecordings
+            .filter((recording: any) => recording.recording_url)
+            .map((recording: any) => recording.recording_url);
+
+        const fullrecodingDetails = {
+            recordings: recordingsUrl,
+            englishText: checkPhrase.english_text,
+            yorubaText: checkPhrase.yoruba_text,
+            pronunciationNote: checkPhrase.pronounciation_note
+        }
+
+        return responseUtilities.handleServicesResponse(
+            201,
+            'Recordings fetched successfully',
+            fullrecodingDetails
+        );
+    }
+);
+
+
+const getPhrasesWithAllRecordingsForZabbotParallel = errorUtilities.withErrorHandling(
+    async (phrases: Array<{englishText?: string, yorubaText?: string}>): Promise<any> => {
+
+        if (!phrases || !Array.isArray(phrases) || phrases.length === 0) {
+            throw errorUtilities.createError("Phrases array must be provided and cannot be empty", 400);
+        }
+
+        const processPhrasePromises = phrases.map(async (phrase) => {
+            const { englishText, yorubaText } = phrase;
+
+            if (!englishText && !yorubaText) {
+                return {
+                    error: "Either English Text or Yoruba Text must be provided",
+                    englishText: englishText || null,
+                    yorubaText: yorubaText || null,
+                    recordings: []
+                };
+            }
+
+            try {
+                const filter: Record<string, any> = {};
+
+                if (yorubaText) {
+                    filter.yoruba_text = yorubaText;
+                } else if (englishText) {
+                    filter.english_text = englishText;
+                }
+
+                const checkPhrase: Partial<PhraseAttributes> | any = await phraseRepository.phrasesRepository.getOne(
+                    filter,
+                    ["id", "yoruba_text", "english_text", "pronounciation_note"]
+                );
+
+                if (!checkPhrase) {
+                    return {
+                        error: "This phrase does not have a recording in our database",
+                        englishText: englishText || null,
+                        yorubaText: yorubaText || null,
+                        recordings: []
+                    };
+                }
+
+                const findRecordings = await recordingRepository.recordingRepository.getMany({ 
+                    phrase_id: checkPhrase.id 
+                });
+
+                const recordingsUrl = findRecordings
+                    .filter((recording: any) => recording.recording_url)
+                    .map((recording: any) => recording.recording_url);
+
+                return {
+                    recordings: recordingsUrl,
+                    englishText: checkPhrase.english_text,
+                    yorubaText: checkPhrase.yoruba_text,
+                    pronunciationNote: checkPhrase.pronounciation_note
+                };
+
+            } catch (error: any) {
+                return {
+                    error: error.message || "An error occurred while processing this phrase",
+                    englishText: englishText || null,
+                    yorubaText: yorubaText || null,
+                    recordings: []
+                };
+            }
+        });
+
+        const results = await Promise.all(processPhrasePromises);
+
+        console.log('Batch Results', results);
+
+        return responseUtilities.handleServicesResponse(
+            200,
+            'Batch recordings fetched successfully',
+            results
+        );
+    }
+);
+
+
 export default {
     addPhrase,
     updatePhrase,
@@ -294,5 +425,7 @@ export default {
     getAllClouinaryRecordingsService,
     findOrphanedFilesService,
     getAllDatabaseAudioFilesService,
-    deleteOrphanedFilesService
+    deleteOrphanedFilesService,
+    getPhraseWithAllRecordingsForZabbot,
+    getPhrasesWithAllRecordingsForZabbotParallel
 }

@@ -254,7 +254,7 @@ export const addUsersToRespectiveLists = async (request: Request, response: Resp
 }
 
 export const getWaitingListBetaTesterUser = async (request: Request, response: Response) => {
-  
+
   try {
     const { email } = request.query;
 
@@ -262,7 +262,7 @@ export const getWaitingListBetaTesterUser = async (request: Request, response: R
       return response.status(400).json({ error: 'Valid email is required' });
     }
 
-    const user = await WaitingList.findOne({ where: { email } });
+    const user = await WaitingList.findOne({ where: { email }, raw: true });
 
     if (!user) {
       return response.status(404).json({ message: 'User not found in waiting list' });

@@ -4,44 +4,50 @@ import { ContentFileAttributes, LanguageAttributes } from '../data-types/interfa
 import { ContentDataType } from '../data-types/enums';
 
 class ContentFiles extends Model<ContentFileAttributes> implements ContentFileAttributes {
-    public id!: string;
-    public contentId!: string;
-    public contentType!: ContentDataType;
-    public filePath: string;
-    public createdAt: Date;
+  public id?: string;
+  public contentId!: string;
+  public contentType!: ContentDataType;
+  public filePath?: string;
+  public createdAt!: Date;
+  public description?: string;
 }
 
 ContentFiles.init(
-    {
-        id: {
-            type: DataTypes.UUID,
-            primaryKey: true
-        },
-        contentId: {
-            type: DataTypes.UUID,
-            allowNull: false
-        },
-        contentType: {
-            type: DataTypes.ENUM,
-            allowNull: false,
-        },
-        filePath: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
-        createdAt: {
-            type: DataTypes.DATE,
-            allowNull: false,
-            defaultValue: DataTypes.NOW,
-        },
+  {
+    id: {
+      type: DataTypes.UUID,
+      primaryKey: true,
+      defaultValue: DataTypes.UUIDV4,
     },
-    {
-        sequelize: users_service_db,
-        modelName: 'Users',
-        tableName: 'users',
-        timestamps: true,
-        paranoid: true,
-    }
+    contentId: {
+      type: DataTypes.UUID,
+      allowNull: false
+    },
+    contentType: {
+      type: DataTypes.ENUM(...Object.values(ContentDataType)),
+      allowNull: false,
+      defaultValue: ContentDataType.AUDIO,
+    },
+    filePath: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+     description: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: DataTypes.NOW,
+    },
+  },
+  {
+    sequelize: users_service_db,
+    modelName: 'ContentFiles',
+    tableName: 'content_files',
+    timestamps: true,
+  }
 );
 
 export default ContentFiles;

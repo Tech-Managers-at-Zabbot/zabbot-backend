@@ -218,7 +218,7 @@ const getWaitingListBetaTesterUser = async (request, response) => {
         if (!email || typeof email !== 'string') {
             return response.status(400).json({ error: 'Valid email is required' });
         }
-        const user = await waitingList_1.default.findOne({ where: { email } });
+        const user = await waitingList_1.default.findOne({ where: { email }, raw: true });
         if (!user) {
             return response.status(404).json({ message: 'User not found in waiting list' });
         }

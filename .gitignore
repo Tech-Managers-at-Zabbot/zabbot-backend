@@ -3,10 +3,13 @@ node_modules
 DocumentLayout.json
 .wsuo
 VSWorkspaceState.json
-keys.ts
 Yoruba_Dataset.xlsx
 yoruba-translator.js
 output.json
 docker-compose.yml
-store.ts
+keys.ts
+migrations
+migration-config
+.sequelizerc
 contents.json
+store.ts

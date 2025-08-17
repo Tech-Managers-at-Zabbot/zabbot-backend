@@ -1,5 +1,21 @@
 {
-  "watch": ["config", "user-service", "waiting-list-service", "notification-service", "shared", "ededun-service", "buildAll.ts", "main-server.ts", "installAll.ts", "package.json", ".env", "tsconfig.json"],
+  "watch": [
+    "config",
+    "user-service",
+    "cronJob-services",
+    "waiting-list-service",
+    "notification-service",
+    "shared",
+    "lesson-service",
+    "ededun-service",
+    "buildAll.ts",
+    "main-server.ts",
+    "installAll.ts",
+    "package.json",
+    ".env",
+    "tsconfig.json",
+    "pronunciation-feedback-service"
+  ],
   "ext": "ts,json",
   "verbose": true,
   "exec": "ts-node main-server.ts",

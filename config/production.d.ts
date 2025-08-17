@@ -16,5 +16,6 @@ declare const _default: {
     EDEDUN_CLOUDINARY_API_KEY: string;
     EDEDUN_CLOUDINARY_API_SECRET: string;
     EDEDUN_DB: string;
+    YORUBA_LANGUAGE_ID: string;
 };
 export default _default;

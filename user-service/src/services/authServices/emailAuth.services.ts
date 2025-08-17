@@ -17,7 +17,7 @@ import {
 import {
   SpecialCodeMessage,
   StatusCodes,
-} from "../../responses/statusCodes/statusCodes.responses";
+} from "../../../../shared/statusCodes/statusCodes.responses";
 import { GeneralResponses } from "../../responses/generalResponses/general.responses";
 import { OtpResponses } from "../../responses/otpResponses/otp.responses";
 import userRepositories from "../../repositories/userRepositories/users.repositories";
@@ -26,7 +26,7 @@ import config from "../../../../config/config";
 
 const registerUserService = errorUtilities.withServiceErrorHandling(
   async (registerPayload: UserAttributes) => {
-    const { firstName, lastName, email, password, role } = registerPayload;
+    const { firstName, lastName, email, password, role, timeZone } = registerPayload;
 
     const userExists = await usersRepositories.getOne({ email: email }, [
       "id",
@@ -51,6 +51,7 @@ const registerUserService = errorUtilities.withServiceErrorHandling(
       isVerified: role && role === UserRoles.ADMIN ? true : false,
       isActive: true,
       isBlocked: false,
+      timeZone,
       isFirstTimeLogin: true,
       role: role ?? UserRoles.USER,
       registerMethod: RegisterMethods.EMAIL,
@@ -284,8 +285,9 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
     email: string;
     password: string;
     stayLoggedIn: boolean;
+    timeZone: string;
   }) => {
-    const { email, password, stayLoggedIn } = loginPayload;
+    const { email, password, stayLoggedIn, timeZone } = loginPayload;
 
     const user = await usersRepositories.getOne({ email });
 
@@ -383,7 +385,7 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
         email: user.email,
         role: user.role,
       },
-      expires: "2h",
+      expires: stayLoggedIn ? "30d" : "2h",
     };
 
     const refreshTokenData = {
@@ -392,7 +394,7 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
         email: user.email,
         role: user.role,
       },
-      expires: "30d",
+      expires: "60d",
     };
 
     const accessToken = helperFunctions.generateToken(accessTokenData);
@@ -403,11 +405,14 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
         id: user.id,
       },
       {
-        refreshToken
+        refreshToken,
+        timeZone
       }
     );
 
-    const userDetails = await usersRepositories.extractUserDetails(user);
+    const userDetails:Record<string, any> = await usersRepositories.extractUserDetails(user);
+
+    userDetails.languageId = config.YORUBA_LANGUAGE_ID!
 
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
@@ -606,6 +611,8 @@ const resetPasswordService = errorUtilities.withServiceErrorHandling(
     );
   }
 );
+
+
 
 export default {
   registerUserService,

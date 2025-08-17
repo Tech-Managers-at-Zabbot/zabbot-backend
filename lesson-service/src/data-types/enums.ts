@@ -1,6 +1,41 @@
 export enum ContentDataType {
-    TEXT = 'text',
+    // TEXT = 'text',
     VIDEO = 'video',
     AUDIO = 'audio',
     IMAGE = 'image',
+}
+
+export enum ContentSourceType {
+  NEW = 'new',
+  EDEDUN = 'ededun'
+}
+
+export enum Level {
+    FOUNDATION = 'foundation',
+    BUILDER = 'builder',
+    EXPLORER = 'explorer',
+}
+
+export enum LanguageCode {
+    ENGLISH = 'EN',
+    SPANISH = 'ES',
+    FRENCH = 'FR',
+    GERMAN = 'DE',
+    ITALIAN = 'IT',
+    PORTUGUESE = 'PT',
+    MANDARIN = 'ZH',
+    JAPANESE = 'JA',
+    KOREAN = 'KO',
+    ARABIC = 'AR',
+    RUSSIAN = 'RU',
+    HINDI = 'HI',
+    YORUBA = 'YO',
+    IGBO = 'IG',
+    HAUSA = 'HA',
+    SWAHILI = 'SW'
+}
+
+export enum QuizType {
+  MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
+  FILL_IN_BLANK = 'FILL_IN_BLANK'
 }

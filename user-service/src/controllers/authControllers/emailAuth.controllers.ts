@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { emailAuthServices } from "../../services";
 import { responseUtilities, errorUtilities } from "../../../../shared/utilities";
 import { GeneralResponses } from "../../responses/generalResponses/general.responses";
-import { StatusCodes } from "../../responses/statusCodes/statusCodes.responses";
+import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
 import { OtpResponses } from "../../responses/otpResponses/otp.responses";
 import axios from "axios";
 import config from '../../../../config/config';

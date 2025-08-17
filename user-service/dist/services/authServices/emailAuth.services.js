@@ -10,14 +10,14 @@ const axios_1 = __importDefault(require("axios"));
 const users_types_1 = require("../../types/users.types");
 const users_repositories_1 = __importDefault(require("../../repositories/userRepositories/users.repositories"));
 const utilities_1 = require("../../../../shared/utilities");
-const statusCodes_responses_1 = require("../../responses/statusCodes/statusCodes.responses");
+const statusCodes_responses_1 = require("../../../../shared/statusCodes/statusCodes.responses");
 const general_responses_1 = require("../../responses/generalResponses/general.responses");
 const otp_responses_1 = require("../../responses/otpResponses/otp.responses");
 const users_repositories_2 = __importDefault(require("../../repositories/userRepositories/users.repositories"));
 const otp_repositories_1 = __importDefault(require("../../repositories/otpRepositories/otp.repositories"));
 const config_1 = __importDefault(require("../../../../config/config"));
 const registerUserService = utilities_1.errorUtilities.withServiceErrorHandling(async (registerPayload) => {
-    const { firstName, lastName, email, password, role } = registerPayload;
+    const { firstName, lastName, email, password, role, timeZone } = registerPayload;
     const userExists = await users_repositories_1.default.getOne({ email: email }, [
         "id",
         "email",
@@ -35,6 +35,7 @@ const registerUserService = utilities_1.errorUtilities.withServiceErrorHandling(
         isVerified: role && role === users_types_1.UserRoles.ADMIN ? true : false,
         isActive: true,
         isBlocked: false,
+        timeZone,
         isFirstTimeLogin: true,
         role: role ?? users_types_1.UserRoles.USER,
         registerMethod: users_types_1.RegisterMethods.EMAIL,
@@ -168,7 +169,7 @@ const resendVerificationOtpService = utilities_1.errorUtilities.withServiceError
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.Created, general_responses_1.GeneralResponses.USER_REGSTRATION_SUCCESSFUL, user.email);
 });
 const loginUserService = utilities_1.errorUtilities.withServiceErrorHandling(async (loginPayload) => {
-    const { email, password, stayLoggedIn } = loginPayload;
+    const { email, password, stayLoggedIn, timeZone } = loginPayload;
     const user = await users_repositories_1.default.getOne({ email });
     if (!user) {
         throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.USER_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
@@ -223,7 +224,7 @@ const loginUserService = utilities_1.errorUtilities.withServiceErrorHandling(asy
             email: user.email,
             role: user.role,
         },
-        expires: "2h",
+        expires: stayLoggedIn ? "30d" : "2h",
     };
     const refreshTokenData = {
         data: {
@@ -231,16 +232,18 @@ const loginUserService = utilities_1.errorUtilities.withServiceErrorHandling(asy
             email: user.email,
             role: user.role,
         },
-        expires: "30d",
+        expires: "60d",
     };
     const accessToken = index_1.helperFunctions.generateToken(accessTokenData);
     const refreshToken = index_1.helperFunctions.generateToken(refreshTokenData);
     await users_repositories_2.default.updateOne({
         id: user.id,
     }, {
-        refreshToken
+        refreshToken,
+        timeZone
     });
     const userDetails = await users_repositories_1.default.extractUserDetails(user);
+    userDetails.languageId = config_1.default.YORUBA_LANGUAGE_ID;
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, general_responses_1.GeneralResponses.SUCCESSFUL_LOGIN, { token: accessToken, user: userDetails });
 });
 const passwordResetRequestService = utilities_1.errorUtilities.withServiceErrorHandling(async (email) => {

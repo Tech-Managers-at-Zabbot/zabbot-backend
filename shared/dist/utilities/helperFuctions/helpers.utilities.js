@@ -18,7 +18,20 @@ const validateToken = (token) => {
         return null;
     }
 };
+const parseStringified = (data) => {
+    if (typeof data === 'string') {
+        try {
+            return JSON.parse(data);
+        }
+        catch (err) {
+            console.error("Invalid JSON string:", err);
+            throw new Error("Invalid stringified JSON input");
+        }
+    }
+    return data;
+};
 exports.default = {
     generateToken,
-    validateToken
+    validateToken,
+    parseStringified
 };

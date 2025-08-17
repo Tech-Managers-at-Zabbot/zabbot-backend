@@ -80,13 +80,23 @@ const userRepositories = {
             throw utilities_1.errorUtilities.createError(`Error fetching user, please try again`, 500);
         }
     },
+    getAllCount: async () => {
+        try {
+            const { count } = await users_entities_1.default.findAndCountAll({});
+            return count;
+        }
+        catch (error) {
+            console.log(`Count users error: ${error.message}`);
+        }
+    },
     getMany: async (filter, projection, options, order) => {
         try {
             const users = await users_entities_1.default.findAll({
                 where: filter,
                 attributes: projection,
                 ...options,
-                order
+                order,
+                raw: true
             });
             return users;
         }

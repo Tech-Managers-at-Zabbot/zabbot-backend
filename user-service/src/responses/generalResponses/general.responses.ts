@@ -22,5 +22,6 @@ export enum GeneralResponses {
     SUCCESSFUL_PASSWORD_RESET = "Password reset successful",
     UNAUTHORIZED_FOR_TESTING = "You are in the Founders Circle; however, you did not sign up to be a Beta Tester.  Changed your mind? That is GREAT! Please send an email to bola@zabbot.com and we will add you the Beta Test group.  Thank you!",
     FAILED_TESTER_CHECK = "Beta tester check failed",
+    PROCESS_SUCCESSFUL = "Process Successful",
     SIGNUP_AS_TESTER = "User not found. Please sign up as a beta tester at https://zabbot.com/founders-circle",
 }
