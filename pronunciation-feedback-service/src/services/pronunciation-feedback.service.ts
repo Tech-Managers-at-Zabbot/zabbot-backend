@@ -1,4 +1,3 @@
-import e, { Request } from "express";
 import fsPromises from "fs/promises";
 import { decode } from "node-wav";
 import Ffmpeg from "fluent-ffmpeg";
@@ -39,67 +38,32 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
     referencePronunciationId,
     file,
     userId,
+    voice = "femaleVoice",
   }: {
     userId: string;
     referencePronunciationId: string;
     file: Express.Multer.File;
+    voice?: string;
   }) => {
     const userfileName = file.filename.replace(/\.[^/.]+$/, "");
     const masterFileName = "referece_pronunciation";
 
-    const userRawFilePath = path.join(
-      __dirname,
-      "../utilities/audioFiles/uploads/raw",
-      file.filename
-    );
-    const userWavFilePath = path.join(
-      __dirname,
-      "../utilities/audioFiles/uploads/wavs",
-      `${userfileName}.wav`
-    );
-    const userTrimmedFilePath = path.join(
-      __dirname,
-      "../utilities/audioFiles/uploads/trimmed",
-      `${userfileName}.wav`
-    );
-    const normalisedUserWavPath = path.join(
-      __dirname,
-      "../utilities/audioFiles/uploads/normalized",
-      `${userfileName}.wav`
-    );
-
-    const masterRawFilePath = path.join(
-      __dirname,
-      "../utilities/audioFiles/master/raw",
-      `${masterFileName}.wav`
-    );
-    const masterWavFilePath = path.join(
-      __dirname,
-      "../utilities/audioFiles/master/wavs",
-      `${masterFileName}.wav`
-    );
-    const masterTrimmedFilePath = path.join(
-      __dirname,
-      "../utilities/audioFiles/master/trimmed",
-      `${masterFileName}.wav`
-    );
-    const normalisedMasterWavPath = path.join(
-      __dirname,
-      "../utilities/audioFiles/master/normalized",
-      `${masterFileName}.wav`
-    );
-
-    // Plots
-    const plotPath = path.join(
-      __dirname,
-      "../utilities/audioFiles/plots",
-      `${userfileName}_plot.png`
-    );
-    const plotDTWPath = path.join(
-      __dirname,
-      "../utilities/audioFiles/plots",
-      `${userfileName}_plotDTW.png`
-    );
+    const {
+      userRawFilePath,
+      userWavFilePath,
+      userTrimmedFilePath,
+      normalisedUserWavPath,
+      masterRawFilePath,
+      masterWavFilePath,
+      masterTrimmedFilePath,
+      normalisedMasterWavPath,
+      plotPath,
+      plotDTWPath,
+    } = await createFileDirectories({
+      reqFileName: file.filename,
+      userfileName,
+      masterFileName,
+    });
 
     try {
       const masterPronunciation =
@@ -110,7 +74,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         throw errorUtilities.createError("Reference file not found", 404);
       }
 
-      const url = masterPronunciation.get("femaleVoice");
+      const url = masterPronunciation.get(voice) as string;
       await getMasterFile(url, masterRawFilePath);
 
       const { tensor: userTensor, raw: userRawAudio } = await loadAndTrimAudio({
@@ -662,6 +626,69 @@ const saveUserPronunciation = async ({
     pronuciationPlotUrl,
   };
   return userPronunciationRepositories.addPronunciation(userPronunciationData);
+};
+
+const createFileDirectories = async ({
+  userfileName,
+  masterFileName,
+  reqFileName,
+}: {
+  userfileName: string;
+  masterFileName: string;
+  reqFileName: string;
+}) => {
+  const userRawFilePath = path.join(
+    __dirname,
+    "../utilities/audioFiles/uploads/raw",
+    reqFileName
+  );
+  const paths: Record<string, string> = {
+    userRawFilePath,
+  };
+
+  const userFilePaths = {
+    userWavFilePath: "../utilities/audioFiles/uploads/wavs",
+    userTrimmedFilePath: "../utilities/audioFiles/uploads/trimmed",
+    normalisedUserWavPath: "../utilities/audioFiles/uploads/normalized",
+  };
+  for (let key in userFilePaths) {
+    const directory = path.join(
+      __dirname,
+      userFilePaths[key as keyof typeof userFilePaths]
+    );
+    await fsPromises.mkdir(directory, { recursive: true });
+    paths[key] = path.join(directory, `${userfileName}.wav`);
+  }
+
+  const masterFilePaths = {
+    masterRawFilePath: "../utilities/audioFiles/master/raw",
+    masterWavFilePath: "../utilities/audioFiles/master/wavs",
+    masterTrimmedFilePath: "../utilities/audioFiles/master/trimmed",
+    normalisedMasterWavPath: "../utilities/audioFiles/master/normalized",
+  };
+  for (let key in masterFilePaths) {
+    const directory = path.join(
+      __dirname,
+      masterFilePaths[key as keyof typeof masterFilePaths]
+    );
+    await fsPromises.mkdir(directory, { recursive: true });
+    paths[key] = path.join(directory, `${masterFileName}.wav`);
+  }
+
+  const plotPaths = {
+    plotPath: "../utilities/audioFiles/plots",
+    plotDTWPath: "../utilities/audioFiles/plots",
+  };
+  for (let key in plotPaths) {
+    const directory = path.join(
+      __dirname,
+      plotPaths[key as keyof typeof plotPaths]
+    );
+    await fsPromises.mkdir(directory, { recursive: true });
+    const suffix = key.split("Path")[0];
+    paths[key] = path.join(directory, `${userfileName}_${suffix}.png`);
+  }
+  return paths;
 };
 
 export default {

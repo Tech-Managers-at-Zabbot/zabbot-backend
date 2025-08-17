@@ -35,7 +35,10 @@ const userPronunciationRepositories = {
     try {
       // check if pronunciation already exists
       const existingPronunciation = await UserPronunciation.findOne({
-        where: { userId: pronunciationData.userId },
+        where: {
+          userId: pronunciationData.userId,
+          pronunciationId: pronunciationData.pronunciationId,
+        },
         transaction,
       });
       if (existingPronunciation) {
