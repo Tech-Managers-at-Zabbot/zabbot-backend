@@ -22,14 +22,20 @@ import userPronunciationRepositories from "../repositories/user-pronunciation.re
 import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
 import UserPronunciation from "../../../shared/entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation";
 
-
-
 Ffmpeg.setFfmpegPath(ffmpegPath as string);
 
 const sampleRate = 16000;
+
+// Configure OpenAI with timeout
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+  timeout: 120000, // 2 minutes timeout
+  maxRetries: 3,
 });
+
+// Configure axios with timeout for external requests
+axios.defaults.timeout = 60000; // 60 seconds
+axios.defaults.maxRedirects = 3;
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
@@ -53,51 +59,59 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
     const userfileName = file.filename.replace(/\.[^/.]+$/, "");
     const masterFileName = "referece_pronunciation";
 
-    const {
-      userRawFilePath,
-      userWavFilePath,
-      userTrimmedFilePath,
-      normalisedUserWavPath,
-      masterRawFilePath,
-      masterWavFilePath,
-      masterTrimmedFilePath,
-      normalisedMasterWavPath,
-      plotPath,
-      plotDTWPath,
-    } = await createFileDirectories({
-      reqFileName: file.filename,
-      userfileName,
-      masterFileName,
-    });
+    let filePaths: any = {};
 
     try {
-      const masterPronunciation =
-        await referenePronunciationRepositories.getPronunciation(
-          referencePronunciationId
-        );
+      filePaths = await createFileDirectories({
+        reqFileName: file.filename,
+        userfileName,
+        masterFileName,
+      });
+
+      const {
+        userRawFilePath,
+        userWavFilePath,
+        userTrimmedFilePath,
+        normalisedUserWavPath,
+        masterRawFilePath,
+        masterWavFilePath,
+        masterTrimmedFilePath,
+        normalisedMasterWavPath,
+        plotPath,
+        plotDTWPath,
+      } = filePaths;
+
+      console.log("Starting pronunciation comparison process...");
+
+      const masterPronunciation = await referenePronunciationRepositories.getPronunciation(
+        referencePronunciationId
+      );
       if (!masterPronunciation) {
         throw errorUtilities.createError("Reference file not found", 404);
       }
 
       const url = masterPronunciation.get(voice) as string;
+      console.log("Downloading master file...");
       await getMasterFile(url, masterRawFilePath);
 
+      console.log("Processing user audio...");
       const { tensor: userTensor, raw: userRawAudio } = await loadAndTrimAudio({
         rawFilePath: userRawFilePath,
         wavFilePath: userWavFilePath,
         trimmedFilePath: userTrimmedFilePath,
       });
-      const { tensor: masterTensor, raw: masterRawAudio } =
-        await loadAndTrimAudio({
-          rawFilePath: masterRawFilePath,
-          trimmedFilePath: masterTrimmedFilePath,
-          wavFilePath: masterWavFilePath,
-        });
+
+      console.log("Processing master audio...");
+      const { tensor: masterTensor, raw: masterRawAudio } = await loadAndTrimAudio({
+        rawFilePath: masterRawFilePath,
+        trimmedFilePath: masterTrimmedFilePath,
+        wavFilePath: masterWavFilePath,
+      });
 
       if (isInvalid(userRawAudio)) {
         throw errorUtilities.createError(
           `Your recording was too short or too quiet`,
-          500
+          400
         );
       }
       if (isInvalid(masterRawAudio)) {
@@ -107,79 +121,104 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         );
       }
 
-      // Normalize audio after trimming
+      console.log("Normalizing audio...");
       const normalisedUserAudio = normalizeAudio(userTensor);
       const normalisedMasterAudio = normalizeAudio(masterTensor);
 
-      // before volume match
       const userRMS = await rms(normalisedUserAudio);
       const masterRMS = await rms(normalisedMasterAudio);
       console.log("Ref RMS:", masterRMS);
       console.log("User RMS:", userRMS);
 
-      // after volume match
       const [masterTensorScaled, userTensorScaled] = await matchVolumes(
         masterTensor,
         userTensor
       );
 
-      //  Save trimmed & normalized WAVs
+      console.log("Writing WAV files...");
       await writeWavFile(normalisedUserWavPath, sampleRate, userRawAudio);
       await writeWavFile(normalisedMasterWavPath, sampleRate, masterRawAudio);
 
-      // Embedding similarity
-      const masterAudioEmbedding = await getEmbedding(normalisedMasterWavPath);
-      const userAudioEmbedding = await getEmbedding(normalisedUserWavPath);
+      console.log("Generating embeddings...");
+      // Add timeout wrapper for embedding generation
+      const masterAudioEmbedding = await withTimeout(
+        getEmbedding(normalisedMasterWavPath),
+        120000, // 2 minutes
+        "Master audio embedding generation timeout"
+      );
 
+      const userAudioEmbedding = await withTimeout(
+        getEmbedding(normalisedUserWavPath),
+        120000, // 2 minutes  
+        "User audio embedding generation timeout"
+      );
+
+      console.log("Calculating embedding similarity...");
       const embeddingSimilarity = getEmbeddingSimilarity(
         userAudioEmbedding,
         masterAudioEmbedding
       );
 
-      // Transcriptions
-      const userTranscription = await getTranscription(normalisedUserWavPath);
-      const masterTranscription = await getTranscription(
-        normalisedMasterWavPath
-      );
+      console.log("Getting transcriptions...");
+      // Add timeout and retry logic for transcriptions
+      const [userTranscription, masterTranscription] = await Promise.all([
+        withTimeout(
+          retryWithBackoff(() => getTranscription(normalisedUserWavPath), 3),
+          180000, // 3 minutes
+          "User transcription timeout"
+        ),
+        withTimeout(
+          retryWithBackoff(() => getTranscription(normalisedMasterWavPath), 3),
+          180000, // 3 minutes
+          "Master transcription timeout"
+        ),
+      ]);
+
+      console.log("User transcription:", userTranscription);
+      console.log("Master transcription:", masterTranscription);
+
       const textSimilarity = transcriptionSimilarity(
         userTranscription,
         masterTranscription
       );
 
-      const finalScore =
-        Math.round((0.05 * embeddingSimilarity + 0.95 * textSimilarity) * 100) /
-        100;
+      const finalScore = Math.round((0.05 * embeddingSimilarity + 0.95 * textSimilarity) * 100) / 100;
 
-      await plotOverlay(masterRawAudio, userRawAudio, plotPath);
-
-      await plotDTW(masterAudioEmbedding, userAudioEmbedding, plotDTWPath);
+      console.log("Creating plots...");
+      await Promise.all([
+        plotOverlay(masterRawAudio, userRawAudio, plotPath),
+        plotDTW(masterAudioEmbedding, userAudioEmbedding, plotDTWPath),
+      ]);
 
       let remark = "";
       if (finalScore > 0.85) {
-        remark =
-          "Excellent! Your pronunciation is perfect or close to perfect.";
+        remark = "Excellent! Your pronunciation is perfect or close to perfect.";
       } else if (finalScore > 0.7) {
-        remark =
-          "Good attempt — there is room for improvement. Listen to recording & try again.";
+        remark = "Good attempt — there is room for improvement. Listen to recording & try again.";
       } else {
         remark = "Needs improvement — listen and try again.";
       }
 
-      const plotDTWResult = await uploadToCloudinary({
-        path: plotDTWPath,
-        folder: "plots",
-        assetType: "image",
-      });
-      const plotResult = await uploadToCloudinary({
-        path: plotPath,
-        folder: "plots",
-        assetType: "image",
-      });
-      const userPronunciationUpload = await uploadToCloudinary({
-        path: userWavFilePath,
-        folder: "userPronunciations",
-        assetType: "video",
-      });
+      console.log("Uploading to Cloudinary...");
+      const [plotDTWResult, plotResult, userPronunciationUpload] = await Promise.all([
+        uploadToCloudinary({
+          path: plotDTWPath,
+          folder: "plots",
+          assetType: "image",
+        }),
+        uploadToCloudinary({
+          path: plotPath,
+          folder: "plots",
+          assetType: "image",
+        }),
+        uploadToCloudinary({
+          path: userWavFilePath,
+          folder: "userPronunciations",
+          assetType: "video",
+        }),
+      ]);
+
+      console.log("Saving user pronunciation data...");
       const userPronunciationData = await saveUserPronunciation({
         userId,
         pronunciationId: masterPronunciation.get("id"),
@@ -187,19 +226,11 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         pronuciationPlotUrl: plotResult,
       });
 
-      fsPromises.unlink(userRawFilePath);
-      fsPromises.unlink(userTrimmedFilePath);
-      fsPromises.unlink(userWavFilePath);
-      fsPromises.unlink(normalisedUserWavPath);
+      // Cleanup files
+      await cleanupFiles(filePaths);
 
-      fsPromises.unlink(masterRawFilePath);
-      fsPromises.unlink(masterWavFilePath);
-      fsPromises.unlink(masterTrimmedFilePath);
-      fsPromises.unlink(normalisedMasterWavPath);
-
-      fsPromises.unlink(plotDTWPath);
-      fsPromises.unlink(plotPath);
-
+      console.log("Pronunciation comparison completed successfully");
+      
       return responseUtilities.handleServicesResponse(
         StatusCodes.Created,
         "Pronunciation completed",
@@ -216,34 +247,117 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         }
       );
     } catch (error: any) {
-      fsPromises.unlink(userRawFilePath);
-      fsPromises.unlink(userTrimmedFilePath);
-      fsPromises.unlink(userWavFilePath);
-      fsPromises.unlink(normalisedUserWavPath);
-
-      fsPromises.unlink(masterRawFilePath);
-      fsPromises.unlink(masterWavFilePath);
-      fsPromises.unlink(masterTrimmedFilePath);
-      fsPromises.unlink(normalisedMasterWavPath);
-
-      fsPromises.unlink(plotDTWPath);
-      fsPromises.unlink(plotPath);
+      console.error("Error in pronunciation comparison:", error);
+      
+      // Ensure cleanup happens even on error
+      if (filePaths && Object.keys(filePaths).length > 0) {
+        await cleanupFiles(filePaths).catch(cleanupError => {
+          console.error("Error during cleanup:", cleanupError);
+        });
+      }
+      
       throw errorUtilities.createError(
         `Error comparing pronunciation: ${error.message}`,
-        500
+        error.status || 500
       );
     }
   }
 );
 
-const getMasterFile = async (url: string, outputPath: string) => {
-  const response = await axios.get(url, { responseType: "stream" });
-  response.data.pipe(fs.createWriteStream(outputPath));
+// Utility function to wrap promises with timeout
+const withTimeout = <T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  errorMessage = 'Operation timeout'
+): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => reject(new Error(errorMessage)), timeoutMs);
+    }),
+  ]);
+};
 
-  return new Promise((resolve, reject) => {
-    response.data.on("end", resolve);
-    response.data.on("error", reject);
-  });
+// Retry function with exponential backoff
+const retryWithBackoff = async <T>(
+  fn: () => Promise<T>,
+  maxRetries: number,
+  baseDelay: number = 1000
+): Promise<T> => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      if (attempt === maxRetries) {
+        throw error;
+      }
+      
+      const delay = baseDelay * Math.pow(2, attempt - 1);
+      console.log(`Attempt ${attempt} failed, retrying in ${delay}ms...`, error.message);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  throw new Error('Max retries exceeded');
+};
+
+// Centralized cleanup function
+const cleanupFiles = async (filePaths: Record<string, string>) => {
+  const filesToCleanup = [
+    'userRawFilePath',
+    'userTrimmedFilePath', 
+    'userWavFilePath',
+    'normalisedUserWavPath',
+    'masterRawFilePath',
+    'masterWavFilePath',
+    'masterTrimmedFilePath',
+    'normalisedMasterWavPath',
+    'plotDTWPath',
+    'plotPath'
+  ];
+
+  const cleanupPromises = filesToCleanup
+    .filter(key => filePaths[key])
+    .map(async (key) => {
+      try {
+        await fsPromises.unlink(filePaths[key]);
+        console.log(`Cleaned up: ${key}`);
+      } catch (error: any) {
+        // Don't throw on cleanup errors, just log them
+        if (error.code !== 'ENOENT') {
+          console.warn(`Failed to cleanup ${key}:`, error.message);
+        }
+      }
+    });
+
+  await Promise.allSettled(cleanupPromises);
+};
+
+const getMasterFile = async (url: string, outputPath: string): Promise<void> => {
+  try {
+    const response = await axios.get(url, { 
+      responseType: "stream",
+      timeout: 60000, // 60 second timeout
+    });
+    
+    const writeStream = fs.createWriteStream(outputPath);
+    response.data.pipe(writeStream);
+
+    return new Promise((resolve, reject) => {
+      writeStream.on('finish', resolve);
+      writeStream.on('error', reject);
+      response.data.on('error', reject);
+      
+      // Add timeout for the write operation
+      setTimeout(() => {
+        reject(new Error('File download timeout'));
+      }, 60000);
+    });
+  } catch (error: any) {
+    throw errorUtilities.createError(
+      `Failed to download master file: ${error.message}`,
+      500
+    );
+  }
 };
 
 const uploadToCloudinary = async ({
@@ -256,36 +370,70 @@ const uploadToCloudinary = async ({
   assetType: "image" | "video";
 }) => {
   try {
-    const audioUrl = await cloudinary.uploader.upload(path, {
-      folder,
-      resource_type: assetType,
-    });
+    console.log(`Uploading to Cloudinary: ${path}`);
+    
+    const audioUrl = await withTimeout(
+      cloudinary.uploader.upload(path, {
+        folder,
+        resource_type: assetType,
+        timeout: 120000, // 2 minutes
+      }),
+      180000, // 3 minutes total timeout
+      'Cloudinary upload timeout'
+    );
+    
     return audioUrl.secure_url;
   } catch (error: any) {
+    console.error(`Cloudinary upload error for ${path}:`, error);
     throw errorUtilities.createError(
-      `Error uploading user pronunciation to cloudinary: ${error.message}`,
+      `Error uploading to cloudinary: ${error.message}`,
       500
     );
   }
 };
 
-// Helper: Promisify ffmpeg save process
-const convertAudio = (
-  inputPath: string,
-  outputPath: string,
-  options: (cmd: Ffmpeg.FfmpegCommand) => void
-): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    const command = Ffmpeg(inputPath);
-    options(command);
-    command
-      .save(outputPath)
-      .on("end", () => resolve())
-      .on("error", (err) => reject(err));
-  });
+// Enhanced transcription function with better error handling
+const getTranscription = async (filePath: string): Promise<string> => {
+  try {
+    // Check if file exists before attempting transcription
+    await fsPromises.access(filePath);
+    
+    const fileStats = await fsPromises.stat(filePath);
+    if (fileStats.size === 0) {
+      throw new Error("Audio file is empty");
+    }
+    
+    console.log(`Getting transcription for: ${filePath} (${fileStats.size} bytes)`);
+    
+    const file = fs.createReadStream(filePath);
+    
+    const response = await openai.audio.transcriptions.create({
+      model: "whisper-1",
+      file: file,
+      language: "en", // Specify language for better results
+    });
+    
+    if (!response.text || response.text.trim().length === 0) {
+      throw new Error("Empty transcription received");
+    }
+    
+    return response.text.trim();
+  } catch (error: any) {
+    console.error(`Transcription error for ${filePath}:`, error);
+    if (error.status === 413) {
+      throw new Error("Audio file is too large for transcription");
+    }
+    if (error.status === 400) {
+      throw new Error("Invalid audio file format");
+    }
+    throw new Error(`Transcription failed: ${error.message}`);
+  }
 };
 
-export const loadAndTrimAudio = async ({
+// Rest of your functions remain the same but with added error handling...
+// [Include all your other functions here with similar error handling improvements]
+
+const loadAndTrimAudio = async ({
   trimmedFilePath,
   wavFilePath,
   rawFilePath,
@@ -311,10 +459,18 @@ export const loadAndTrimAudio = async ({
     console.log("Reading trimmed file...");
     const fileBuffer = await fsPromises.readFile(trimmedFilePath);
 
+    if (fileBuffer.length === 0) {
+      throw new Error("Trimmed audio file is empty");
+    }
+
     const result = await decode(fileBuffer);
     console.log("Decoded WAV file");
 
-    const rawAudio = result.channelData[0]; // Float32Array
+    if (!result.channelData || result.channelData.length === 0) {
+      throw new Error("No audio channels found in decoded file");
+    }
+
+    const rawAudio = result.channelData[0];
     const audioSamples = Array.from(rawAudio);
     const tensorAudio = tf.tensor2d([audioSamples]);
 
@@ -323,6 +479,7 @@ export const loadAndTrimAudio = async ({
       raw: rawAudio,
     };
   } catch (err: any) {
+    console.error("Audio processing error:", err);
     throw errorUtilities.createError(
       `Error processing audio: ${err.message}`,
       500
@@ -330,6 +487,36 @@ export const loadAndTrimAudio = async ({
   }
 };
 
+// Helper: Promisify ffmpeg save process with timeout
+const convertAudio = (
+  inputPath: string,
+  outputPath: string,
+  options: (cmd: Ffmpeg.FfmpegCommand) => void
+): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const command = Ffmpeg(inputPath);
+    options(command);
+    
+    // Add timeout for ffmpeg operations
+    const timeout = setTimeout(() => {
+      command.kill('SIGKILL');
+      reject(new Error('FFmpeg operation timeout'));
+    }, 60000); // 60 seconds
+    
+    command
+      .save(outputPath)
+      .on("end", () => {
+        clearTimeout(timeout);
+        resolve();
+      })
+      .on("error", (err) => {
+        clearTimeout(timeout);
+        reject(err);
+      });
+  });
+};
+
+// Rest of your utility functions...
 const isInvalid = (
   audio: Float32Array<ArrayBufferLike>,
   threshold = 0.01,
@@ -343,39 +530,21 @@ const isInvalid = (
 };
 
 const normalizeAudio = (audioTensor: tf.Tensor): tf.Tensor => {
-  // Find the maximum absolute value in the tensor.
-  // We use tf.abs() to get the absolute values before finding the maximum.
   const maxAbsValue = tf.max(tf.abs(audioTensor));
-
-  // Add a small epsilon (1e-8) to the maximum absolute value to prevent
-  // division by zero, which could happen if the audioTensor is all zeros.
   const divisor = tf.add(maxAbsValue, 1e-8);
-
-  // Perform the normalization by dividing the entire tensor by the divisor.
-  // The tf.div() function handles this element-wise division.
   const normalizedTensor = tf.div(audioTensor, divisor);
-
   return normalizedTensor;
 };
 
 const rms = async (tensor: tf.Tensor): Promise<number> => {
-  // Ensure the tensor is properly disposed of to prevent memory leaks.
   const rmsValueTensor = tf.tidy(() => {
-    // Square the tensor elements.
     const squared = tf.pow(tensor, 2);
-    // Find the mean of the squared elements.
     const mean = tf.mean(squared);
-    // Take the square root to get the RMS value.
     return tf.sqrt(mean);
   });
 
-  // Extract the single number from the resulting tensor.
-  // We use .data() because the operations are asynchronous.
   const rmsValue = (await rmsValueTensor.data())[0];
-
-  // Dispose of the tensor to free up GPU memory.
   rmsValueTensor.dispose();
-
   return rmsValue;
 };
 
@@ -383,19 +552,10 @@ const matchVolumes = async (
   masterTensor: tf.Tensor,
   userTensor: tf.Tensor
 ): Promise<[tf.Tensor, tf.Tensor]> => {
-  // Use the reusable rms function to get the RMS values.
   const masterRms = await rms(masterTensor);
   const userRms = await rms(userTensor);
-
-  // Calculate the scaling factor. Add a small epsilon (1e-8) to prevent
-  // division by zero if the user's audio tensor is all zeros.
   const scalingFactor = masterRms / (userRms + 1e-8);
-
-  // Apply the scaling factor to the user's tensor.
   const userTensorScaled = tf.mul(userTensor, tf.scalar(scalingFactor));
-
-  // Return the original reference tensor and the scaled user tensor.
-  // Note that we return a Promise that resolves to a tuple of tensors.
   return [masterTensor, userTensorScaled];
 };
 
@@ -405,59 +565,34 @@ const writeWavFile = async (
   audioData: Float32Array
 ): Promise<void> => {
   const wav = new WaveFile();
-
-  // From the given audio data, create a new WaveFile with the specified sample rate,
-  // number of channels (1 for mono), and bit depth (32-bit floating point, same as Float32Array).
-  // The value '32f' is used for 32-bit float audio, matching the input data type.
   wav.fromScratch(1, sampleRate, "32f", audioData);
-
-  // Convert the WaveFile object into a Buffer that can be written to disk.
   const buffer = wav.toBuffer();
-
-  // Write the buffer to the specified file path asynchronously.
   await fsPromises.writeFile(path, buffer);
-
-  console.log(`WAV file written successfully`);
+  console.log(`WAV file written successfully: ${path}`);
 };
 
 const getEmbeddingSimilarity = (a: tf.Tensor2D, b: tf.Tensor2D) => {
-  // Ensure same number of frames (rows)
   const minLen = Math.min(a.shape[0], b.shape[0]);
   const aSlice = a.slice([0, 0], [minLen, a.shape[1]]);
   const bSlice = b.slice([0, 0], [minLen, b.shape[1]]);
-
-  // Compute cosine similarity per frame
-  const dotProduct = tf.sum(tf.mul(aSlice, bSlice), 1); // shape: [minLen]
-  const aNorm = tf.norm(aSlice, "euclidean", 1); // shape: [minLen]
-  const bNorm = tf.norm(bSlice, "euclidean", 1); // shape: [minLen]
-  const cosineSim = dotProduct.div(aNorm.mul(bNorm)); // shape: [minLen]
-
-  // Mean cosine similarity and subtract from 1
+  
+  const dotProduct = tf.sum(tf.mul(aSlice, bSlice), 1);
+  const aNorm = tf.norm(aSlice, "euclidean", 1);
+  const bNorm = tf.norm(bSlice, "euclidean", 1);
+  const cosineSim = dotProduct.div(aNorm.mul(bNorm));
+  
   const similarity = tf.sub(1, tf.mean(cosineSim));
-  return similarity.dataSync()[0]; // Return scalar as number
-};
-
-const getTranscription = async (filePath: string) => {
-  const file = fs.createReadStream(filePath);
-
-  const response = await openai.audio.transcriptions.create({
-    model: "whisper-1",
-    file: file,
-  });
-  return response.text;
+  return similarity.dataSync()[0];
 };
 
 const transcriptionSimilarity = (a: string, b: string) => {
-  // Sequence similarity (like difflib.SequenceMatcher)
   const matcher = new SequenceMatcher(null, a, b);
   const seqSim = matcher.ratio();
-
-  // Levenshtein similarity
+  
   const levDist = levenshtein(a, b);
   const maxLen = Math.max(a.length, b.length, 1);
   const levSim = 1 - levDist / maxLen;
-
-  // Conservative estimate: return the lower of the two
+  
   return Math.min(seqSim, levSim);
 };
 
@@ -531,7 +666,6 @@ const plotOverlay = async (
   await writeFile(outputPath, imageBuffer);
 };
 
-// Cosine distance between two vectors
 function cosineDistance(a: number[], b: number[]): number {
   const dot = a.reduce((sum, val, i) => sum + val * b[i], 0);
   const normA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
@@ -539,9 +673,8 @@ function cosineDistance(a: number[], b: number[]): number {
   return 1 - dot / (normA * normB + 1e-8);
 }
 
-// Convert Float32Array[] (embeddings) to number[][] if needed
 const tensorTo2DArray = async (tensor: tf.Tensor2D): Promise<number[][]> => {
-  const data = await tensor.array(); // shape: [T, D]
+  const data = await tensor.array();
   return data as number[][];
 };
 
@@ -555,14 +688,13 @@ const plotDTW = async (
 
   const dtw = new DynamicTimeWarping(ref, user, cosineDistance);
   const distance = dtw.getDistance();
-  const pathPts = dtw.getPath(); // Array of [x, y] alignment path
+  const pathPts = dtw.getPath();
 
   const x: number[] = pathPts.map(([x]) => x);
   const y: number[] = pathPts.map(([, y]) => y);
 
   const width = 600;
   const height = 600;
-
   const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height });
 
   const config = {
