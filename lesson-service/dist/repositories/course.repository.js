@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const utilities_1 = require("../../../shared/utilities");
-const course_1 = __importDefault(require("../entities/course"));
+const course_1 = __importDefault(require("../../../shared/entities/lesson-service-entities/course/course"));
 // import LanguageContents from "../entities/language-content";
 const courseRepositories = {
     getCourses: async (isActive = true, languageId) => {

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const users_entities_1 = __importDefault(require("../../entities/users.entities"));
+const users_entities_1 = __importDefault(require("../../../../shared/entities/user-service-entities/users/users.entities"));
 const utilities_1 = require("../../../../shared/utilities");
 const userRepositories = {
     create: async (data, transaction) => {

@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const utilities_1 = require("../../../shared/utilities");
-const user_pronunciation_1 = __importDefault(require("../entities/user-pronunciation"));
+const user_pronunciation_1 = __importDefault(require("../../../shared/entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation"));
 const userPronunciationRepositories = {
     getPronunciation: async (id) => {
         try {
@@ -28,7 +28,10 @@ const userPronunciationRepositories = {
         try {
             // check if pronunciation already exists
             const existingPronunciation = await user_pronunciation_1.default.findOne({
-                where: { userId: pronunciationData.userId },
+                where: {
+                    userId: pronunciationData.userId,
+                    pronunciationId: pronunciationData.pronunciationId,
+                },
                 transaction,
             });
             if (existingPronunciation) {

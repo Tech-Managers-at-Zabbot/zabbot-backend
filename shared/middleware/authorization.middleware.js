@@ -6,9 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.generalAuthFunction = void 0;
 exports.rolePermit = rolePermit;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const config_1 = __importDefault(require("../../config/config"));
 const utilities_1 = require("../utilities");
-const user_services_1 = __importDefault(require("../../user-service/src/services/userServices/user.services"));
+const users_entities_1 = __importDefault(require("../entities/user-service-entities/users/users.entities"));
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 const generalAuthFunction = async (request, response, next) => {
     try {
         const authorizationHeader = request.headers.authorization;
@@ -27,7 +28,7 @@ const generalAuthFunction = async (request, response, next) => {
         }
         let verifiedUser;
         try {
-            verifiedUser = jsonwebtoken_1.default.verify(authorizationToken, `${config_1.default.APP_JWT_SECRET}`);
+            verifiedUser = jsonwebtoken_1.default.verify(authorizationToken, `${process.env.APP_JWT_SECRET}`);
         }
         catch (error) {
             if (error.message === 'jwt expired') {
@@ -39,11 +40,17 @@ const generalAuthFunction = async (request, response, next) => {
                     });
                 }
                 const projection = ['refreshToken', 'isVerified', "isActive", "isBlocked", "role", "accessToken", "id"];
-                const userDetails = await user_services_1.default.getSingleUserService(decodedToken?.userId, projection);
+                const userDetails = await users_entities_1.default.findOne({ where: { id: decodedToken?.userId }, attributes: projection, raw: true });
+                if (!userDetails) {
+                    return response.status(403).json({
+                        status: 'error',
+                        message: 'User not found, please login again or contact admin',
+                    });
+                }
                 const refreshToken = userDetails?.refreshToken;
                 let refreshVerifiedUser;
                 try {
-                    refreshVerifiedUser = jsonwebtoken_1.default.verify(refreshToken, `${config_1.default.APP_JWT_SECRET}`);
+                    refreshVerifiedUser = jsonwebtoken_1.default.verify(refreshToken, `${process.env.APP_JWT_SECRET}`);
                 }
                 catch (refreshError) {
                     return response.status(403).json({
@@ -78,7 +85,11 @@ const generalAuthFunction = async (request, response, next) => {
                 const newAccessToken = utilities_1.helpersUtilities.generateToken(tokenPayload, '2h');
                 const newRefreshToken = utilities_1.helpersUtilities.generateToken(tokenPayload, '30d');
                 response.setHeader('x-access-token', newAccessToken);
-                await user_services_1.default.updateSingleUserService(refreshVerifiedUser.id, { refreshToken: newRefreshToken });
+                await users_entities_1.default.update({
+                    refreshToken: newRefreshToken
+                }, {
+                    where: { id: refreshVerifiedUser.id }
+                });
                 request.user = refreshVerifiedUser;
                 return next();
             }

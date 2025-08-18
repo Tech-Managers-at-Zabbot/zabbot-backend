@@ -1,8 +1,8 @@
 import userPronunciationRepositories from "../repositories/user-pronunciation.repository";
 import { errorUtilities, responseUtilities } from "../../../shared/utilities";
 import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
-import { UserPronunciationAttributes } from "../data-types/interface";
 import { v4 } from "uuid";
+import { UserPronunciationAttributes } from "../../../shared/databaseTypes/pronunciation-feedback-types";
 
 const getPronunciations = errorUtilities.withServiceErrorHandling(async () => {
   const pronunciations =

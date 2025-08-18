@@ -13,7 +13,7 @@ const cors_1 = __importDefault(require("cors"));
 const morgan_1 = __importDefault(require("morgan"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const http_1 = __importDefault(require("http"));
-require("./config/models");
+require("./shared/modelSync");
 const syncDb_1 = require("./config/syncDb");
 const services = [
     {
@@ -90,57 +90,66 @@ function logServiceStatus() {
     console.log("=================================\n");
 }
 function startSingleService(service) {
-    const attempts = restartAttempts.get(service.name) || 0;
-    if (attempts >= 5) {
-        console.error(`❌ ${service.name} has failed too many times. Not restarting.`);
-        failedServices.add(service.name);
-        return;
-    }
-    console.log(`Starting ${service.name} on port ${service.port}...`);
-    const entryPoint = NODE_ENV === "production"
-        ? service.entryPoint.prod
-        : service.entryPoint.dev;
-    const isTypeScript = entryPoint.endsWith(".ts");
-    let command;
-    let args;
-    if (NODE_ENV === "production" || !isTypeScript) {
-        command = "node";
-        args = [entryPoint];
-    }
-    else {
-        command = "node";
-        args = ["-r", "ts-node/register", entryPoint];
-    }
-    const childProcess = (0, child_process_1.spawn)(command, args, {
-        env: {
-            ...process_1.default.env,
-            PORT: service.port.toString(),
-            SERVICE_NAME: service.name,
-        },
-        stdio: "inherit",
-        shell: true,
-    });
-    serviceProcesses.set(service.name, childProcess);
-    childProcess.on("error", (error) => {
-        console.error(`Failed to start ${service.name}:`, error);
-    });
-    childProcess.on("exit", (code, signal) => {
-        console.log(`${service.name} exited with code ${code} and signal ${signal}`);
-        serviceProcesses.delete(service.name);
-        if (code !== 0 && signal !== "SIGTERM") {
-            const newAttempts = attempts + 1;
-            restartAttempts.set(service.name, newAttempts);
-            console.log(`Restarting ${service.name} in 5 seconds... (attempt ${newAttempts})`);
-            setTimeout(() => startSingleService(service), 5000);
+    return new Promise((resolve) => {
+        const attempts = restartAttempts.get(service.name) || 0;
+        if (attempts >= 5) {
+            console.error(`❌ ${service.name} has failed too many times. Not restarting.`);
+            failedServices.add(service.name);
+            return resolve();
         }
+        console.log(`Starting ${service.name} on port ${service.port}...`);
+        const entryPoint = NODE_ENV === "production"
+            ? service.entryPoint.prod
+            : service.entryPoint.dev;
+        const isTypeScript = entryPoint.endsWith(".ts");
+        let command;
+        let args;
+        if (NODE_ENV === "production" || !isTypeScript) {
+            command = "node";
+            args = [entryPoint];
+        }
+        else {
+            command = "node";
+            args = ["-r", "ts-node/register", entryPoint];
+        }
+        const childProcess = (0, child_process_1.spawn)(command, args, {
+            env: {
+                ...process_1.default.env,
+                PORT: service.port.toString(),
+                SERVICE_NAME: service.name,
+            },
+            stdio: "inherit",
+            shell: true,
+        });
+        serviceProcesses.set(service.name, childProcess);
+        childProcess.on("error", (error) => {
+            console.error(`Failed to start ${service.name}:`, error);
+            resolve();
+        });
+        childProcess.on("exit", (code, signal) => {
+            console.log(`${service.name} exited with code ${code} and signal ${signal}`);
+            serviceProcesses.delete(service.name);
+            if (code !== 0 && signal !== "SIGTERM") {
+                const newAttempts = attempts + 1;
+                restartAttempts.set(service.name, newAttempts);
+                console.log(`Restarting ${service.name} in 5 seconds... (attempt ${newAttempts})`);
+                setTimeout(() => startSingleService(service), 5000);
+            }
+            resolve();
+        });
+        setTimeout(() => {
+            if (!failedServices.has(service.name)) {
+                resolve();
+            }
+        }, 3000);
     });
 }
-function startServices() {
-    services.forEach((service) => startSingleService(service));
-    setTimeout(() => {
-        console.log("\n🎯 All services attempted startup. Final status:");
-        logServiceStatus();
-    }, 7000);
+async function startServices() {
+    for (const service of services) {
+        await startSingleService(service);
+    }
+    console.log("\n🎯 All services attempted startup. Final status:");
+    logServiceStatus();
 }
 services.forEach((service) => {
     const proxyOptions = {
@@ -205,8 +214,8 @@ function shutdown(code = 0) {
 process_1.default.on("SIGTERM", () => shutdown(0));
 process_1.default.on("SIGINT", () => shutdown(0));
 async function init() {
+    await startServices();
     await (0, syncDb_1.syncDatabases)();
-    startServices();
 }
 init();
 app.use((req, res, next) => {

@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const utilities_1 = require("../../../shared/utilities");
-const reference_pronunciation_1 = __importDefault(require("../entities/reference-pronunciation"));
+const reference_pronunciation_1 = __importDefault(require("../../../shared/entities/pronunciation-feedback-service-entities/referencePronunciation/reference-pronunciation"));
 const referenePronunciationRepositories = {
     getPronunciation: async (id) => {
         try {

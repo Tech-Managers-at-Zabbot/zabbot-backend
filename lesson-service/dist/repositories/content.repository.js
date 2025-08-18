@@ -3,9 +3,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const content_1 = __importDefault(require("../entities/content"));
+const content_1 = __importDefault(require("../../../shared/entities/lesson-service-entities/content/content"));
 const utilities_1 = require("../../../shared/utilities");
-const content_file_1 = __importDefault(require("../entities/content-file"));
+const content_file_1 = __importDefault(require("../../../shared/entities/lesson-service-entities/contentFile/content-file"));
 const contentRepositories = {
     // CRUD CONTENTS SESSION START
     getContents: async () => {

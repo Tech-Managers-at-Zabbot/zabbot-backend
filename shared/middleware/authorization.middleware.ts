@@ -1,8 +1,10 @@
-import { Response, NextFunction } from 'express';
+import { Response, NextFunction, raw } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import config from '../../config/config';
 import { helpersUtilities } from '../utilities';
-import userServices from '../../user-service/src/services/userServices/user.services';
+import Users from '../entities/user-service-entities/users/users.entities';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export const generalAuthFunction = async (
   request: JwtPayload,
@@ -32,7 +34,7 @@ export const generalAuthFunction = async (
     let verifiedUser: any;
 
     try {
-      verifiedUser = jwt.verify(authorizationToken, `${config.APP_JWT_SECRET}`);
+      verifiedUser = jwt.verify(authorizationToken, `${process.env.APP_JWT_SECRET}`);
     } catch (error: any) {
 
       if (error.message === 'jwt expired') {
@@ -48,12 +50,19 @@ export const generalAuthFunction = async (
 
         const projection = ['refreshToken', 'isVerified', "isActive", "isBlocked", "role", "accessToken", "id"];
 
-        const userDetails = await userServices.getSingleUserService(decodedToken?.userId, projection);
-        const refreshToken = userDetails?.refreshToken;
+        const userDetails = await Users.findOne({ where: {id:decodedToken?.userId}, attributes: projection, raw: true });
+
+        if(!userDetails) {
+          return response.status(403).json({
+            status: 'error',
+            message: 'User not found, please login again or contact admin',
+          });
+        }
+        const refreshToken:any = userDetails?.refreshToken;
 
         let refreshVerifiedUser: any;
         try {
-          refreshVerifiedUser = jwt.verify(refreshToken, `${config.APP_JWT_SECRET}`);
+          refreshVerifiedUser = jwt.verify(refreshToken, `${process.env.APP_JWT_SECRET}`);
         } catch (refreshError: any) {
           return response.status(403).json({
             status: 'error',
@@ -96,9 +105,11 @@ export const generalAuthFunction = async (
 
         response.setHeader('x-access-token', newAccessToken);
 
-        await userServices.updateSingleUserService(
-          refreshVerifiedUser.id,
-          { refreshToken: newRefreshToken }
+        await Users.update({
+          refreshToken: newRefreshToken
+        }, {
+          where: { id: refreshVerifiedUser.id }
+        }
         )
 
         request.user = refreshVerifiedUser;

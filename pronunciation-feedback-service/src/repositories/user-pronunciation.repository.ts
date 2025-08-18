@@ -1,6 +1,6 @@
 import { Transaction } from "sequelize";
 import { errorUtilities } from "../../../shared/utilities";
-import UserPronunciation from "../entities/user-pronunciation";
+import UserPronunciation from "../../../shared/entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation";
 
 const userPronunciationRepositories = {
   getPronunciation: async (id: string) => {

@@ -1,6 +1,6 @@
 import { Transaction } from "sequelize";
 import { errorUtilities } from "../../../shared/utilities";
-import ReferencePronunciation from "../entities/reference-pronunciation";
+import ReferencePronunciation from "../../../shared/entities/pronunciation-feedback-service-entities/referencePronunciation/reference-pronunciation";
 
 const referenePronunciationRepositories = {
   getPronunciation: async (

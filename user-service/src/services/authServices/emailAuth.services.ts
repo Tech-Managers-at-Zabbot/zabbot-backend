@@ -2,13 +2,6 @@ import { v4 } from "uuid";
 import { helperFunctions, endpointCallsUtilities } from "../../utilities/index";
 // import Users from "../../models/users.models";
 import axios from "axios";
-import {
-  OtpAttributes,
-  OtpNotificationType,
-  RegisterMethods,
-  UserAttributes,
-  UserRoles,
-} from "../../types/users.types";
 import usersRepositories from "../../repositories/userRepositories/users.repositories";
 import {
   responseUtilities,
@@ -23,6 +16,7 @@ import { OtpResponses } from "../../responses/otpResponses/otp.responses";
 import userRepositories from "../../repositories/userRepositories/users.repositories";
 import otpRepositories from "../../repositories/otpRepositories/otp.repositories";
 import config from "../../../../config/config";
+import { UserAttributes, UserRoles, RegisterMethods, OtpNotificationType, OtpAttributes } from "../../../../shared/databaseTypes/user-service-types";
 
 const registerUserService = errorUtilities.withServiceErrorHandling(
   async (registerPayload: UserAttributes) => {

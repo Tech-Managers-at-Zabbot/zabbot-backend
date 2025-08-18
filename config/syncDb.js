@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.syncDatabases = syncDatabases;
 const databases_1 = require("./databases");
-require("./modelSync");
 async function syncDatabases() {
     try {
         console.log('📥 Registering models...');

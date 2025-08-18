@@ -1,6 +1,6 @@
-import Contents from "../entities/content"
+import Contents from "../../../shared/entities/lesson-service-entities/content/content";
 import { errorUtilities } from "../../../shared/utilities";
-import ContentFiles from "../entities/content-file";
+import ContentFiles from "../../../shared/entities/lesson-service-entities/contentFile/content-file";
 import { Transaction } from "sequelize";
 
 const contentRepositories = {

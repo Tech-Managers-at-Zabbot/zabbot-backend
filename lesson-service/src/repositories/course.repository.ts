@@ -1,6 +1,6 @@
 import { Transaction } from "sequelize";
 import { errorUtilities } from "../../../shared/utilities";
-import Courses from "../entities/course";
+import Courses from "../../../shared/entities/lesson-service-entities/course/course";
 // import LanguageContents from "../entities/language-content";
 
 

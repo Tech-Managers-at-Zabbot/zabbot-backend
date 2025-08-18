@@ -41,7 +41,7 @@ const promises_1 = __importDefault(require("fs/promises"));
 const node_wav_1 = require("node-wav");
 const fluent_ffmpeg_1 = __importDefault(require("fluent-ffmpeg"));
 const path_1 = __importDefault(require("path"));
-const tf = __importStar(require("@tensorflow/tfjs"));
+const tf = __importStar(require("@tensorflow/tfjs-node"));
 const wavefile_1 = require("wavefile");
 const openai_1 = require("openai");
 const fs_1 = __importDefault(require("fs"));
@@ -68,26 +68,20 @@ cloudinary_1.v2.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
     secure: true,
 });
-const comparePronounciation = utilities_1.errorUtilities.withServiceErrorHandling(async ({ referencePronunciationId, file, userId, }) => {
+const comparePronounciation = utilities_1.errorUtilities.withServiceErrorHandling(async ({ referencePronunciationId, file, userId, voice = "femaleVoice", }) => {
     const userfileName = file.filename.replace(/\.[^/.]+$/, "");
     const masterFileName = "referece_pronunciation";
-    const userRawFilePath = path_1.default.join(__dirname, "../utilities/audioFiles/uploads/raw", file.filename);
-    const userWavFilePath = path_1.default.join(__dirname, "../utilities/audioFiles/uploads/wavs", `${userfileName}.wav`);
-    const userTrimmedFilePath = path_1.default.join(__dirname, "../utilities/audioFiles/uploads/trimmed", `${userfileName}.wav`);
-    const normalisedUserWavPath = path_1.default.join(__dirname, "../utilities/audioFiles/uploads/normalized", `${userfileName}.wav`);
-    const masterRawFilePath = path_1.default.join(__dirname, "../utilities/audioFiles/master/raw", `${masterFileName}.wav`);
-    const masterWavFilePath = path_1.default.join(__dirname, "../utilities/audioFiles/master/wavs", `${masterFileName}.wav`);
-    const masterTrimmedFilePath = path_1.default.join(__dirname, "../utilities/audioFiles/master/trimmed", `${masterFileName}.wav`);
-    const normalisedMasterWavPath = path_1.default.join(__dirname, "../utilities/audioFiles/master/normalized", `${masterFileName}.wav`);
-    // Plots
-    const plotPath = path_1.default.join(__dirname, "../utilities/audioFiles/plots", `${userfileName}_plot.png`);
-    const plotDTWPath = path_1.default.join(__dirname, "../utilities/audioFiles/plots", `${userfileName}_plotDTW.png`);
+    const { userRawFilePath, userWavFilePath, userTrimmedFilePath, normalisedUserWavPath, masterRawFilePath, masterWavFilePath, masterTrimmedFilePath, normalisedMasterWavPath, plotPath, plotDTWPath, } = await createFileDirectories({
+        reqFileName: file.filename,
+        userfileName,
+        masterFileName,
+    });
     try {
         const masterPronunciation = await reference_pronunciation_repository_1.default.getPronunciation(referencePronunciationId);
         if (!masterPronunciation) {
             throw utilities_1.errorUtilities.createError("Reference file not found", 404);
         }
-        const url = masterPronunciation.get("femaleVoice");
+        const url = masterPronunciation.get(voice);
         await getMasterFile(url, masterRawFilePath);
         const { tensor: userTensor, raw: userRawAudio } = await (0, exports.loadAndTrimAudio)({
             rawFilePath: userRawFilePath,
@@ -485,6 +479,44 @@ const saveUserPronunciation = async ({ userId, pronuciationPlotUrl, recordingUrl
         pronuciationPlotUrl,
     };
     return user_pronunciation_repository_1.default.addPronunciation(userPronunciationData);
+};
+const createFileDirectories = async ({ userfileName, masterFileName, reqFileName, }) => {
+    const userRawFilePath = path_1.default.join(__dirname, "../utilities/audioFiles/uploads/raw", reqFileName);
+    const paths = {
+        userRawFilePath,
+    };
+    const userFilePaths = {
+        userWavFilePath: "../utilities/audioFiles/uploads/wavs",
+        userTrimmedFilePath: "../utilities/audioFiles/uploads/trimmed",
+        normalisedUserWavPath: "../utilities/audioFiles/uploads/normalized",
+    };
+    for (let key in userFilePaths) {
+        const directory = path_1.default.join(__dirname, userFilePaths[key]);
+        await promises_1.default.mkdir(directory, { recursive: true });
+        paths[key] = path_1.default.join(directory, `${userfileName}.wav`);
+    }
+    const masterFilePaths = {
+        masterRawFilePath: "../utilities/audioFiles/master/raw",
+        masterWavFilePath: "../utilities/audioFiles/master/wavs",
+        masterTrimmedFilePath: "../utilities/audioFiles/master/trimmed",
+        normalisedMasterWavPath: "../utilities/audioFiles/master/normalized",
+    };
+    for (let key in masterFilePaths) {
+        const directory = path_1.default.join(__dirname, masterFilePaths[key]);
+        await promises_1.default.mkdir(directory, { recursive: true });
+        paths[key] = path_1.default.join(directory, `${masterFileName}.wav`);
+    }
+    const plotPaths = {
+        plotPath: "../utilities/audioFiles/plots",
+        plotDTWPath: "../utilities/audioFiles/plots",
+    };
+    for (let key in plotPaths) {
+        const directory = path_1.default.join(__dirname, plotPaths[key]);
+        await promises_1.default.mkdir(directory, { recursive: true });
+        const suffix = key.split("Path")[0];
+        paths[key] = path_1.default.join(directory, `${userfileName}_${suffix}.png`);
+    }
+    return paths;
 };
 exports.default = {
     comparePronounciation,

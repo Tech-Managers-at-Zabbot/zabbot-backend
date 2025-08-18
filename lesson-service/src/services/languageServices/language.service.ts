@@ -1,8 +1,8 @@
-import { LanguageAttributes, LessonAttributes } from "../../data-types/interface"
 import { errorUtilities, responseUtilities } from "../../../../shared/utilities";
 import languageRepositories from "../../repositories/language.repository";
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
 import { v4 } from "uuid";
+import { LanguageAttributes } from "../../../../shared/databaseTypes/lesson-service-types";
 
 const getLanguages = errorUtilities.withServiceErrorHandling(
   async (params?: {isActive: boolean}) => {

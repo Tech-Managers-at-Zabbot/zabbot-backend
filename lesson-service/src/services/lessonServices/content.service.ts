@@ -4,7 +4,6 @@ import contentRepositories from "../../repositories/content.repository"
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
 import { CourseResponses } from "../../responses/responses";
 import { v4 } from "uuid";
-import { create } from "ts-node";
 
 const getContents = errorUtilities.withServiceErrorHandling(
   async () => {

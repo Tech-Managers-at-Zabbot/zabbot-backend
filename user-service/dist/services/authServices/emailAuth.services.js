@@ -7,7 +7,6 @@ const uuid_1 = require("uuid");
 const index_1 = require("../../utilities/index");
 // import Users from "../../models/users.models";
 const axios_1 = __importDefault(require("axios"));
-const users_types_1 = require("../../types/users.types");
 const users_repositories_1 = __importDefault(require("../../repositories/userRepositories/users.repositories"));
 const utilities_1 = require("../../../../shared/utilities");
 const statusCodes_responses_1 = require("../../../../shared/statusCodes/statusCodes.responses");
@@ -16,6 +15,7 @@ const otp_responses_1 = require("../../responses/otpResponses/otp.responses");
 const users_repositories_2 = __importDefault(require("../../repositories/userRepositories/users.repositories"));
 const otp_repositories_1 = __importDefault(require("../../repositories/otpRepositories/otp.repositories"));
 const config_1 = __importDefault(require("../../../../config/config"));
+const user_service_types_1 = require("../../../../shared/databaseTypes/user-service-types");
 const registerUserService = utilities_1.errorUtilities.withServiceErrorHandling(async (registerPayload) => {
     const { firstName, lastName, email, password, role, timeZone } = registerPayload;
     const userExists = await users_repositories_1.default.getOne({ email: email }, [
@@ -32,19 +32,19 @@ const registerUserService = utilities_1.errorUtilities.withServiceErrorHandling(
         lastName: lastName,
         email: email,
         password: newPassword,
-        isVerified: role && role === users_types_1.UserRoles.ADMIN ? true : false,
+        isVerified: role && role === user_service_types_1.UserRoles.ADMIN ? true : false,
         isActive: true,
         isBlocked: false,
         timeZone,
         isFirstTimeLogin: true,
-        role: role ?? users_types_1.UserRoles.USER,
-        registerMethod: users_types_1.RegisterMethods.EMAIL,
+        role: role ?? user_service_types_1.UserRoles.USER,
+        registerMethod: user_service_types_1.RegisterMethods.EMAIL,
     };
     const newUser = await users_repositories_1.default.create(createUserPayload);
     if (!newUser) {
         throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.PROCESS_UNSSUCCESSFUL, statusCodes_responses_1.StatusCodes.InternalServerError);
     }
-    if (createUserPayload.role === users_types_1.UserRoles.USER) {
+    if (createUserPayload.role === user_service_types_1.UserRoles.USER) {
         const otp = index_1.helperFunctions.generateOtp();
         const hashedOtp = await index_1.helperFunctions.hashPassword(otp);
         const otpData = {
@@ -53,7 +53,7 @@ const registerUserService = utilities_1.errorUtilities.withServiceErrorHandling(
             otp: hashedOtp,
             expiresAt: new Date(Date.now() + 10 * 60 * 1000),
             isUsed: false,
-            notificationType: users_types_1.OtpNotificationType.EMAIL,
+            notificationType: user_service_types_1.OtpNotificationType.EMAIL,
             attempts: 0,
             verifiedAt: null,
         };
@@ -76,7 +76,7 @@ const registerUserService = utilities_1.errorUtilities.withServiceErrorHandling(
             console.error(`Background email processing failed for ${createUserPayload.email}:`, error.message);
         });
     }
-    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.Created, role && role === users_types_1.UserRoles.ADMIN
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.Created, role && role === user_service_types_1.UserRoles.ADMIN
         ? general_responses_1.GeneralResponses.ADMIN_REGISTRATION_SUCCESSFUL
         : general_responses_1.GeneralResponses.USER_REGSTRATION_SUCCESSFUL, createUserPayload.email);
 });
@@ -96,7 +96,7 @@ const verifyUserAccountService = utilities_1.errorUtilities.withServiceErrorHand
     const otpData = await otp_repositories_1.default.getLatestOtp({
         userId: user.id,
         isUsed: false,
-        notificationType: users_types_1.OtpNotificationType.EMAIL,
+        notificationType: user_service_types_1.OtpNotificationType.EMAIL,
     }, ["id", "otp", "expiresAt", "isUsed", "attempts"]);
     if (!otpData) {
         throw utilities_1.errorUtilities.createError(otp_responses_1.OtpResponses.INVALID_OTP, statusCodes_responses_1.StatusCodes.NotFound);
@@ -145,7 +145,7 @@ const resendVerificationOtpService = utilities_1.errorUtilities.withServiceError
         otp: hashedOtp,
         expiresAt: new Date(Date.now() + 10 * 60 * 1000),
         isUsed: false,
-        notificationType: users_types_1.OtpNotificationType.EMAIL,
+        notificationType: user_service_types_1.OtpNotificationType.EMAIL,
         attempts: 0,
         verifiedAt: null,
     };
@@ -191,7 +191,7 @@ const loginUserService = utilities_1.errorUtilities.withServiceErrorHandling(asy
             otp: hashedOtp,
             expiresAt: new Date(Date.now() + 10 * 60 * 1000),
             isUsed: false,
-            notificationType: users_types_1.OtpNotificationType.EMAIL,
+            notificationType: user_service_types_1.OtpNotificationType.EMAIL,
             attempts: 0,
             verifiedAt: null,
         };

@@ -19,7 +19,7 @@ import referenePronunciationRepositories from "../repositories/reference-pronunc
 import { v4 } from "uuid";
 import userPronunciationRepositories from "../repositories/user-pronunciation.repository";
 import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
-import UserPronunciation from "../entities/user-pronunciation";
+import UserPronunciation from "../../../shared/entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation";
 
 const sampleRate = 16000;
 const openai = new OpenAI({
