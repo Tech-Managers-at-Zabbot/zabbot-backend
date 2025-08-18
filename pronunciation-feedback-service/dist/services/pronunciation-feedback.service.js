@@ -40,6 +40,7 @@ exports.loadAndTrimAudio = void 0;
 const promises_1 = __importDefault(require("fs/promises"));
 const node_wav_1 = require("node-wav");
 const fluent_ffmpeg_1 = __importDefault(require("fluent-ffmpeg"));
+const ffmpeg_static_1 = __importDefault(require("ffmpeg-static"));
 const path_1 = __importDefault(require("path"));
 const tf = __importStar(require("@tensorflow/tfjs-node"));
 const wavefile_1 = require("wavefile");
@@ -58,6 +59,7 @@ const reference_pronunciation_repository_1 = __importDefault(require("../reposit
 const uuid_1 = require("uuid");
 const user_pronunciation_repository_1 = __importDefault(require("../repositories/user-pronunciation.repository"));
 const statusCodes_responses_1 = require("../../../shared/statusCodes/statusCodes.responses");
+fluent_ffmpeg_1.default.setFfmpegPath(ffmpeg_static_1.default);
 const sampleRate = 16000;
 const openai = new openai_1.OpenAI({
     apiKey: process.env.OPENAI_API_KEY,

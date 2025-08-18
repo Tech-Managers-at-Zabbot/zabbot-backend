@@ -1,6 +1,7 @@
 import fsPromises from "fs/promises";
 import { decode } from "node-wav";
 import Ffmpeg from "fluent-ffmpeg";
+import ffmpegPath from "ffmpeg-static";
 import path from "path";
 import * as tf from "@tensorflow/tfjs-node";
 import { WaveFile } from "wavefile";
@@ -20,6 +21,10 @@ import { v4 } from "uuid";
 import userPronunciationRepositories from "../repositories/user-pronunciation.repository";
 import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
 import UserPronunciation from "../../../shared/entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation";
+
+
+
+Ffmpeg.setFfmpegPath(ffmpegPath as string);
 
 const sampleRate = 16000;
 const openai = new OpenAI({
