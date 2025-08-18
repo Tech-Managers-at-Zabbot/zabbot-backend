@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const utilities_1 = require("../../../shared/utilities");
-const wordForTheDay_1 = __importDefault(require("../entities/wordForTheDay"));
+const wordForTheDay_1 = __importDefault(require("../../../shared/entities/lesson-service-entities/wordForTheDay/wordForTheDay"));
 const wordForTheDayRepositories = {
     create: async (data, transaction) => {
         try {

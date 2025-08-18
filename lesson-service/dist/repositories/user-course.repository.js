@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const utilities_1 = require("../../../shared/utilities");
-const user_course_1 = __importDefault(require("../entities/user-course"));
+const user_course_1 = __importDefault(require("../../../shared/entities/lesson-service-entities/userCourse/user-course"));
 const userCourseRepositories = {
     getUserCourses: async (filter, projection) => {
         try {

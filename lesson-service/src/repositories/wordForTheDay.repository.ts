@@ -1,6 +1,6 @@
 import { Transaction } from "sequelize";
 import { errorUtilities } from "../../../shared/utilities";
-import WordForTheDay from "../entities/wordForTheDay";
+import WordForTheDay from "../../../shared/entities/lesson-service-entities/wordForTheDay/wordForTheDay";
 
 const wordForTheDayRepositories = {
 

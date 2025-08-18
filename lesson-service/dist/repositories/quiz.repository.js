@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const utilities_1 = require("../../../shared/utilities");
-const quiz_1 = __importDefault(require("../entities/quiz"));
+const quiz_1 = __importDefault(require("../../../shared/entities/lesson-service-entities/quiz/quiz"));
 // import LanguageContents from "../entities/language-content";
 const quizRepositories = {
     getQuizzes: async (filter, isActive = true) => {

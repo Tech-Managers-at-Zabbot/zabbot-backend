@@ -47,10 +47,12 @@ exports.comparePronunciation = utilities_1.errorUtilities.withControllerErrorHan
         res, "User not authenticated", 400, null);
     }
     const referencePronunciationId = req.params.id;
+    const { voice } = req.body;
     const pronunciation = await pronunciation_feedback_service_1.default.comparePronounciation({
         file: req.file,
         userId: user.userId,
         referencePronunciationId,
+        voice,
     });
     return utilities_1.responseUtilities.responseHandler(
     // @ts-ignore

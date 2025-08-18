@@ -5,12 +5,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const users_repositories_1 = __importDefault(require("../../repositories/userRepositories/users.repositories"));
 const uuid_1 = require("uuid");
-const users_types_1 = require("../../types/users.types");
 const axios_1 = __importDefault(require("axios"));
 const statusCodes_responses_1 = require("../../../../shared/statusCodes/statusCodes.responses");
 const index_1 = require("../../utilities/index");
 const config_1 = __importDefault(require("../../../../config/config"));
 const users_repositories_2 = __importDefault(require("../../repositories/userRepositories/users.repositories"));
+const user_service_types_1 = require("../../../../shared/databaseTypes/user-service-types");
 const googleOAuthRegister = async (request, accessToken, refreshToken, profile, done) => {
     try {
         let user = await users_repositories_1.default.getOne({ email: profile.emails?.[0].value }, ["id", "email"]);
@@ -60,11 +60,11 @@ const googleOAuthRegister = async (request, accessToken, refreshToken, profile, 
             isActive: true,
             isBlocked: false,
             isFirstTimeLogin: true,
-            role: users_types_1.UserRoles.USER,
+            role: user_service_types_1.UserRoles.USER,
             profilePicture: profile?.photos?.[0].value,
             googleAccessToken: accessToken,
             googleRefreshToken: refreshToken,
-            registerMethod: users_types_1.RegisterMethods.GOOGLE,
+            registerMethod: user_service_types_1.RegisterMethods.GOOGLE,
             timeZone: request.query?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
         };
         await users_repositories_1.default.create(createUserPayload);

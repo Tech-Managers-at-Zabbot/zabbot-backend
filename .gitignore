@@ -13,3 +13,4 @@ migration-config
 .sequelizerc
 contents.json
 store.ts
+holder

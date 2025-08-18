@@ -1,4 +1,4 @@
-import Users from "../../entities/users.entities";
+import Users from "../../../../shared/entities/user-service-entities/users/users.entities";
 import { Transaction } from "sequelize";
 import { errorUtilities } from "../../../../shared/utilities";
 

@@ -12,8 +12,8 @@ import { errorUtilities } from '../../shared/utilities';
 import userRoutes from './routes'
 import passport from 'passport';
 import { googleAuthUtilities } from './utilities';
-import Users from './entities/users.entities';
 import { googleAuthServices } from './services';
+import Users from '../../shared/entities/user-service-entities/users/users.entities';
 
 // import { associateUserModels } from './entities/associations';
 

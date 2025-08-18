@@ -7,9 +7,11 @@
   "author": "Olaide Agboola",
   "license": "ISC",
   "scripts": {
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
     "build": "tsc -p .",
     "buildWatch": "tsc -w",
-    "start": "node dist/src/app.js",
+    "start": "node dist/app.js",
     "dev": "nodemon src/app.ts",
     "compile": "tsc -w"
   },
@@ -34,6 +36,7 @@
     "onnxruntime-node": "^1.22.0-rev",
     "openai": "^4.24.1",
     "play-sound": "^1.1.5",
+    "typescript": "^5.8.3",
     "uuid": "^11.1.0",
     "wavefile": "^11.0.0"
   },
@@ -49,7 +52,6 @@
     "@types/node": "^20.10.6",
     "@types/node-wav": "^0.0.4",
     "@types/play-sound": "^1.1.2",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "ts-node": "^10.9.2"
   }
 }

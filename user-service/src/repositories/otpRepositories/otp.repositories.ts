@@ -1,4 +1,4 @@
-import Otp from "../../entities/otp.entities";
+import Otp from "../../../../shared/entities/user-service-entities/otp/otp.entities";
 import { Transaction } from "sequelize";
 import { errorUtilities } from "../../../../shared/utilities";
 

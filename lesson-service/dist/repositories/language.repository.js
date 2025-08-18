@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const utilities_1 = require("../../../shared/utilities");
-const language_1 = __importDefault(require("../entities/language"));
+const language_1 = __importDefault(require("../../../shared/entities/lesson-service-entities/language/language"));
 // import LanguageContents from "../entities/language-content";
 const languageRepositories = {
     // LANGUAGE SESSION START

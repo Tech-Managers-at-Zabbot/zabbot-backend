@@ -1,5 +1,4 @@
 import { v4 } from "uuid";
-import { LessonAttributes } from "../../data-types/interface"
 import lessonRepositories from "../../repositories/lesson.repository"
 import { errorUtilities, responseUtilities } from "../../../../shared/utilities";
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
@@ -54,7 +53,7 @@ const getLessonsForCourse = errorUtilities.withServiceErrorHandling(
     }
 
     const getLessonsContents = await Promise.all(
-      getCourseLessons.map(async (lesson) => {
+      getCourseLessons.map(async (lesson:Record<string, any>) => {
         const contents = await contentRepositories.getLessonContents(lesson?.id);
         return {
           ...lesson,
@@ -80,7 +79,7 @@ const getLessonWithContents = errorUtilities.withServiceErrorHandling(
     const contentsData = await contentRepositories.getLessonContents(lessonId)
 
     const contents = await Promise.all(
-      contentsData.map(async (content) => {
+      contentsData.map(async (content:Record<string, any>) => {
         const contentFiles = await contentRepositories.getContentFiles(content.id);
         return {
           ...content,
@@ -95,7 +94,7 @@ const getLessonWithContents = errorUtilities.withServiceErrorHandling(
 );
 
 const createLesson = errorUtilities.withServiceErrorHandling(
-  async (lessonData: LessonAttributes) => {
+  async (lessonData: Record<string, any>) => {
     const payload = {
       ...lessonData,
       id: v4(),
@@ -110,7 +109,7 @@ const createLesson = errorUtilities.withServiceErrorHandling(
 );
 
 const updateLesson = errorUtilities.withServiceErrorHandling(
-  async (id: string, lessonData: LessonAttributes) => {
+  async (id: string, lessonData: Record<string, any>) => {
     const lesson = await lessonRepositories.getLesson(id);
     if (!lesson)
       throw errorUtilities.createError(`Lesson not found`, 404);

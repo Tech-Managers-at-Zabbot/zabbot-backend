@@ -5,9 +5,9 @@ import fs from "fs-extra";
 const services = [
   { name: "config", path: "./config" },
   { name: "shared", path: "./shared" },
+  { name: "user-service", path: "./user-service" },
   { name: "founding-list-service", path: "./waiting-list-service" },
   { name: "notification-service", path: "./notification-service" },
-  { name: "user-service", path: "./user-service" },
   { name: "ededun-service", path: "./ededun-service" },
   { name: "lesson-service", path: "./lesson-service" },
   {
@@ -32,13 +32,15 @@ function buildService(service: { name: string; path: string }) {
       }
 
       console.log(`✅ Successfully built ${service.name}`);
+
     } catch (error: any) {
       console.error(`❌ Failed to build ${service.name}:`, error.message);
       process.exit(1);
-    } finally {
-      console.log("Copying shared utilities to services...");
-      fs.copySync("shared/dist", "shared");
     }
+    //   finally {
+    //     console.log("📦 Copying shared utilities to shared folder...");
+    //       fs.copySync("shared/dist", "shared");
+    // }
   } else {
     console.warn(
       `⚠️  Skipping ${service.name}: No package.json found at ${packageJson}`

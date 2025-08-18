@@ -4,7 +4,6 @@ import { v4 } from "uuid";
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
 import contentRepositories from "../../repositories/content.repository";
 import lessonRepositories from "../../repositories/lesson.repository";
-import { Transaction } from "sequelize";
 import { CourseResponses } from "../../responses/responses";
 
 const getCoursesForLanguage = errorUtilities.withServiceErrorHandling(

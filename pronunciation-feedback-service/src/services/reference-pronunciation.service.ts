@@ -1,9 +1,9 @@
 import referenePronunciationRepositories from "../repositories/reference-pronunciation.repository";
 import { errorUtilities, responseUtilities } from "../../../shared/utilities";
 import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
-import { ReferencePronunciationAttributes } from "../data-types/interface";
 import { v4 } from "uuid";
 import { ResponseDetails } from "../../../shared/utilities/responseHandlers/response.utilities";
+import { ReferencePronunciationAttributes } from "../../../shared/databaseTypes/pronunciation-feedback-types";
 
 const getPronunciations = errorUtilities.withServiceErrorHandling(async () => {
   const pronunciations =
