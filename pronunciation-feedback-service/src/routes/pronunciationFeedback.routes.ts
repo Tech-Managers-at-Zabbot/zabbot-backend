@@ -7,10 +7,23 @@ import {
   getRefPronunciationController,
   getRefPronunciationsController,
 } from "../controllers/referencePronunciation.controller";
-import { getPronunciationController } from "../controllers/userPronunciation.controller";
+import {
+  getPronunciationController,
+  getPronunciationsController,
+} from "../controllers/userPronunciation.controller";
 import { generalAuthFunction } from "../../../shared/middleware/authorization.middleware";
+import fs from "fs/promises";
 
 const router = express.Router();
+
+(async () => {
+  const userRawFilePath = path.join(
+    __dirname,
+    "../utilities/audioFiles/uploads/raw"
+  );
+  await fs.mkdir(userRawFilePath, { recursive: true });
+  console.log("file createds");
+})();
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -37,6 +50,8 @@ router.post(
 );
 // @ts-ignore
 router.post("/reference", addRefPronunciationController);
+// @ts-ignore
+router.get("/user/recordings", getPronunciationsController);
 // @ts-ignore
 router.get("/user/:id", getPronunciationController);
 
