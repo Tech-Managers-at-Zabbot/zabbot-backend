@@ -9,7 +9,8 @@
   "scripts": {
     "clean": "rm -rf dist",
     "prebuild": "npm run clean",
-    "build": "tsc -p .",
+    "build": "tsc -p . && npm run copy-model",
+    "copy-model": "mkdir -p dist/utilities && cp src/utilities/whisperEncoder.onnx dist/utilities/",
     "buildWatch": "tsc -w",
     "start": "node dist/app.js",
     "dev": "nodemon src/app.ts",

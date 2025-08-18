@@ -8,6 +8,7 @@ import rootRouter from "./routes";
 import compression from "compression";
 import logger from "morgan";
 import cookieParser from "cookie-parser";
+import { inspect } from 'util';
 
 const app = express();
 
@@ -43,8 +44,21 @@ app.get("/check-status", (req, res) => {
   });
 });
 
+const utilShim = {
+  ...require('util'),
+  isNullOrUndefined: (val: unknown) => val === null || val === undefined
+};
+
+
+if (!('isNullOrUndefined' in inspect)) {
+  require('util').isNullOrUndefined = utilShim.isNullOrUndefined;
+}
+
+
 // Error handling
 app.use(errorUtilities.globalErrorHandler as any);
+
+
 
 // Start server if not imported as a module
 if (require.main === module) {

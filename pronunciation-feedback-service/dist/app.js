@@ -14,6 +14,7 @@ const routes_1 = __importDefault(require("./routes"));
 const compression_1 = __importDefault(require("compression"));
 const morgan_1 = __importDefault(require("morgan"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
+const util_1 = require("util");
 const app = (0, express_1.default)();
 // Load environment variables
 dotenv_1.default.config({ path: path_1.default.resolve(__dirname, "../../.env") });
@@ -41,6 +42,13 @@ app.get("/check-status", (req, res) => {
         status: "ok",
     });
 });
+const utilShim = {
+    ...require('util'),
+    isNullOrUndefined: (val) => val === null || val === undefined
+};
+if (!('isNullOrUndefined' in util_1.inspect)) {
+    require('util').isNullOrUndefined = utilShim.isNullOrUndefined;
+}
 // Error handling
 app.use(utilities_1.errorUtilities.globalErrorHandler);
 // Start server if not imported as a module
