@@ -11,8 +11,6 @@ import levenshtein from "js-levenshtein";
 import { SequenceMatcher } from "difflib";
 import { ChartJSNodeCanvas } from "chartjs-node-canvas";
 import { writeFile } from "fs/promises";
-import DynamicTimeWarping from "dynamic-time-warping";
-import { getEmbedding } from "./whisperEncoding";
 import { v2 as cloudinary } from "cloudinary";
 import axios from "axios";
 import { errorUtilities, responseUtilities } from "../../../shared/utilities";
@@ -21,8 +19,6 @@ import { v4 } from "uuid";
 import userPronunciationRepositories from "../repositories/user-pronunciation.repository";
 import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
 import UserPronunciation from "../../../shared/entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation";
-
-
 
 Ffmpeg.setFfmpegPath(ffmpegPath as string);
 
@@ -38,6 +34,101 @@ cloudinary.config({
   secure: true,
 });
 
+// Helper function to log memory usage
+const logMemoryUsage = (label: string) => {
+  const used = process.memoryUsage();
+  console.log(`${label} - Memory usage:`, {
+    rss: `${Math.round(used.rss / 1024 / 1024)} MB`,
+    heapTotal: `${Math.round(used.heapTotal / 1024 / 1024)} MB`,
+    heapUsed: `${Math.round(used.heapUsed / 1024 / 1024)} MB`,
+  });
+};
+
+// Helper to safely dispose of tensors
+const safeTensorDispose = (tensor: tf.Tensor | null) => {
+  if (tensor && !tensor.isDisposed) {
+    tensor.dispose();
+  }
+};
+
+// New lightweight embedding function using OpenAI API
+const getTextEmbedding = async (text: string): Promise<number[]> => {
+  try {
+    const response = await openai.embeddings.create({
+      model: "text-embedding-3-small", // Most cost-effective option
+      input: text.toLowerCase().trim(), // Normalize text
+      encoding_format: "float",
+    });
+
+    return response.data[0].embedding;
+  } catch (error: any) {
+    throw errorUtilities.createError(
+      `Error getting text embedding: ${error.message}`,
+      500
+    );
+  }
+};
+
+// Helper function for cosine similarity
+const calculateCosineSimilarity = (vecA: number[], vecB: number[]): number => {
+  const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
+  const normA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
+  const normB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
+  return dotProduct / (normA * normB);
+};
+
+// Enhanced text similarity function using embeddings
+const getEnhancedTextSimilarity = async (
+  userTranscription: string,
+  masterTranscription: string
+): Promise<{
+  embeddingSimilarity: number;
+  textSimilarity: number;
+  combinedSimilarity: number;
+}> => {
+  // Get embeddings for both transcriptions
+  const [userEmbedding, masterEmbedding] = await Promise.all([
+    getTextEmbedding(userTranscription),
+    getTextEmbedding(masterTranscription),
+  ]);
+
+  // Calculate cosine similarity between embeddings
+  const embeddingSimilarity = calculateCosineSimilarity(userEmbedding, masterEmbedding);
+
+  // Keep existing text similarity calculation
+  const matcher = new SequenceMatcher(null, userTranscription, masterTranscription);
+  const seqSim = matcher.ratio();
+
+  const levDist = levenshtein(userTranscription, masterTranscription);
+  const maxLen = Math.max(userTranscription.length, masterTranscription.length, 1);
+  const levSim = 1 - levDist / maxLen;
+
+  const textSimilarity = Math.min(seqSim, levSim);
+
+  // Combine embedding and text similarities (embedding weighted higher)
+  const combinedSimilarity = (embeddingSimilarity * 0.7) + (textSimilarity * 0.3);
+
+  return {
+    embeddingSimilarity,
+    textSimilarity,
+    combinedSimilarity,
+  };
+};
+
+// Helper function to clean up files
+const cleanupFiles = async (filePaths: string[]) => {
+  const cleanupPromises = filePaths.map(async (filePath) => {
+    try {
+      await fsPromises.unlink(filePath);
+    } catch (error) {
+      // Ignore errors if file doesn't exist
+      console.warn(`Could not delete file ${filePath}:`, error);
+    }
+  });
+  
+  await Promise.allSettled(cleanupPromises);
+};
+
 const comparePronounciation = errorUtilities.withServiceErrorHandling(
   async ({
     referencePronunciationId,
@@ -50,6 +141,8 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
     file: Express.Multer.File;
     voice?: string;
   }) => {
+    logMemoryUsage("Start of comparePronounciation");
+    
     const userfileName = file.filename.replace(/\.[^/.]+$/, "");
     const masterFileName = "referece_pronunciation";
 
@@ -63,12 +156,19 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
       masterTrimmedFilePath,
       normalisedMasterWavPath,
       plotPath,
-      plotDTWPath,
     } = await createFileDirectories({
       reqFileName: file.filename,
       userfileName,
       masterFileName,
     });
+
+    // Only keep essential tensor references (no heavy embedding tensors)
+    let userTensor: tf.Tensor | null = null;
+    let masterTensor: tf.Tensor | null = null;
+    let normalisedUserAudio: tf.Tensor | null = null;
+    let normalisedMasterAudio: tf.Tensor | null = null;
+    let masterTensorScaled: tf.Tensor | null = null;
+    let userTensorScaled: tf.Tensor | null = null;
 
     try {
       const masterPronunciation =
@@ -82,17 +182,24 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
       const url = masterPronunciation.get(voice) as string;
       await getMasterFile(url, masterRawFilePath);
 
-      const { tensor: userTensor, raw: userRawAudio } = await loadAndTrimAudio({
+      logMemoryUsage("Before user audio processing");
+      const { tensor: userTensorRaw, raw: userRawAudio } = await loadAndTrimAudio({
         rawFilePath: userRawFilePath,
         wavFilePath: userWavFilePath,
         trimmedFilePath: userTrimmedFilePath,
       });
-      const { tensor: masterTensor, raw: masterRawAudio } =
+      userTensor = userTensorRaw;
+
+      logMemoryUsage("Before master audio processing");
+      const { tensor: masterTensorRaw, raw: masterRawAudio } =
         await loadAndTrimAudio({
           rawFilePath: masterRawFilePath,
           trimmedFilePath: masterTrimmedFilePath,
           wavFilePath: masterWavFilePath,
         });
+      masterTensor = masterTensorRaw;
+
+      logMemoryUsage("After audio loading");
 
       if (isInvalid(userRawAudio)) {
         throw errorUtilities.createError(
@@ -108,68 +215,67 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
       }
 
       // Normalize audio after trimming
-      const normalisedUserAudio = normalizeAudio(userTensor);
-      const normalisedMasterAudio = normalizeAudio(masterTensor);
+      normalisedUserAudio = normalizeAudio(userTensor);
+      normalisedMasterAudio = normalizeAudio(masterTensor);
 
-      // before volume match
+      logMemoryUsage("After audio normalization");
+
+      // RMS calculation for monitoring
       const userRMS = await rms(normalisedUserAudio);
       const masterRMS = await rms(normalisedMasterAudio);
       console.log("Ref RMS:", masterRMS);
       console.log("User RMS:", userRMS);
 
-      // after volume match
-      const [masterTensorScaled, userTensorScaled] = await matchVolumes(
+      // Volume matching (keeping for consistency)
+      const [masterScaled, userScaled] = await matchVolumes(
         masterTensor,
         userTensor
       );
+      masterTensorScaled = masterScaled;
+      userTensorScaled = userScaled;
 
-      //  Save trimmed & normalized WAVs
+      logMemoryUsage("After volume matching");
+
+      // Save normalized WAVs for transcription
       await writeWavFile(normalisedUserWavPath, sampleRate, userRawAudio);
       await writeWavFile(normalisedMasterWavPath, sampleRate, masterRawAudio);
 
-      // Embedding similarity
-      const masterAudioEmbedding = await getEmbedding(normalisedMasterWavPath);
-      const userAudioEmbedding = await getEmbedding(normalisedUserWavPath);
+      logMemoryUsage("Before transcriptions");
 
-      const embeddingSimilarity = getEmbeddingSimilarity(
-        userAudioEmbedding,
-        masterAudioEmbedding
-      );
+      // Get transcriptions in parallel (this is lightweight)
+      const [userTranscription, masterTranscription] = await Promise.all([
+        getTranscription(normalisedUserWavPath),
+        getTranscription(normalisedMasterWavPath)
+      ]);
 
-      // Transcriptions
-      const userTranscription = await getTranscription(normalisedUserWavPath);
-      const masterTranscription = await getTranscription(
-        normalisedMasterWavPath
-      );
-      const textSimilarity = transcriptionSimilarity(
-        userTranscription,
-        masterTranscription
-      );
+      logMemoryUsage("After transcriptions");
 
-      const finalScore =
-        Math.round((0.05 * embeddingSimilarity + 0.95 * textSimilarity) * 100) /
-        100;
+      // Use OpenAI embeddings instead of heavy audio embeddings
+      const {
+        embeddingSimilarity,
+        textSimilarity,
+        combinedSimilarity
+      } = await getEnhancedTextSimilarity(userTranscription, masterTranscription);
 
+      logMemoryUsage("After embedding similarity");
+
+      // Use the combined similarity as your final score
+      const finalScore = Math.round(combinedSimilarity * 100) / 100;
+
+      // Create waveform plot (keep this lightweight visualization)
       await plotOverlay(masterRawAudio, userRawAudio, plotPath);
-
-      await plotDTW(masterAudioEmbedding, userAudioEmbedding, plotDTWPath);
+      logMemoryUsage("After plot overlay");
 
       let remark = "";
       if (finalScore > 0.85) {
-        remark =
-          "Excellent! Your pronunciation is perfect or close to perfect.";
+        remark = "Excellent! Your pronunciation is perfect or close to perfect.";
       } else if (finalScore > 0.7) {
-        remark =
-          "Good attempt — there is room for improvement. Listen to recording & try again.";
+        remark = "Good attempt — there is room for improvement. Listen to recording & try again.";
       } else {
         remark = "Needs improvement — listen and try again.";
       }
 
-      const plotDTWResult = await uploadToCloudinary({
-        path: plotDTWPath,
-        folder: "plots",
-        assetType: "image",
-      });
+      // Upload results
       const plotResult = await uploadToCloudinary({
         path: plotPath,
         folder: "plots",
@@ -180,6 +286,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         folder: "userPronunciations",
         assetType: "video",
       });
+      
       const userPronunciationData = await saveUserPronunciation({
         userId,
         pronunciationId: masterPronunciation.get("id"),
@@ -187,18 +294,20 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         pronuciationPlotUrl: plotResult,
       });
 
-      fsPromises.unlink(userRawFilePath);
-      fsPromises.unlink(userTrimmedFilePath);
-      fsPromises.unlink(userWavFilePath);
-      fsPromises.unlink(normalisedUserWavPath);
+      // Clean up files
+      await cleanupFiles([
+        userRawFilePath,
+        userTrimmedFilePath,
+        userWavFilePath,
+        normalisedUserWavPath,
+        masterRawFilePath,
+        masterWavFilePath,
+        masterTrimmedFilePath,
+        normalisedMasterWavPath,
+        plotPath,
+      ]);
 
-      fsPromises.unlink(masterRawFilePath);
-      fsPromises.unlink(masterWavFilePath);
-      fsPromises.unlink(masterTrimmedFilePath);
-      fsPromises.unlink(normalisedMasterWavPath);
-
-      fsPromises.unlink(plotDTWPath);
-      fsPromises.unlink(plotPath);
+      logMemoryUsage("End of comparePronounciation - success");
 
       return responseUtilities.handleServicesResponse(
         StatusCodes.Created,
@@ -211,27 +320,45 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
           embeddingSimilarity: embeddingSimilarity,
           textSimilarity: textSimilarity,
           finalScore,
-          dtwPlot: plotDTWResult,
           plot: plotResult,
+          // Removed dtwPlot to save memory
         }
       );
     } catch (error: any) {
-      fsPromises.unlink(userRawFilePath);
-      fsPromises.unlink(userTrimmedFilePath);
-      fsPromises.unlink(userWavFilePath);
-      fsPromises.unlink(normalisedUserWavPath);
+      // Clean up files on error
+      await cleanupFiles([
+        userRawFilePath,
+        userTrimmedFilePath,
+        userWavFilePath,
+        normalisedUserWavPath,
+        masterRawFilePath,
+        masterWavFilePath,
+        masterTrimmedFilePath,
+        normalisedMasterWavPath,
+        plotPath,
+      ]);
 
-      fsPromises.unlink(masterRawFilePath);
-      fsPromises.unlink(masterWavFilePath);
-      fsPromises.unlink(masterTrimmedFilePath);
-      fsPromises.unlink(normalisedMasterWavPath);
-
-      fsPromises.unlink(plotDTWPath);
-      fsPromises.unlink(plotPath);
+      logMemoryUsage("End of comparePronounciation - error");
+      
       throw errorUtilities.createError(
         `Error comparing pronunciation: ${error.message}`,
         500
       );
+    } finally {
+      // Clean up tensors (much fewer now!)
+      safeTensorDispose(userTensor);
+      safeTensorDispose(masterTensor);
+      safeTensorDispose(normalisedUserAudio);
+      safeTensorDispose(normalisedMasterAudio);
+      safeTensorDispose(masterTensorScaled !== masterTensor ? masterTensorScaled : null);
+      safeTensorDispose(userTensorScaled);
+      
+      // Force garbage collection if available
+      if (global.gc) {
+        global.gc();
+      }
+      
+      logMemoryUsage("After tensor cleanup");
     }
   }
 );
@@ -297,6 +424,8 @@ export const loadAndTrimAudio = async ({
   tensor: tf.Tensor;
   raw: Float32Array;
 }> => {
+  let tensorAudio: tf.Tensor | null = null;
+  
   try {
     console.log("Converting to WAV...");
     await convertAudio(rawFilePath, wavFilePath, (cmd) =>
@@ -316,13 +445,16 @@ export const loadAndTrimAudio = async ({
 
     const rawAudio = result.channelData[0]; // Float32Array
     const audioSamples = Array.from(rawAudio);
-    const tensorAudio = tf.tensor2d([audioSamples]);
+    
+    tensorAudio = tf.tensor2d([audioSamples]);
 
     return {
       tensor: tensorAudio,
       raw: rawAudio,
     };
   } catch (err: any) {
+    // Clean up tensor if creation failed
+    safeTensorDispose(tensorAudio);
     throw errorUtilities.createError(
       `Error processing audio: ${err.message}`,
       500
@@ -343,37 +475,25 @@ const isInvalid = (
 };
 
 const normalizeAudio = (audioTensor: tf.Tensor): tf.Tensor => {
-  // Find the maximum absolute value in the tensor.
-  // We use tf.abs() to get the absolute values before finding the maximum.
-  const maxAbsValue = tf.max(tf.abs(audioTensor));
-
-  // Add a small epsilon (1e-8) to the maximum absolute value to prevent
-  // division by zero, which could happen if the audioTensor is all zeros.
-  const divisor = tf.add(maxAbsValue, 1e-8);
-
-  // Perform the normalization by dividing the entire tensor by the divisor.
-  // The tf.div() function handles this element-wise division.
-  const normalizedTensor = tf.div(audioTensor, divisor);
-
-  return normalizedTensor;
+  return tf.tidy(() => {
+    // Find the maximum absolute value in the tensor.
+    const maxAbsValue = tf.max(tf.abs(audioTensor));
+    // Add a small epsilon to prevent division by zero.
+    const divisor = tf.add(maxAbsValue, 1e-8);
+    // Perform the normalization.
+    return tf.div(audioTensor, divisor);
+  });
 };
 
 const rms = async (tensor: tf.Tensor): Promise<number> => {
-  // Ensure the tensor is properly disposed of to prevent memory leaks.
+  // Use tf.tidy to automatically clean up intermediate tensors
   const rmsValueTensor = tf.tidy(() => {
-    // Square the tensor elements.
     const squared = tf.pow(tensor, 2);
-    // Find the mean of the squared elements.
     const mean = tf.mean(squared);
-    // Take the square root to get the RMS value.
     return tf.sqrt(mean);
   });
 
-  // Extract the single number from the resulting tensor.
-  // We use .data() because the operations are asynchronous.
   const rmsValue = (await rmsValueTensor.data())[0];
-
-  // Dispose of the tensor to free up GPU memory.
   rmsValueTensor.dispose();
 
   return rmsValue;
@@ -383,19 +503,15 @@ const matchVolumes = async (
   masterTensor: tf.Tensor,
   userTensor: tf.Tensor
 ): Promise<[tf.Tensor, tf.Tensor]> => {
-  // Use the reusable rms function to get the RMS values.
   const masterRms = await rms(masterTensor);
   const userRms = await rms(userTensor);
 
-  // Calculate the scaling factor. Add a small epsilon (1e-8) to prevent
-  // division by zero if the user's audio tensor is all zeros.
   const scalingFactor = masterRms / (userRms + 1e-8);
 
-  // Apply the scaling factor to the user's tensor.
-  const userTensorScaled = tf.mul(userTensor, tf.scalar(scalingFactor));
+  const userTensorScaled = tf.tidy(() => {
+    return tf.mul(userTensor, tf.scalar(scalingFactor));
+  });
 
-  // Return the original reference tensor and the scaled user tensor.
-  // Note that we return a Promise that resolves to a tuple of tensors.
   return [masterTensor, userTensorScaled];
 };
 
@@ -405,36 +521,10 @@ const writeWavFile = async (
   audioData: Float32Array
 ): Promise<void> => {
   const wav = new WaveFile();
-
-  // From the given audio data, create a new WaveFile with the specified sample rate,
-  // number of channels (1 for mono), and bit depth (32-bit floating point, same as Float32Array).
-  // The value '32f' is used for 32-bit float audio, matching the input data type.
   wav.fromScratch(1, sampleRate, "32f", audioData);
-
-  // Convert the WaveFile object into a Buffer that can be written to disk.
   const buffer = wav.toBuffer();
-
-  // Write the buffer to the specified file path asynchronously.
   await fsPromises.writeFile(path, buffer);
-
   console.log(`WAV file written successfully`);
-};
-
-const getEmbeddingSimilarity = (a: tf.Tensor2D, b: tf.Tensor2D) => {
-  // Ensure same number of frames (rows)
-  const minLen = Math.min(a.shape[0], b.shape[0]);
-  const aSlice = a.slice([0, 0], [minLen, a.shape[1]]);
-  const bSlice = b.slice([0, 0], [minLen, b.shape[1]]);
-
-  // Compute cosine similarity per frame
-  const dotProduct = tf.sum(tf.mul(aSlice, bSlice), 1); // shape: [minLen]
-  const aNorm = tf.norm(aSlice, "euclidean", 1); // shape: [minLen]
-  const bNorm = tf.norm(bSlice, "euclidean", 1); // shape: [minLen]
-  const cosineSim = dotProduct.div(aNorm.mul(bNorm)); // shape: [minLen]
-
-  // Mean cosine similarity and subtract from 1
-  const similarity = tf.sub(1, tf.mean(cosineSim));
-  return similarity.dataSync()[0]; // Return scalar as number
 };
 
 const getTranscription = async (filePath: string) => {
@@ -445,20 +535,6 @@ const getTranscription = async (filePath: string) => {
     file: file,
   });
   return response.text;
-};
-
-const transcriptionSimilarity = (a: string, b: string) => {
-  // Sequence similarity (like difflib.SequenceMatcher)
-  const matcher = new SequenceMatcher(null, a, b);
-  const seqSim = matcher.ratio();
-
-  // Levenshtein similarity
-  const levDist = levenshtein(a, b);
-  const maxLen = Math.max(a.length, b.length, 1);
-  const levSim = 1 - levDist / maxLen;
-
-  // Conservative estimate: return the lower of the two
-  return Math.min(seqSim, levSim);
 };
 
 const plotOverlay = async (
@@ -531,87 +607,6 @@ const plotOverlay = async (
   await writeFile(outputPath, imageBuffer);
 };
 
-// Cosine distance between two vectors
-function cosineDistance(a: number[], b: number[]): number {
-  const dot = a.reduce((sum, val, i) => sum + val * b[i], 0);
-  const normA = Math.sqrt(a.reduce((sum, val) => sum + val * val, 0));
-  const normB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
-  return 1 - dot / (normA * normB + 1e-8);
-}
-
-// Convert Float32Array[] (embeddings) to number[][] if needed
-const tensorTo2DArray = async (tensor: tf.Tensor2D): Promise<number[][]> => {
-  const data = await tensor.array(); // shape: [T, D]
-  return data as number[][];
-};
-
-const plotDTW = async (
-  refEmbed: tf.Tensor2D,
-  userEmbed: tf.Tensor2D,
-  outputPath: string
-): Promise<void> => {
-  const ref = await tensorTo2DArray(refEmbed);
-  const user = await tensorTo2DArray(userEmbed);
-
-  const dtw = new DynamicTimeWarping(ref, user, cosineDistance);
-  const distance = dtw.getDistance();
-  const pathPts = dtw.getPath(); // Array of [x, y] alignment path
-
-  const x: number[] = pathPts.map(([x]) => x);
-  const y: number[] = pathPts.map(([, y]) => y);
-
-  const width = 600;
-  const height = 600;
-
-  const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height });
-
-  const config = {
-    type: "line" as const,
-    data: {
-      labels: x,
-      datasets: [
-        {
-          label: "DTW Path",
-          data: y,
-          borderColor: "purple",
-          borderWidth: 1,
-          pointRadius: 0,
-          fill: false,
-        },
-      ],
-    },
-    options: {
-      responsive: false,
-      plugins: {
-        title: {
-          display: true,
-          text: "DTW Alignment Path",
-        },
-        legend: {
-          display: false,
-        },
-      },
-      scales: {
-        x: {
-          title: {
-            display: true,
-            text: "Reference Frame",
-          },
-        },
-        y: {
-          title: {
-            display: true,
-            text: "User Frame",
-          },
-        },
-      },
-    },
-  };
-
-  const buffer = await chartJSNodeCanvas.renderToBuffer(config);
-  await writeFile(outputPath, buffer);
-};
-
 const saveUserPronunciation = async ({
   userId,
   pronuciationPlotUrl,
@@ -682,7 +677,6 @@ const createFileDirectories = async ({
 
   const plotPaths = {
     plotPath: "../utilities/audioFiles/plots",
-    plotDTWPath: "../utilities/audioFiles/plots",
   };
   for (let key in plotPaths) {
     const directory = path.join(

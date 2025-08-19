@@ -77,7 +77,7 @@ export const generalAuthFunction = async (
           });
         }
 
-        if (!userDetails?.isBlocked) {
+        if (userDetails?.isBlocked) {
           return response.status(403).json({
             status: 'error',
             message: 'Account blocked, please contact admin',
