@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addUsersToRespectiveLists = exports.unsubscribeWaitingList = exports.joinWaitingList = exports.config = void 0;
+exports.getWaitingListBetaTesterUser = exports.addUsersToRespectiveLists = exports.unsubscribeWaitingList = exports.joinWaitingList = exports.config = void 0;
 const waitingList_1 = __importDefault(require("../entities/waitingList"));
 const uuid_1 = require("uuid");
 const axios_1 = __importDefault(require("axios"));
@@ -212,3 +212,28 @@ const addUsersToRespectiveLists = async (request, response) => {
     }
 };
 exports.addUsersToRespectiveLists = addUsersToRespectiveLists;
+const getWaitingListBetaTesterUser = async (request, response) => {
+    try {
+        const { email } = request.query;
+        if (!email || typeof email !== 'string') {
+            return response.status(400).json({ error: 'Valid email is required' });
+        }
+        const user = await waitingList_1.default.findOne({ where: { email }, raw: true });
+        if (!user) {
+            return response.status(404).json({ message: 'User not found in waiting list' });
+        }
+        if (!user.betaTest) {
+            return response.status(403).json({ message: 'User is not part of the beta testers' });
+        }
+        return response.status(200).json({
+            message: 'User found',
+            data: user
+        });
+    }
+    catch (error) {
+        console.error('💥 Beta tester check error:', error);
+        console.error('📚 Error stack:', error.stack);
+        return response.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+exports.getWaitingListBetaTesterUser = getWaitingListBetaTesterUser;

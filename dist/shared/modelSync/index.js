@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+require("../entities/lesson-service-entities/content/content");
+require("../entities/lesson-service-entities/contentFile/content-file");
+require("../entities/lesson-service-entities/course/course");
+require("../entities/lesson-service-entities/language/language");
+require("../entities/lesson-service-entities/lesson/lesson");
+require("../entities/lesson-service-entities/quiz/quiz");
+require("../entities/lesson-service-entities/userCourse/user-course");
+require("../entities/lesson-service-entities/userDailyGoals/userDailyGoals");
+require("../entities/lesson-service-entities/userQuiz/user-quiz");
+require("../entities/lesson-service-entities/wordForTheDay/wordForTheDay");
+require("../entities/pronunciation-feedback-service-entities/referencePronunciation/reference-pronunciation");
+require("../entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation");
+require("../entities/user-service-entities/otp/otp.entities");
+require("../entities/user-service-entities/users/users.entities");

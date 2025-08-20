@@ -5,9 +5,10 @@ export interface CustomError extends Error {
   code?: string;
 }
 
-const createError = (message: string, statusCode: number) => ({
+const createError = (message: string, statusCode: number, specialCodeMessage?: string[]) => ({
   message,
   statusCode,
+  specialCodeMessage,
   timestamp: new Date(),
   isOperational: true,
 });
@@ -50,6 +51,7 @@ export const globalErrorHandler: ErrorRequestHandler = (err: any, req: Request, 
     status: 'error',
     message: errorResponse.message,
     timestamp: errorResponse.timestamp,
+    specialCodeMessage: errorResponse?.specialCodeMessage,
     details: !err.isOperational ? errorResponse.details : '',
   });
 };

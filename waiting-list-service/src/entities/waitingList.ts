@@ -1,5 +1,5 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
-import database from '../../../config/databases';
+import { founders_list_db } from '../../../config/databases';
 
 interface WaitingListAttributes {
   id: string;
@@ -62,7 +62,7 @@ WaitingList.init(
     },
   },
   {
-    sequelize: database,
+    sequelize: founders_list_db,
     modelName: 'WaitingList',
     tableName: 'waiting_lists',
     timestamps: true,

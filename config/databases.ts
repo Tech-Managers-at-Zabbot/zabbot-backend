@@ -1,41 +1,68 @@
-import {Sequelize} from 'sequelize';
-import config from './config';
-import fs from 'fs';
-import path from 'path';
+import { Sequelize } from "sequelize";
+import config from "./config";
+import fs from "fs";
+import path from "path";
 
+const { FOUNDERS_LIST_DB, USERS_SERVICE_DB, EDEDUN_DB } = config;
 
-const {
-    DB_URL
-} = config
+const certificatePath = path.join(__dirname, "../ssl/ca-certificate.crt");
 
-const certificatePath = path.join(__dirname, '../ssl/ca-certificate.crt');
+const founders_list_db = new Sequelize(`${FOUNDERS_LIST_DB}`, {
+  dialect: "postgres",
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000,
+  },
+  dialectOptions: {
+    ssl: {
+      require: false,
+      rejectUnauthorized: false,
+      // ca: fs.readFileSync(certificatePath).toString(),
+    },
+  },
+});
 
-const database = new Sequelize(`${DB_URL}`,
-    {
-      dialect: 'postgres',
-        pool: {
-          max: 5,
-          min: 0,
-          acquire: 30000,
-          idle: 10000,
-        },
-        dialectOptions: {
-          ssl: {
-            require: false,
-            rejectUnauthorized: false,
-            // ca: fs.readFileSync(certificatePath).toString(),
-          }
-        }
-    }
-)
+const ededun_database = new Sequelize(`${EDEDUN_DB}`, {
+  dialect: "postgres",
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000,
+  },
+});
 
-database.sync({}).then(() => {
-    console.log(config.stage, "database connected");
-  })
-  .catch((error: any) => {
-    console.log("No connection:", error);
-  });
+// founders_list_db.sync({}).then(() => {
+//     console.log(`Stage is: ${config.stage}`, "Founders list database connected");
+//   })
+//   .catch((error: any) => {
+//     console.log("No connection:", error);
+//   });
 
+const users_service_db = new Sequelize(`${USERS_SERVICE_DB}`, {
+  dialect: "postgres",
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000,
+  },
+  dialectOptions: {
+    ssl: {
+      require: false,
+      rejectUnauthorized: false,
+      // ca: fs.readFileSync(certificatePath).toString(),
+    },
+  },
+});
 
+// users_service_db.sync({}).then(() => {
+//     console.log(`Stage is: ${config}`, "Users database connected");
+//   })
+//   .catch((error: any) => {
+//     console.log("No connection:", error);
+//   });
 
-export default database;
+export { founders_list_db, users_service_db, ededun_database };
