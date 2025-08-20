@@ -1,4 +1,21 @@
 declare const _default: {
-    DB_URL: string | undefined;
+    FOUNDERS_LIST_DB: string;
+    USERS_SERVICE_DB: string;
+    GOOGLE_REGISTER_CALLBACK_URL: string;
+    GOOGLE_LOGIN_CALLBACK_URL: string;
+    FRONTEND_URL: string;
+    PASSWORD_RESET_URL: string;
+    GOOGLE_AUTH_FAILURE_URL: string;
+    LOCAL_FOUNDERS_LIST_URL: string;
+    NOTIFICATION_SERVICE_ROUTE: string;
+    APP_JWT_SECRET: string;
+    EDEDUN_APP_SECRET: string;
+    EDEDUN_SMTP_USER_NAME: string;
+    EDEDUN_SMTP_PASSWORD: string;
+    EDEDUN_CLOUDINARY_NAME: string;
+    EDEDUN_CLOUDINARY_API_KEY: string;
+    EDEDUN_CLOUDINARY_API_SECRET: string;
+    EDEDUN_DB: string;
+    YORUBA_LANGUAGE_ID: string;
 };
 export default _default;

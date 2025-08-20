@@ -1,10 +1,7 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
-const databases_1 = __importDefault(require("../../../config/databases"));
+const databases_1 = require("../../../config/databases");
 class WaitingList extends sequelize_1.Model {
 }
 WaitingList.init({
@@ -44,7 +41,7 @@ WaitingList.init({
         defaultValue: false,
     },
 }, {
-    sequelize: databases_1.default,
+    sequelize: databases_1.founders_list_db,
     modelName: 'WaitingList',
     tableName: 'waiting_lists',
     timestamps: true,

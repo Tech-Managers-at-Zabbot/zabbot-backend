@@ -12,9 +12,10 @@ export declare const createUnknownError: (error: any) => {
 };
 export declare const globalErrorHandler: ErrorRequestHandler;
 declare const _default: {
-    createError: (message: string, statusCode: number) => {
+    createError: (message: string, statusCode: number, specialCodeMessage?: string[]) => {
         message: string;
         statusCode: number;
+        specialCodeMessage: string[] | undefined;
         timestamp: Date;
         isOperational: boolean;
     };

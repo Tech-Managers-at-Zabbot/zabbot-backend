@@ -1,8 +1,8 @@
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import path from 'path';
 
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+dotenv.config();
+
 
 
 const generateToken = (data:Record<string,any>, expiresIn:any) => {
@@ -24,7 +24,20 @@ const validateToken = (token: string) => {
     }
 }
 
+const parseStringified = (data: any) => {
+  if (typeof data === 'string') {
+    try {
+      return JSON.parse(data);
+    } catch (err) {
+      console.error("Invalid JSON string:", err);
+      throw new Error("Invalid stringified JSON input");
+    }
+  }
+  return data;
+}
+
 export default {
     generateToken,
-    validateToken
+    validateToken,
+    parseStringified
 }

@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": ".",
+    "composite": false,
+    "declaration": false 
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "references": [
+    { "path": "../shared" },
+    { "path": "../config" }
+  ]
+}

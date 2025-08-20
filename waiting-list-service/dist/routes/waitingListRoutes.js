@@ -6,4 +6,5 @@ const router = (0, express_1.Router)();
 router.post('/join', waitingListController_1.joinWaitingList);
 router.get('/unsubscribe', waitingListController_1.unsubscribeWaitingList);
 router.get('/split-to-lists', waitingListController_1.addUsersToRespectiveLists);
+router.get('/beta-tester-check', waitingListController_1.getWaitingListBetaTesterUser);
 exports.default = router;
