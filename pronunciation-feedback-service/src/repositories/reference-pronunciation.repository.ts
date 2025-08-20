@@ -18,6 +18,21 @@ const referenePronunciationRepositories = {
     }
   },
 
+  getPronunciationByEnglishWord: async (englishWord: string) => {
+    try {
+      const pronunciation = await ReferencePronunciation.findOne({
+        where: { englishWord },
+      });
+
+      return pronunciation;
+    } catch (error: any) {
+      throw errorUtilities.createError(
+        `Error Fetching pronunciation by englishWord: ${error.message}`,
+        500
+      );
+    }
+  },
+
   getPronunciations: async () => {
     try {
       const pronunciations = await ReferencePronunciation.findAll();
@@ -52,10 +67,13 @@ const referenePronunciationRepositories = {
 
   updatePronunciation: async (
     pronunciationData: any,
-    transaction?: Transaction
+    updateFilter: Record<string, any>
   ) => {
     try {
-      await pronunciationData.update(pronunciationData, { transaction });
+      await ReferencePronunciation.update(
+        pronunciationData,
+        { where: updateFilter }
+      );
 
       return pronunciationData;
     } catch (error: any) {

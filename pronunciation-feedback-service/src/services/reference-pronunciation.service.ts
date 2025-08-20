@@ -4,6 +4,7 @@ import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
 import { v4 } from "uuid";
 import { ResponseDetails } from "../../../shared/utilities/responseHandlers/response.utilities";
 import { ReferencePronunciationAttributes } from "../../../shared/databaseTypes/pronunciation-feedback-types";
+import { handleSinglePronunciation } from "../helpers/helpers";
 
 const getPronunciations = errorUtilities.withServiceErrorHandling(async () => {
   const pronunciations =
@@ -30,62 +31,43 @@ const getPronunciation = errorUtilities.withServiceErrorHandling(
 const addPronunciation = errorUtilities.withServiceErrorHandling(
   async (pronunciationData: ReferencePronunciationAttributes | ReferencePronunciationAttributes[]) => {
 
-    if(Array.isArray(pronunciationData)) {
-            const created: Record<string, any>[] = []
-      const failed: { data: Record<string, any>; reason: string }[] = [];
-      const newPronunciations = await Promise.all(
-        pronunciationData.map(async (data) => {
-          try {
-          const newPronunciationData = {
-            ...data,
-            id: v4(),
-            createdAt: new Date(),
-          };
-           const createdData = await referenePronunciationRepositories.addPronunciation(
-            newPronunciationData
-          );
-           if (createdData) {
-              created.push(createdData);
-              return createdData;
-            } else {
-              failed.push({ data, reason: 'Unknown creation failure (no result returned)' });
-              return null;
-            }
-          } catch (error: any) {
-            failed.push({
-              data,
-              reason: error?.message || 'Unknown error during creation',
-            });
-            return null;
-          }
-        })
-      );
+    if (Array.isArray(pronunciationData)) {
+      const created: any[] = [];
+      const updated: any[] = [];
+      const failed: any[] = [];
+
+      const results = await Promise.all(pronunciationData.map((data:any) => handleSinglePronunciation(data)));
+
+      results.forEach((data) => {
+        if (data.type === "created") created.push(data.result);
+        else if (data.type === "updated") updated.push(data.result);
+        else failed.push(data.result);
+      });
 
       return responseUtilities.handleServicesResponse(
-        StatusCodes.Created,
-        "Pronunciations created successfully",
-        newPronunciations
+        StatusCodes.MultiStatus,
+        "Pronunciations processed",
+        { created, updated, failed }
       );
-    }else {
-      const newPronunciaitonData = {
-        ...pronunciationData,
-        id: v4(),
-        createdAt: new Date(),
-      };
-  
-      const newPronunciation =
-        await referenePronunciationRepositories.addPronunciation(
-          newPronunciaitonData
-        );
+    } else {
+      const result = await handleSinglePronunciation(pronunciationData);
+      const message = result.type === "created"
+        ? "Pronunciation created successfully"
+        : result.type === "updated"
+          ? "Pronunciation updated successfully"
+          : "Failed to process pronunciation";
+
+      const status = result.type === "error" ? StatusCodes.InternalServerError : StatusCodes.OK;
 
       return responseUtilities.handleServicesResponse(
-        StatusCodes.Created,
-        "Pronunciation created successfully",
-        newPronunciation
+        status,
+        message,
+        result.result
       );
     }
   }
 );
+
 
 const updatePronunciation = errorUtilities.withServiceErrorHandling(
   async (id: string, pronunciationData: ReferencePronunciationAttributes) => {
@@ -97,7 +79,7 @@ const updatePronunciation = errorUtilities.withServiceErrorHandling(
 
     const updatedPronunciation =
       await referenePronunciationRepositories.updatePronunciation(
-        pronunciationData
+        pronunciationData, {id}
       );
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
