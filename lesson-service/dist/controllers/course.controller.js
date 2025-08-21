@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createCourseWithLessonsController = exports.removeUserCourseController = exports.getCourseWithLessonsController = exports.updateUserCourseController = exports.addUserCourseController = exports.getUserCourseController = exports.getUserCoursesController = exports.deleteCourseController = exports.updateCourseController = exports.addCourseController = exports.getCourseByTitleController = exports.getCourseController = exports.getCoursesController = void 0;
+exports.createCourseWithLessonsController = exports.removeUserCourseController = exports.getCourseWithLessonsController = exports.getUserCompletedCoursesController = exports.updateUserCourseController = exports.addUserCourseController = exports.getUserCourseController = exports.getUserCoursesController = exports.deleteCourseController = exports.updateCourseController = exports.addCourseController = exports.getCourseByTitleController = exports.getCourseController = exports.getCoursesController = void 0;
 const course_service_1 = __importDefault(require("../services/lessonServices/course.service"));
 const user_course_service_1 = __importDefault(require("../services/lessonServices/user-course.service"));
 const utilities_1 = require("../../../shared/utilities");
@@ -11,9 +11,6 @@ const utilities_1 = require("../../../shared/utilities");
 exports.getCoursesController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
     const { languageId } = req.params;
     const { isActive } = req.query;
-    // const isActive: boolean | null = req.query.isActive === 'true' ? true
-    //   : req.query.isActive === 'false' ? false
-    //   : true;
     const courses = await course_service_1.default.getCoursesForLanguage(languageId, isActive);
     return utilities_1.responseUtilities.responseHandler(res, courses.message, courses.statusCode, courses.data);
 });
@@ -60,22 +57,40 @@ exports.getUserCoursesController = utilities_1.errorUtilities.withControllerErro
 });
 // Controller to get user course
 exports.getUserCourseController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
-    const { id } = req?.user;
-    const userCourse = await user_course_service_1.default.getUserCourse(id);
+    const { userId } = req?.user;
+    const { languageId, courseId } = req.params;
+    const userCourse = await user_course_service_1.default.getUserCourse(languageId, userId, courseId);
     return utilities_1.responseUtilities.responseHandler(res, userCourse.message, userCourse.statusCode, userCourse.data);
 });
 // Controller to add user to course
 exports.addUserCourseController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
-    const { title } = req.params;
-    const addUserCourse = await user_course_service_1.default.addUserCourse(title);
+    const { languageId, courseId } = req.params;
+    const { userId } = req.user;
+    const userCourseData = {
+        ...req.body,
+        userId,
+        languageId,
+        courseId,
+        lastAccessed: new Date(),
+        isCompleted: false,
+        isActive: true,
+    };
+    const addUserCourse = await user_course_service_1.default.addUserCourse(userCourseData);
     return utilities_1.responseUtilities.responseHandler(res, addUserCourse.message, addUserCourse.statusCode, addUserCourse.data);
 });
 // Controller to update user course
-exports.updateUserCourseController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
-    const { id } = req.params;
-    const { userCourseData } = req.body;
-    const updateUserCourse = await user_course_service_1.default.updateUserCourse(id, userCourseData);
-    return utilities_1.responseUtilities.responseHandler(res, updateUserCourse.message, updateUserCourse.statusCode, updateUserCourse.data);
+exports.updateUserCourseController = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {
+    const { courseId } = request.params;
+    const { userId } = request.user;
+    const updateUserCourse = await user_course_service_1.default.updateUserCourse(courseId, userId, request.body);
+    return utilities_1.responseUtilities.responseHandler(response, updateUserCourse.message, updateUserCourse.statusCode, updateUserCourse.data);
+});
+exports.getUserCompletedCoursesController = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {
+    const { userId } = request.user;
+    const { languageId } = request.params;
+    const { countOnly } = request.query;
+    const userCompletedCourses = await user_course_service_1.default.getUserCompletedCoursesService(userId, languageId, countOnly);
+    return utilities_1.responseUtilities.responseHandler(response, userCompletedCourses.message, userCompletedCourses.statusCode, userCompletedCourses.data);
 });
 exports.getCourseWithLessonsController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
     const { languageId } = req.params;
