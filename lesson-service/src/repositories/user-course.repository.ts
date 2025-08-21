@@ -2,12 +2,16 @@ import { Transaction } from "sequelize";
 import { errorUtilities } from "../../../shared/utilities";
 import UserCourses from "../../../shared/entities/lesson-service-entities/userCourse/user-course";
 
-
 const userCourseRepositories = {
-  getUserCourses: async (filter: { languageId: string; userId: string, courseId?: string }, projection?: string[]) => {
+  getUserCourses: async (
+    filter: { languageId: string; userId: string; courseId?: string },
+    projection?: string[]
+  ) => {
     try {
       const where: any = {
-        languageId: filter?.languageId, userId: filter?.userId, isActive:true
+        languageId: filter?.languageId,
+        userId: filter?.userId,
+        isActive: true,
       };
 
       if (filter?.courseId) {
@@ -17,48 +21,130 @@ const userCourseRepositories = {
       const userCourses = await UserCourses.findAll({
         where,
         attributes: projection,
-        order: [['lastAccessed', 'DESC']],
-        raw: true
+        order: [["lastAccessed", "DESC"]],
+        raw: true,
       });
 
       return userCourses;
     } catch (error: any) {
-      throw errorUtilities.createError(`Error Fetching user courses: ${error.message}`, 500);
+      throw errorUtilities.createError(
+        `Error Fetching user courses: ${error.message}`,
+        500
+      );
     }
   },
 
-  getUserCourse: async (id: string) => {
+  getUserCourse: async (
+    filter: {
+      languageId?: string;
+      userId: string;
+      courseId: string;
+      id?: string;
+    },
+    projection?: string[]
+  ) => {
     try {
-      const userCourse = await UserCourses.findByPk(id);
+      const where: any = {
+        isActive: true,
+      };
+
+      if (filter?.languageId) {
+        where.languageId = filter.languageId;
+      }
+
+      if (filter?.userId) {
+        where.userId = filter.userId;
+      }
+
+      if (filter?.courseId) {
+        where.courseId = filter.courseId;
+      }
+
+      if (filter?.id) {
+        where.id = filter.id;
+      }
+
+      const userCourse = await UserCourses.findOne({
+        where,
+        attributes: projection,
+        raw: true,
+      });
 
       return userCourse;
-
     } catch (error: any) {
-      throw errorUtilities.createError(`Error Fetching user course: ${error.message}`, 500);
+      throw errorUtilities.createError(
+        `Error Fetching user course: ${error.message}`,
+        500
+      );
+    }
+  },
+
+  getCompletedCourses: async (
+    userId: string,
+    languageId: string,
+    countOnly?: string
+  ) => {
+    try {
+      if (countOnly === "true") {
+        const count = await UserCourses.count({
+          where: {
+            userId,
+            languageId,
+            isCompleted: true,
+          },
+        });
+
+        return count;
+      }
+
+      const { count, rows } = await UserCourses.findAndCountAll({
+        where: {
+          userId,
+          languageId,
+          isCompleted: true,
+        },
+        raw: true,
+      });
+      return { count, data: rows };
+    } catch (error: any) {
+      throw errorUtilities.createError(
+        `Error fetching user courses: ${error.message}`,
+        500
+      );
     }
   },
 
   addUserCourse: async (userCourseData: any, transaction?: Transaction) => {
     try {
       // Create a new user course
-      const newUserCourse = await UserCourses.create(userCourseData, { transaction });
+      const newUserCourse = await UserCourses.create(userCourseData, {
+        transaction,
+      });
 
       return newUserCourse;
-
     } catch (error: any) {
-      throw errorUtilities.createError(`Error Adding user course: ${error.message}`, 500);
+      throw errorUtilities.createError(
+        `Error Adding user course: ${error.message}`,
+        500
+      );
     }
   },
 
-  updateUserCourse: async (userCourseData: any, transaction?: Transaction) => {
+  updateUserCourse: async (userCourseData: any, userCourseId: string) => {
     try {
       // Update the user course
-      await userCourseData.update(userCourseData, { transaction });
+      await UserCourses.update(userCourseData, {
+        where: {
+          id: userCourseId,
+        },
+      });
 
       return userCourseData;
-
     } catch (error: any) {
-      throw errorUtilities.createError(`Error Updating user course: ${error.message}`, 500);
+      throw errorUtilities.createError(
+        `Error Updating user course: ${error.message}`,
+        500
+      );
     }
   },
 
@@ -73,9 +159,12 @@ const userCourseRepositories = {
 
       return { message: "User course deleted successfully" };
     } catch (error: any) {
-      throw errorUtilities.createError(`Error Deleting user course: ${error.message}`, 500);
+      throw errorUtilities.createError(
+        `Error Deleting user course: ${error.message}`,
+        500
+      );
     }
   },
-}
+};
 
 export default userCourseRepositories;
