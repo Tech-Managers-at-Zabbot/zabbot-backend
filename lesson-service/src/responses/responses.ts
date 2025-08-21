@@ -29,6 +29,7 @@ export enum CourseResponses {
     COURSES_NOT_FETCHED = "Unable to fetch courses, try again",
     PROCESS_SUCCESSFUL = "Process Successful",
     USER_COURSE_NOT_FOUND = "User course not found",
+    USER_ENROLLED_FOR_COURSE = "User already enrolled in this course",
     COURSE_NOT_FOUND = "Course not found, please try again",
     CONTENTS_NOT_FOUND = "Contents not found, please try again",
     LESSONS_NOT_FOUND = "Lessons not found, please try again",
