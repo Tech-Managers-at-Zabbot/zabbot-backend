@@ -26,6 +26,7 @@ const generalAuthFunction = async (request, response, next) => {
                 message: 'Login required',
             });
         }
+        //https://zabbot-backend-development-no68m.ondigitalocean.app
         let verifiedUser;
         try {
             verifiedUser = jsonwebtoken_1.default.verify(authorizationToken, `${process.env.APP_JWT_SECRET}`);
@@ -64,7 +65,7 @@ const generalAuthFunction = async (request, response, next) => {
                         message: 'User not found, please login again or contact admin',
                     });
                 }
-                if (!userDetails?.isBlocked) {
+                if (userDetails?.isBlocked) {
                     return response.status(403).json({
                         status: 'error',
                         message: 'Account blocked, please contact admin',
