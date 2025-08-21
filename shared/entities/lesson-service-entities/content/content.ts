@@ -54,6 +54,15 @@ Contents.init(
       type: DataTypes.STRING,
       allowNull: false
     },
+    // level: {
+    //   type: DataTypes.ENUM,
+    //   values: Object.values(Level),
+    //   allowNull: false
+    // },
+    // key: {
+    //   type: DataTypes.STRING,
+    //   allowNull: true
+    // },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
