@@ -4,7 +4,7 @@ import contentRepositories from "../../repositories/content.repository"
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
 import { CourseResponses } from "../../responses/responses";
 import { v4 } from "uuid";
-import FileContentAttributes from "../../../../shared/databaseTypes/lesson-service-types";
+// import FileContentAttributes from "../../../../shared/databaseTypes/lesson-service-types";
 
 const getContents = errorUtilities.withServiceErrorHandling(
   async () => {
@@ -79,14 +79,14 @@ const addContent = errorUtilities.withServiceErrorHandling(
 
     const newContent = await contentRepositories.createContent(payload);
     
-    let fileContents = contentData.contentFiles as FileContentAttributes[];
-    if (fileContents) {
-      fileContents.forEach(item => {
-        item.contentId = newContent.id;
-      });
+    // let fileContents = contentData.contentFiles as FileContentAttributes[];
+    // if (fileContents) {
+    //   fileContents.forEach(item => {
+    //     item.contentId = newContent.id;
+    //   });
 
-      await contentRepositories.createMultipleContents(fileContents);
-    }
+    //   await contentRepositories.createMultipleContents(fileContents);
+    // }
     
     return newContent;
   }
