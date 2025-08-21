@@ -26,7 +26,6 @@ const generalAuthFunction = async (request, response, next) => {
                 message: 'Login required',
             });
         }
-        //https://zabbot-backend-development-no68m.ondigitalocean.app
         let verifiedUser;
         try {
             verifiedUser = jsonwebtoken_1.default.verify(authorizationToken, `${process.env.APP_JWT_SECRET}`);

@@ -9,7 +9,9 @@ const userCourseRepositories = {
     getUserCourses: async (filter, projection) => {
         try {
             const where = {
-                languageId: filter?.languageId, userId: filter?.userId, isActive: true
+                languageId: filter?.languageId,
+                userId: filter?.userId,
+                isActive: true,
             };
             if (filter?.courseId) {
                 where.courseId = filter.courseId;
@@ -17,8 +19,8 @@ const userCourseRepositories = {
             const userCourses = await user_course_1.default.findAll({
                 where,
                 attributes: projection,
-                order: [['lastAccessed', 'DESC']],
-                raw: true
+                order: [["lastAccessed", "DESC"]],
+                raw: true,
             });
             return userCourses;
         }
@@ -26,29 +28,80 @@ const userCourseRepositories = {
             throw utilities_1.errorUtilities.createError(`Error Fetching user courses: ${error.message}`, 500);
         }
     },
-    getUserCourse: async (id) => {
+    getUserCourse: async (filter, projection) => {
         try {
-            const userCourse = await user_course_1.default.findByPk(id);
+            const where = {
+                isActive: true,
+            };
+            if (filter?.languageId) {
+                where.languageId = filter.languageId;
+            }
+            if (filter?.userId) {
+                where.userId = filter.userId;
+            }
+            if (filter?.courseId) {
+                where.courseId = filter.courseId;
+            }
+            if (filter?.id) {
+                where.id = filter.id;
+            }
+            const userCourse = await user_course_1.default.findOne({
+                where,
+                attributes: projection,
+                raw: true,
+            });
             return userCourse;
         }
         catch (error) {
             throw utilities_1.errorUtilities.createError(`Error Fetching user course: ${error.message}`, 500);
         }
     },
+    getCompletedCourses: async (userId, languageId, countOnly) => {
+        try {
+            if (countOnly === "true") {
+                const count = await user_course_1.default.count({
+                    where: {
+                        userId,
+                        languageId,
+                        isCompleted: true,
+                    },
+                });
+                return count;
+            }
+            const { count, rows } = await user_course_1.default.findAndCountAll({
+                where: {
+                    userId,
+                    languageId,
+                    isCompleted: true,
+                },
+                raw: true,
+            });
+            return { count, data: rows };
+        }
+        catch (error) {
+            throw utilities_1.errorUtilities.createError(`Error fetching user courses: ${error.message}`, 500);
+        }
+    },
     addUserCourse: async (userCourseData, transaction) => {
         try {
             // Create a new user course
-            const newUserCourse = await user_course_1.default.create(userCourseData, { transaction });
+            const newUserCourse = await user_course_1.default.create(userCourseData, {
+                transaction,
+            });
             return newUserCourse;
         }
         catch (error) {
             throw utilities_1.errorUtilities.createError(`Error Adding user course: ${error.message}`, 500);
         }
     },
-    updateUserCourse: async (userCourseData, transaction) => {
+    updateUserCourse: async (userCourseData, userCourseId) => {
         try {
             // Update the user course
-            await userCourseData.update(userCourseData, { transaction });
+            await user_course_1.default.update(userCourseData, {
+                where: {
+                    id: userCourseId,
+                },
+            });
             return userCourseData;
         }
         catch (error) {
