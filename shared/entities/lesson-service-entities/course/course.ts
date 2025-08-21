@@ -1,13 +1,6 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
-<<<<<<< HEAD:lesson-service/src/entities/course.ts
-import { users_service_db } from '../../../config/databases';
-import { CourseAttributes } from '../data-types/interface';
-import { Level } from '../data-types/enums';
-
-=======
 import { users_service_db } from '../../../../config/databases';
 import { CourseAttributes, Level } from '../../../databaseTypes/lesson-service-types';
->>>>>>> ab3ecc7c706caae2a77db72b4d3074ce3755cd78:shared/entities/lesson-service-entities/course/course.ts
 
 class Courses extends Model<CourseAttributes> implements CourseAttributes {
   public id!: string;
