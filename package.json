@@ -28,6 +28,7 @@
     "cross-env": "^7.0.3",
     "dayjs": "^1.11.13",
     "dotenv": "^16.5.0",
+    "dynamic-time-warping": "^1.0.0",
     "express": "^5.1.0",
     "ffmpeg": "^0.0.4",
     "fluent-ffmpeg": "^2.1.3",

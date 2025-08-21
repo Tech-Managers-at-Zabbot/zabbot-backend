@@ -4,8 +4,7 @@ import contentRepositories from "../../repositories/content.repository"
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
 import { CourseResponses } from "../../responses/responses";
 import { v4 } from "uuid";
-import { create } from "ts-node";
-import { FileContentAttributes } from "../../data-types/interface";
+import FileContentAttributes from "../../../../shared/databaseTypes/lesson-service-types";
 
 const getContents = errorUtilities.withServiceErrorHandling(
   async () => {

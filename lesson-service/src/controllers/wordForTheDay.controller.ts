@@ -2,12 +2,29 @@ import { DailyWordResponses, LanguageResponses } from "../responses/responses";
 import { responseUtilities, errorUtilities } from "../../../shared/utilities";
 import { Request, Response } from "express";
 import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
-import { LanguageCode } from "../data-types/enums";
 import { fetchEdedunLanguage, fetchEdedunLanguageBatches } from "../utilities/axiosCalls";
 import { dailyWordsServices } from "../services";
-import { v4 } from "uuid";
 import languageRepositories from "../repositories/language.repository";
+import { JwtPayload } from "jsonwebtoken";
 
+export enum LanguageCode {
+    ENGLISH = 'EN',
+    SPANISH = 'ES',
+    FRENCH = 'FR',
+    GERMAN = 'DE',
+    ITALIAN = 'IT',
+    PORTUGUESE = 'PT',
+    MANDARIN = 'ZH',
+    JAPANESE = 'JA',
+    KOREAN = 'KO',
+    ARABIC = 'AR',
+    RUSSIAN = 'RU',
+    HINDI = 'HI',
+    YORUBA = 'YO',
+    IGBO = 'IG',
+    HAUSA = 'HA',
+    SWAHILI = 'SW'
+}
 
 const createDailyWordController = errorUtilities.withControllerErrorHandling(async (request: Request, response: Response) => {
     const { languageCode, englishText, languageText } = request.body;
@@ -105,10 +122,10 @@ const createManyDailyWordsController = errorUtilities.withControllerErrorHandlin
 
 })
 
-const getWordOfTheDayController = errorUtilities.withControllerErrorHandling(async (request: Request, response: Response) => {
+const getWordOfTheDayController = errorUtilities.withControllerErrorHandling(async (request: JwtPayload, response: Response) => {
     const { languageId } = request.params
 
-    const { userId } = request.query
+    const { userId } = request.user
 
     const getWord = await dailyWordsServices.getTodayWordService(languageId, userId)
 

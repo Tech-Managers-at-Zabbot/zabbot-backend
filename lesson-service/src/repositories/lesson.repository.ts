@@ -1,7 +1,6 @@
 import { Transaction } from "sequelize";
 import { errorUtilities } from "../../../shared/utilities";
-import { LessonAttributes } from "../data-types/interface";
-import Lessons from "../entities/lesson";
+import Lessons from "../../../shared/entities/lesson-service-entities/lesson/lesson";
 
 const lessonRepositories = {
 

@@ -1,6 +1,8 @@
 import { QueryInterface, DataTypes, Sequelize, QueryTypes } from 'sequelize';
 import dotenv from 'dotenv';
 
+
+//npx ts-node migrate-add-languageId-lessons.ts
 // Load environment variables
 dotenv.config({ path: '../.env' });
 

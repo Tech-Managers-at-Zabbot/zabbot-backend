@@ -1,5 +1,4 @@
 import { founders_list_db, users_service_db, ededun_database } from './databases';
-import './modelSync';
 
 
 export async function syncDatabases() {

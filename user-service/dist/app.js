@@ -17,8 +17,8 @@ const utilities_1 = require("../../shared/utilities");
 const routes_1 = __importDefault(require("./routes"));
 const passport_1 = __importDefault(require("passport"));
 const utilities_2 = require("./utilities");
-const users_entities_1 = __importDefault(require("./entities/users.entities"));
 const services_1 = require("./services");
+const users_entities_1 = __importDefault(require("../../shared/entities/user-service-entities/users/users.entities"));
 // import { associateUserModels } from './entities/associations';
 const app = (0, express_1.default)();
 // Load environment variables

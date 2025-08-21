@@ -1,5 +1,4 @@
 import { Response } from "express";
-import { stat } from "fs-extra";
 
 export interface ResponseDetails {
   message: string;

@@ -1,6 +1,6 @@
 import { Transaction } from "sequelize";
 import { errorUtilities } from "../../../shared/utilities";
-import UserDailyGoals from "../entities/userDailyGoals";
+import UserDailyGoals from "../../../shared/entities/lesson-service-entities/userDailyGoals/userDailyGoals";
 
 const userDailyGoalRepositories = {
 

@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { errorUtilities, responseUtilities } from '../../../shared/utilities';
-import { JwtPayload } from 'jsonwebtoken'
 import quizService from '../services/quizServices/quiz.service';
 
 

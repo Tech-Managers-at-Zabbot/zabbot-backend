@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 export enum ContentDataType {
     // TEXT = 'text',
     VIDEO = 'video',
@@ -45,3 +46,5 @@ export enum QuizType {
   MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
   FILL_IN_BLANK = 'FILL_IN_BLANK'
 }
+=======
+>>>>>>> ab3ecc7c706caae2a77db72b4d3074ce3755cd78

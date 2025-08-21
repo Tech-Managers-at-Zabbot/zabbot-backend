@@ -3,13 +3,32 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.LanguageCode = void 0;
 const responses_1 = require("../responses/responses");
 const utilities_1 = require("../../../shared/utilities");
 const statusCodes_responses_1 = require("../../../shared/statusCodes/statusCodes.responses");
-const enums_1 = require("../data-types/enums");
 const axiosCalls_1 = require("../utilities/axiosCalls");
 const services_1 = require("../services");
 const language_repository_1 = __importDefault(require("../repositories/language.repository"));
+var LanguageCode;
+(function (LanguageCode) {
+    LanguageCode["ENGLISH"] = "EN";
+    LanguageCode["SPANISH"] = "ES";
+    LanguageCode["FRENCH"] = "FR";
+    LanguageCode["GERMAN"] = "DE";
+    LanguageCode["ITALIAN"] = "IT";
+    LanguageCode["PORTUGUESE"] = "PT";
+    LanguageCode["MANDARIN"] = "ZH";
+    LanguageCode["JAPANESE"] = "JA";
+    LanguageCode["KOREAN"] = "KO";
+    LanguageCode["ARABIC"] = "AR";
+    LanguageCode["RUSSIAN"] = "RU";
+    LanguageCode["HINDI"] = "HI";
+    LanguageCode["YORUBA"] = "YO";
+    LanguageCode["IGBO"] = "IG";
+    LanguageCode["HAUSA"] = "HA";
+    LanguageCode["SWAHILI"] = "SW";
+})(LanguageCode || (exports.LanguageCode = LanguageCode = {}));
 const createDailyWordController = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {
     const { languageCode, englishText, languageText } = request.body;
     const { languageId } = request.params;
@@ -23,7 +42,7 @@ const createDailyWordController = utilities_1.errorUtilities.withControllerError
     if (!languageText && !englishText) {
         throw utilities_1.errorUtilities.createError(responses_1.DailyWordResponses.REQUIRED_LANGUAGE_DATA, statusCodes_responses_1.StatusCodes.BadRequest);
     }
-    if (languageCode === enums_1.LanguageCode.YORUBA) {
+    if (languageCode === LanguageCode.YORUBA) {
         const fetchFromEdedun = await (0, axiosCalls_1.fetchEdedunLanguage)(englishText, languageText);
         if (!fetchFromEdedun.success) {
             return utilities_1.responseUtilities.responseHandler(response, fetchFromEdedun.message, fetchFromEdedun.statusCode);
@@ -53,7 +72,7 @@ const createManyDailyWordsController = utilities_1.errorUtilities.withController
     if (!languageCode) {
         throw utilities_1.errorUtilities.createError(responses_1.DailyWordResponses.REQUIRED_LANGUAGE_CODE, statusCodes_responses_1.StatusCodes.BadRequest);
     }
-    if (languageCode === enums_1.LanguageCode.YORUBA) {
+    if (languageCode === LanguageCode.YORUBA) {
         const fetchFromEdedun = await (0, axiosCalls_1.fetchEdedunLanguageBatches)(wordArr);
         if (!fetchFromEdedun.success) {
             return utilities_1.responseUtilities.responseHandler(response, fetchFromEdedun.message, fetchFromEdedun.statusCode);
@@ -65,7 +84,7 @@ const createManyDailyWordsController = utilities_1.errorUtilities.withController
 });
 const getWordOfTheDayController = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {
     const { languageId } = request.params;
-    const { userId } = request.query;
+    const { userId } = request.user;
     const getWord = await services_1.dailyWordsServices.getTodayWordService(languageId, userId);
     return utilities_1.responseUtilities.responseHandler(response, getWord.message, getWord.statusCode, getWord.data);
 });

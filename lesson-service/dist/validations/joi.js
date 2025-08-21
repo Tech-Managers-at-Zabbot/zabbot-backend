@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const joi_1 = __importDefault(require("joi"));
-const enums_1 = require("../data-types/enums");
+const lesson_service_types_1 = require("../../../shared/databaseTypes/lesson-service-types");
 const inputValidator = (schema) => {
     return async (request, response, next) => {
         try {
@@ -55,7 +55,7 @@ const baseQuizSchema = {
 };
 const multipleChoiceSchema = joi_1.default.object({
     ...baseQuizSchema,
-    quizType: joi_1.default.string().valid(enums_1.QuizType.MULTIPLE_CHOICE).required(),
+    quizType: joi_1.default.string().valid(lesson_service_types_1.QuizType.MULTIPLE_CHOICE).required(),
     options: joi_1.default.array()
         .items(joi_1.default.string().min(1).messages({
         'string.empty': 'Option cannot be empty',
@@ -85,7 +85,7 @@ const multipleChoiceSchema = joi_1.default.object({
 });
 const fillInBlankSchema = joi_1.default.object({
     ...baseQuizSchema,
-    quizType: joi_1.default.string().valid(enums_1.QuizType.FILL_IN_BLANK).required(),
+    quizType: joi_1.default.string().valid(lesson_service_types_1.QuizType.FILL_IN_BLANK).required(),
     correctAnswer: joi_1.default.string().min(1).max(200).required().messages({
         'string.empty': 'Correct answer is required',
         'string.min': 'Correct answer is required',
@@ -141,17 +141,17 @@ const updateQuizSchema = joi_1.default.object({
     question: joi_1.default.string().min(1).max(1000).optional(),
     lessonId: joi_1.default.string().uuid({ version: 'uuidv4' }).optional().allow(null),
     contentId: joi_1.default.string().uuid({ version: 'uuidv4' }).optional().allow(null),
-    quizType: joi_1.default.string().valid(...Object.values(enums_1.QuizType)).optional(),
+    quizType: joi_1.default.string().valid(...Object.values(lesson_service_types_1.QuizType)).optional(),
     options: joi_1.default.array().items(joi_1.default.string().min(1)).min(2).max(6).optional(),
     correctOption: joi_1.default.string().min(1).optional(),
     correctAnswer: joi_1.default.string().min(1).max(200).optional(),
 }).custom((value, helpers) => {
-    if (value.quizType === enums_1.QuizType.MULTIPLE_CHOICE) {
+    if (value.quizType === lesson_service_types_1.QuizType.MULTIPLE_CHOICE) {
         if (value.options && value.correctOption && !value.options.includes(value.correctOption)) {
             return helpers.error('update.invalidMultipleChoice');
         }
     }
-    if (value.quizType === enums_1.QuizType.FILL_IN_BLANK) {
+    if (value.quizType === lesson_service_types_1.QuizType.FILL_IN_BLANK) {
         if (value.options && value.correctAnswer) {
             const normalizedCorrectAnswer = value.correctAnswer.toLowerCase().trim();
             const normalizedOptions = value.options.map((option) => option.toLowerCase().trim());
@@ -193,7 +193,7 @@ const getQuizzesQuerySchema = joi_1.default.object({
     courseId: joi_1.default.string().uuid({ version: 'uuidv4' }).optional(),
     lessonId: joi_1.default.string().uuid({ version: 'uuidv4' }).optional(),
     contentId: joi_1.default.string().uuid({ version: 'uuidv4' }).optional(),
-    quizType: joi_1.default.string().valid(...Object.values(enums_1.QuizType)).optional(),
+    quizType: joi_1.default.string().valid(...Object.values(lesson_service_types_1.QuizType)).optional(),
     page: joi_1.default.number().integer().min(1).default(1),
     limit: joi_1.default.number().integer().min(1).max(100).default(10),
 });

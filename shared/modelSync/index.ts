@@ -1,0 +1,16 @@
+import '../entities/lesson-service-entities/content/content';
+import '../entities/lesson-service-entities/contentFile/content-file';
+import '../entities/lesson-service-entities/course/course';
+import '../entities/lesson-service-entities/language/language';
+import '../entities/lesson-service-entities/lesson/lesson';
+import '../entities/lesson-service-entities/quiz/quiz';
+import '../entities/lesson-service-entities/userCourse/user-course';
+import '../entities/lesson-service-entities/userDailyGoals/userDailyGoals';
+import '../entities/lesson-service-entities/userQuiz/user-quiz';
+import '../entities/lesson-service-entities/wordForTheDay/wordForTheDay';
+import '../entities/pronunciation-feedback-service-entities/referencePronunciation/reference-pronunciation';
+import '../entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation';
+import '../entities/user-service-entities/otp/otp.entities';
+// import '../entities/user-service-entities/securityLogs.entities';
+// import '../entities/user-service-entities/userActivityLogs.entities';
+import '../entities/user-service-entities/users/users.entities';

@@ -1,6 +1,6 @@
 import { Transaction } from "sequelize";
 import { errorUtilities } from "../../../shared/utilities";
-import UserCourses from "../entities/user-course";
+import UserCourses from "../../../shared/entities/lesson-service-entities/userCourse/user-course";
 
 
 const userCourseRepositories = {

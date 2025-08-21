@@ -1,7 +1,6 @@
 import { Profile, VerifyCallback } from 'passport-google-oauth20';
 import usersRepositories from "../../repositories/userRepositories/users.repositories";
 import { v4 } from "uuid";
-import { RegisterMethods, UserRoles } from "../../types/users.types";
 import axios from "axios";
 import { Request, Response } from 'express'
 import { GeneralResponses } from "../../responses/generalResponses/general.responses";
@@ -10,6 +9,7 @@ import { responseUtilities, errorUtilities } from "../../../../shared/utilities"
 import { helperFunctions, endpointCallsUtilities } from "../../utilities/index";
 import config from '../../../../config/config';
 import userRepositories from '../../repositories/userRepositories/users.repositories';
+import { UserRoles, RegisterMethods } from '../../../../shared/databaseTypes/user-service-types';
 
 const googleOAuthRegister = async (
     request: Request,

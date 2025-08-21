@@ -1,6 +1,6 @@
 import Joi from 'joi';
-import { QuizType } from '../data-types/enums';
 import { Request, Response, NextFunction } from "express";
+import { QuizType } from '../../../shared/databaseTypes/lesson-service-types';
 
 const inputValidator = (schema: Joi.Schema): any => {
   return async (

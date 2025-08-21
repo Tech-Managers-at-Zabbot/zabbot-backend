@@ -9,9 +9,9 @@ const fs_extra_1 = __importDefault(require("fs-extra"));
 const services = [
     { name: "config", path: "./config" },
     { name: "shared", path: "./shared" },
+    { name: "user-service", path: "./user-service" },
     { name: "founding-list-service", path: "./waiting-list-service" },
     { name: "notification-service", path: "./notification-service" },
-    { name: "user-service", path: "./user-service" },
     { name: "ededun-service", path: "./ededun-service" },
     { name: "lesson-service", path: "./lesson-service" },
     {
@@ -37,10 +37,6 @@ function buildService(service) {
         catch (error) {
             console.error(`❌ Failed to build ${service.name}:`, error.message);
             process.exit(1);
-        }
-        finally {
-            console.log("Copying shared utilities to services...");
-            fs_extra_1.default.copySync("shared/dist", "shared");
         }
     }
     else {

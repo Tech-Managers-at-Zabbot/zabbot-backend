@@ -9,7 +9,8 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "baseUrl": ".",
-    "composite": true 
+    "composite": false,
+    "declaration": false 
   },
   "include": [
     "src/**/*"
