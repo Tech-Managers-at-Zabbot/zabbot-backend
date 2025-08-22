@@ -7,6 +7,7 @@ import {
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
 import { CourseResponses } from "../../responses/responses";
 import { v4 } from "uuid";
+import lessonRepositories from "../../repositories/lesson.repository";
 // import courseService from "./course.service";
 
 const getUserCourses = errorUtilities.withServiceErrorHandling(
@@ -18,11 +19,12 @@ const getUserCourses = errorUtilities.withServiceErrorHandling(
 );
 
 const getUserCourse = errorUtilities.withServiceErrorHandling(
-  async (languageId: string, userId: string, courseId: string) => {
+  async (languageId: string, userId: string, courseId: string, lastLessonId:string) => {
     const userCourse = await userCourseRepositories.getUserCourse({
       languageId,
       userId,
       courseId,
+      lastLessonId
     });
     if (!userCourse) {
       throw errorUtilities.createError(
@@ -59,6 +61,7 @@ const addUserCourse = errorUtilities.withServiceErrorHandling(
       userId: userCourseData.userId,
       courseId: userCourseData.courseId,
       languageId: userCourseData.languageId,
+      lastLessonId: userCourseData.lastLessonId,
     });
 
     if (existingUserCourse) {
@@ -97,14 +100,26 @@ const getUserCompletedCoursesService = errorUtilities.withServiceErrorHandling(
 );
 
 const updateUserCourse = errorUtilities.withServiceErrorHandling(
-  async (courseId: string | any, userId: string, userCourseData: any) => {
+  async (courseId: string | any, userId: string, userCourseData: any, lessonId: string) => {
+
     const userCourse = await userCourseRepositories.getUserCourse({
       userId: userId,
       courseId: courseId,
+      lastLessonId: lessonId
     });
+
     if (!userCourse) {
       throw errorUtilities.createError(
         CourseResponses.USER_COURSE_NOT_FOUND,
+        StatusCodes.NotFound
+      );
+    }
+
+    const lessonExists = await lessonRepositories.getLesson(lessonId)
+
+    if (!lessonExists) {
+      throw errorUtilities.createError(
+        CourseResponses.LESSON_NOT_FOUND,
         StatusCodes.NotFound
       );
     }
@@ -120,7 +135,8 @@ const updateUserCourse = errorUtilities.withServiceErrorHandling(
     Object.assign(userCourse, userCourseData);
     const updatedUserCourse = await userCourseRepositories.updateUserCourse(
       userCourse,
-      userCourse.id
+      userCourse.id,
+      lessonId
     );
 
     return responseUtilities.handleServicesResponse(
