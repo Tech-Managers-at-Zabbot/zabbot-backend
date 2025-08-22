@@ -33,6 +33,7 @@ export enum CourseResponses {
     COURSE_NOT_FOUND = "Course not found, please try again",
     CONTENTS_NOT_FOUND = "Contents not found, please try again",
     LESSONS_NOT_FOUND = "Lessons not found, please try again",
+    LESSON_NOT_FOUND = "Lesson not found.",
     CONTENT_NOT_FOUND = "Content not found, please try again",
     PROCESS_UNSUCCESSFUL = "Process unsuccessful, please try again",
     PROCESS_COMPLETED = "Process completed",
