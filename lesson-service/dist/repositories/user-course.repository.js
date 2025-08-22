@@ -32,18 +32,12 @@ const userCourseRepositories = {
         try {
             const where = {
                 isActive: true,
+                lastLessonId: filter.lastLessonId,
+                userId: filter.userId,
+                courseId: filter.courseId
             };
             if (filter?.languageId) {
                 where.languageId = filter.languageId;
-            }
-            if (filter?.userId) {
-                where.userId = filter.userId;
-            }
-            if (filter?.courseId) {
-                where.courseId = filter.courseId;
-            }
-            if (filter?.id) {
-                where.id = filter.id;
             }
             const userCourse = await user_course_1.default.findOne({
                 where,
@@ -94,15 +88,23 @@ const userCourseRepositories = {
             throw utilities_1.errorUtilities.createError(`Error Adding user course: ${error.message}`, 500);
         }
     },
-    updateUserCourse: async (userCourseData, userCourseId) => {
+    updateUserCourse: async (userCourseData, userCourseId, lessonId) => {
         try {
-            // Update the user course
-            await user_course_1.default.update(userCourseData, {
+            if (!lessonId) {
+                throw utilities_1.errorUtilities.createError("Lesson id is required", 400);
+            }
+            const [rowsUpdated, [updatedRecord]] = await user_course_1.default.update(userCourseData, {
                 where: {
                     id: userCourseId,
+                    userId: userCourseData.userId,
+                    lastLessonId: lessonId,
                 },
+                returning: true,
             });
-            return userCourseData;
+            if (rowsUpdated === 0) {
+                throw utilities_1.errorUtilities.createError("No user course updated", 400);
+            }
+            return updatedRecord;
         }
         catch (error) {
             throw utilities_1.errorUtilities.createError(`Error Updating user course: ${error.message}`, 500);

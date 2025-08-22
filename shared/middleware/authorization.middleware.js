@@ -29,6 +29,27 @@ const generalAuthFunction = async (request, response, next) => {
         let verifiedUser;
         try {
             verifiedUser = jsonwebtoken_1.default.verify(authorizationToken, `${process.env.APP_JWT_SECRET}`);
+            const decodedToken = jsonwebtoken_1.default.decode(authorizationToken);
+            const projection = ['refreshToken', 'isVerified', "isActive", "isBlocked", "role", "accessToken", "id"];
+            const userDetails = await users_entities_1.default.findOne({ where: { id: decodedToken?.userId }, attributes: projection, raw: true });
+            if (!userDetails) {
+                return response.status(403).json({
+                    status: 'error',
+                    message: 'User not found, please login again or contact admin',
+                });
+            }
+            if (userDetails?.isBlocked) {
+                return response.status(403).json({
+                    status: 'error',
+                    message: 'Account blocked, please contact admin',
+                });
+            }
+            if (!userDetails.refreshToken) {
+                return response.status(403).json({
+                    status: 'error',
+                    message: 'Please login again.',
+                });
+            }
         }
         catch (error) {
             if (error.message === 'jwt expired') {

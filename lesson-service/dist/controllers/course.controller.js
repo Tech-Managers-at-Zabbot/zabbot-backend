@@ -56,18 +56,19 @@ exports.getUserCoursesController = utilities_1.errorUtilities.withControllerErro
     return utilities_1.responseUtilities.responseHandler(res, userCourses.message, userCourses.statusCode, userCourses.data);
 });
 // Controller to get user course
-exports.getUserCourseController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
-    const { userId } = req?.user;
-    const { languageId, courseId } = req.params;
-    const userCourse = await user_course_service_1.default.getUserCourse(languageId, userId, courseId);
-    return utilities_1.responseUtilities.responseHandler(res, userCourse.message, userCourse.statusCode, userCourse.data);
+exports.getUserCourseController = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {
+    const { userId } = request?.user;
+    const { languageId, courseId } = request.params;
+    const { lastLessonId } = request.query;
+    const userCourse = await user_course_service_1.default.getUserCourse(languageId, userId, courseId, lastLessonId);
+    return utilities_1.responseUtilities.responseHandler(response, userCourse.message, userCourse.statusCode, userCourse.data);
 });
 // Controller to add user to course
-exports.addUserCourseController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
-    const { languageId, courseId } = req.params;
-    const { userId } = req.user;
+exports.addUserCourseController = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {
+    const { languageId, courseId } = request.params;
+    const { userId } = request.user;
     const userCourseData = {
-        ...req.body,
+        ...request.body,
         userId,
         languageId,
         courseId,
@@ -76,13 +77,14 @@ exports.addUserCourseController = utilities_1.errorUtilities.withControllerError
         isActive: true,
     };
     const addUserCourse = await user_course_service_1.default.addUserCourse(userCourseData);
-    return utilities_1.responseUtilities.responseHandler(res, addUserCourse.message, addUserCourse.statusCode, addUserCourse.data);
+    return utilities_1.responseUtilities.responseHandler(response, addUserCourse.message, addUserCourse.statusCode, addUserCourse.data);
 });
 // Controller to update user course
 exports.updateUserCourseController = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {
     const { courseId } = request.params;
     const { userId } = request.user;
-    const updateUserCourse = await user_course_service_1.default.updateUserCourse(courseId, userId, request.body);
+    const lessonId = request.body.lastLessonId;
+    const updateUserCourse = await user_course_service_1.default.updateUserCourse(courseId, userId, request.body, lessonId);
     return utilities_1.responseUtilities.responseHandler(response, updateUserCourse.message, updateUserCourse.statusCode, updateUserCourse.data);
 });
 exports.getUserCompletedCoursesController = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {
