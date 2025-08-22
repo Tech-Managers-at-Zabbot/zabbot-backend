@@ -39,29 +39,20 @@ const userCourseRepositories = {
       languageId?: string;
       userId: string;
       courseId: string;
-      id?: string;
+      lastLessonId: string;
     },
     projection?: string[]
   ) => {
     try {
       const where: any = {
         isActive: true,
+        lastLessonId:filter.lastLessonId,
+        userId: filter.userId,
+        courseId: filter.courseId
       };
 
       if (filter?.languageId) {
         where.languageId = filter.languageId;
-      }
-
-      if (filter?.userId) {
-        where.userId = filter.userId;
-      }
-
-      if (filter?.courseId) {
-        where.courseId = filter.courseId;
-      }
-
-      if (filter?.id) {
-        where.id = filter.id;
       }
 
       const userCourse = await UserCourses.findOne({
@@ -82,7 +73,7 @@ const userCourseRepositories = {
   getCompletedCourses: async (
     userId: string,
     languageId: string,
-    countOnly?: string
+    countOnly?: string,
   ) => {
     try {
       if (countOnly === "true") {
@@ -130,16 +121,33 @@ const userCourseRepositories = {
     }
   },
 
-  updateUserCourse: async (userCourseData: any, userCourseId: string) => {
+  updateUserCourse: async (
+    userCourseData: any,
+    userCourseId: string,
+    lessonId: string
+  ) => {
     try {
-      // Update the user course
-      await UserCourses.update(userCourseData, {
-        where: {
-          id: userCourseId,
-        },
-      });
+      if (!lessonId) {
+        throw errorUtilities.createError("Lesson id is required", 400);
+      }
 
-      return userCourseData;
+      const [rowsUpdated, [updatedRecord]] = await UserCourses.update(
+        userCourseData,
+        {
+          where: {
+            id: userCourseId,
+            userId: userCourseData.userId,
+            lastLessonId: lessonId,
+          },
+          returning: true,
+        }
+      );
+
+      if (rowsUpdated === 0) {
+        throw errorUtilities.createError("No user course updated", 400);
+      }
+
+      return updatedRecord;
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error Updating user course: ${error.message}`,

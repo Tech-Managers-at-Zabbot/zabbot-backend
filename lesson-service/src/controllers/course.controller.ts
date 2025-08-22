@@ -119,16 +119,18 @@ export const getUserCoursesController =
 // Controller to get user course
 export const getUserCourseController =
   errorUtilities.withControllerErrorHandling(
-    async (req: JwtPayload, res: Response) => {
-      const { userId }: string | any = req?.user;
-      const { languageId, courseId } = req.params;
+    async (request: JwtPayload, response: Response) => {
+      const { userId }: string | any = request?.user;
+      const { languageId, courseId } = request.params;
+      const { lastLessonId } = request.query
       const userCourse = await userCourseService.getUserCourse(
         languageId,
         userId,
-        courseId
+        courseId,
+        lastLessonId
       );
       return responseUtilities.responseHandler(
-        res,
+        response,
         userCourse.message,
         userCourse.statusCode,
         userCourse.data
@@ -139,11 +141,11 @@ export const getUserCourseController =
 // Controller to add user to course
 export const addUserCourseController =
   errorUtilities.withControllerErrorHandling(
-    async (req: JwtPayload, res: Response) => {
-      const { languageId, courseId } = req.params;
-      const { userId } = req.user;
+    async (request: JwtPayload, response: Response) => {
+      const { languageId, courseId } = request.params;
+      const { userId } = request.user;
       const userCourseData = {
-        ...req.body,
+        ...request.body,
         userId,
         languageId,
         courseId,
@@ -156,7 +158,7 @@ export const addUserCourseController =
       );
 
       return responseUtilities.responseHandler(
-        res,
+        response,
         addUserCourse.message,
         addUserCourse.statusCode,
         addUserCourse.data
@@ -170,10 +172,12 @@ export const updateUserCourseController =
     async (request: JwtPayload, response: Response) => {
       const { courseId } = request.params;
       const { userId } = request.user;
+      const lessonId = request.body.lastLessonId
       const updateUserCourse = await userCourseService.updateUserCourse(
         courseId,
         userId,
-        request.body
+        request.body,
+        lessonId
       );
       return responseUtilities.responseHandler(
         response,
