@@ -1,14 +1,18 @@
-import { DataTypes, Model, Sequelize } from 'sequelize';
-import { users_service_db } from '../../../../config/databases';
-import { ContentAttributes, ContentSourceType } from '../../../databaseTypes/lesson-service-types';
-
+import { DataTypes, Model, Sequelize } from "sequelize";
+import { users_service_db } from "../../../../config/databases";
+import {
+  ContentAttributes,
+  ContentSourceType,
+  ContentType,
+} from "../../../databaseTypes/lesson-service-types";
 
 class Contents extends Model<ContentAttributes> implements ContentAttributes {
   public id!: string;
   public lessonId!: string;
   public languageId!: string;
   public translation?: string;
-  // public totalContents?: number;
+  public contentType!: string;
+  public proverb?: string;
   public createdAt?: Date;
   public updatedAt?: Date;
   public isGrammarRule?: boolean;
@@ -26,48 +30,57 @@ Contents.init(
     },
     lessonId: {
       type: DataTypes.UUID,
-      allowNull: false
+      allowNull: false,
     },
     languageId: {
       type: DataTypes.UUID,
-      allowNull: false
+      allowNull: false,
     },
     isGrammarRule: {
       type: DataTypes.BOOLEAN,
       allowNull: false,
-      defaultValue: false
+      defaultValue: false,
+    },
+    contentType: {
+      type: DataTypes.ENUM(...Object.values(ContentType)),
+      allowNull: false,
+      defaultValue: ContentType.NORMAL
+    },
+    proverb: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     sourceType: {
       type: DataTypes.ENUM(...Object.values(ContentSourceType)),
       allowNull: false,
-      defaultValue: ContentSourceType.NEW
+      defaultValue: ContentSourceType.NEW,
     },
-     customText: {
+    customText: {
       type: DataTypes.TEXT,
-      allowNull: true
+      allowNull: true,
     },
-     ededunPhrases: {
+    ededunPhrases: {
       type: DataTypes.JSON,
-      allowNull: true
+      allowNull: true,
     },
     translation: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
     },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: DataTypes.DATE
+      defaultValue: DataTypes.DATE,
     },
     updatedAt: {
       type: DataTypes.DATE,
-      allowNull: true
+      allowNull: true,
     },
   },
   {
     sequelize: users_service_db,
-    modelName: 'Contents',
-    tableName: 'contents',
+    modelName: "Contents",
+    tableName: "contents",
     // timestamps: true,
   }
 );

@@ -18,23 +18,21 @@ export interface ContentAttributes {
         name: string;
         description: string;
     };
-    languageContent?: {
-        title: string;
-        word: string;
-        tone: string;
-    };
     translation?: string;
     customText?: string;
     isGrammarRule?: boolean;
-    filePath?: {
-        contentType: ContentDataType;
-        filePath: string;
-    }[];
+    contentType: string;
+    proverb?: string;
     languageId: string;
     ededunPhrases?: string;
     sourceType: string;
     createdAt?: Date;
     updatedAt?: Date;
+}
+export declare enum ContentType {
+    GRAMMAR_RULE = "grammar_rule",
+    PROVERB = "proverb",
+    NORMAL = "normal"
 }
 export declare enum ContentSourceType {
     NEW = "new",

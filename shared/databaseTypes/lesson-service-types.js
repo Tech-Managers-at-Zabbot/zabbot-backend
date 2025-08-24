@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.QuizType = exports.LanguageCode = exports.Level = exports.ContentSourceType = exports.ContentDataType = void 0;
+exports.QuizType = exports.LanguageCode = exports.Level = exports.ContentSourceType = exports.ContentType = exports.ContentDataType = void 0;
 var ContentDataType;
 (function (ContentDataType) {
     // TEXT = 'text',
@@ -8,6 +8,12 @@ var ContentDataType;
     ContentDataType["AUDIO"] = "audio";
     ContentDataType["IMAGE"] = "image";
 })(ContentDataType || (exports.ContentDataType = ContentDataType = {}));
+var ContentType;
+(function (ContentType) {
+    ContentType["GRAMMAR_RULE"] = "grammar_rule";
+    ContentType["PROVERB"] = "proverb";
+    ContentType["NORMAL"] = "normal";
+})(ContentType || (exports.ContentType = ContentType = {}));
 var ContentSourceType;
 (function (ContentSourceType) {
     ContentSourceType["NEW"] = "new";
