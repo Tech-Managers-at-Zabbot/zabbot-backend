@@ -8,6 +8,8 @@ class Contents extends sequelize_1.Model {
     lessonId;
     languageId;
     translation;
+    contentType;
+    proverb;
     createdAt;
     updatedAt;
     isGrammarRule;
@@ -23,46 +25,55 @@ Contents.init({
     },
     lessonId: {
         type: sequelize_1.DataTypes.UUID,
-        allowNull: false
+        allowNull: false,
     },
     languageId: {
         type: sequelize_1.DataTypes.UUID,
-        allowNull: false
+        allowNull: false,
     },
     isGrammarRule: {
         type: sequelize_1.DataTypes.BOOLEAN,
         allowNull: false,
-        defaultValue: false
+        defaultValue: false,
+    },
+    contentType: {
+        type: sequelize_1.DataTypes.ENUM(...Object.values(lesson_service_types_1.ContentType)),
+        allowNull: false,
+        defaultValue: lesson_service_types_1.ContentType.NORMAL
+    },
+    proverb: {
+        type: sequelize_1.DataTypes.TEXT,
+        allowNull: true,
     },
     sourceType: {
         type: sequelize_1.DataTypes.ENUM(...Object.values(lesson_service_types_1.ContentSourceType)),
         allowNull: false,
-        defaultValue: lesson_service_types_1.ContentSourceType.NEW
+        defaultValue: lesson_service_types_1.ContentSourceType.NEW,
     },
     customText: {
         type: sequelize_1.DataTypes.TEXT,
-        allowNull: true
+        allowNull: true,
     },
     ededunPhrases: {
         type: sequelize_1.DataTypes.JSON,
-        allowNull: true
+        allowNull: true,
     },
     translation: {
         type: sequelize_1.DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
     },
     createdAt: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: false,
-        defaultValue: sequelize_1.DataTypes.DATE
+        defaultValue: sequelize_1.DataTypes.DATE,
     },
     updatedAt: {
         type: sequelize_1.DataTypes.DATE,
-        allowNull: true
+        allowNull: true,
     },
 }, {
     sequelize: databases_1.users_service_db,
-    modelName: 'Contents',
-    tableName: 'contents',
+    modelName: "Contents",
+    tableName: "contents",
 });
 exports.default = Contents;

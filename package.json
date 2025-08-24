@@ -44,7 +44,8 @@
     "pg": "^8.16.0",
     "sequelize": "^6.37.7",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.18",
