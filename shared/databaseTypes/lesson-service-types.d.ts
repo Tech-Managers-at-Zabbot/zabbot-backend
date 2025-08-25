@@ -28,11 +28,19 @@ export interface ContentAttributes {
     sourceType: string;
     createdAt?: Date;
     updatedAt?: Date;
+    grammarDescription?: string[];
+    grammarTitle?: string;
+    grammarSubtitle?: string;
+    grammarExamples?: GrammarExample[];
 }
 export declare enum ContentType {
     GRAMMAR_RULE = "grammar_rule",
     PROVERB = "proverb",
     NORMAL = "normal"
+}
+export interface GrammarExample {
+    yoruba: string;
+    translation: string;
 }
 export declare enum ContentSourceType {
     NEW = "new",

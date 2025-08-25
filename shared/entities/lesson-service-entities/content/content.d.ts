@@ -1,5 +1,5 @@
 import { Model } from "sequelize";
-import { ContentAttributes } from "../../../databaseTypes/lesson-service-types";
+import { ContentAttributes, GrammarExample } from "../../../databaseTypes/lesson-service-types";
 declare class Contents extends Model<ContentAttributes> implements ContentAttributes {
     id: string;
     lessonId: string;
@@ -12,6 +12,10 @@ declare class Contents extends Model<ContentAttributes> implements ContentAttrib
     isGrammarRule?: boolean;
     sourceType: string;
     customText?: string;
+    grammarTitle?: string;
+    grammarSubtitle?: string;
+    grammarDescription?: string[];
+    grammarExamples?: GrammarExample[];
     ededunPhrases?: string;
 }
 export default Contents;

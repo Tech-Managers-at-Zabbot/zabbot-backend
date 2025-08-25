@@ -15,6 +15,10 @@ class Contents extends sequelize_1.Model {
     isGrammarRule;
     sourceType;
     customText;
+    grammarTitle;
+    grammarSubtitle;
+    grammarDescription;
+    grammarExamples;
     ededunPhrases;
 }
 Contents.init({
@@ -39,10 +43,26 @@ Contents.init({
     contentType: {
         type: sequelize_1.DataTypes.ENUM(...Object.values(lesson_service_types_1.ContentType)),
         allowNull: false,
-        defaultValue: lesson_service_types_1.ContentType.NORMAL
+        defaultValue: lesson_service_types_1.ContentType.NORMAL,
     },
     proverb: {
         type: sequelize_1.DataTypes.TEXT,
+        allowNull: true,
+    },
+    grammarTitle: {
+        type: sequelize_1.DataTypes.TEXT,
+        allowNull: true,
+    },
+    grammarSubtitle: {
+        type: sequelize_1.DataTypes.TEXT,
+        allowNull: true,
+    },
+    grammarDescription: {
+        type: sequelize_1.DataTypes.JSON,
+        allowNull: true,
+    },
+    grammarExamples: {
+        type: sequelize_1.DataTypes.JSON,
         allowNull: true,
     },
     sourceType: {
