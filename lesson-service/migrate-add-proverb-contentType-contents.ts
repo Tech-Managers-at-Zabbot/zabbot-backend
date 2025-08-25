@@ -1,20 +1,19 @@
-import { QueryInterface, DataTypes, Sequelize, QueryTypes } from "sequelize";
-import dotenv from "dotenv";
+import { QueryInterface, DataTypes, Sequelize, QueryTypes } from 'sequelize';
+import dotenv from 'dotenv';
 
-//npx ts-node migrate-add-proverb-contentType-contents.ts
 // Load environment variables
-dotenv.config({ path: "../.env" });
+dotenv.config({ path: '../.env' });
 
 // Database configuration
 const USERS_SERVICE_DB = process.env.USERS_SERVICE_DEV_DB!;
 
 if (!USERS_SERVICE_DB) {
-  console.error("❌ USERS_SERVICE_DB environment variable is not set");
+  console.error('❌ USERS_SERVICE_DB environment variable is not set');
   process.exit(1);
 }
 
 const sequelize = new Sequelize(USERS_SERVICE_DB, {
-  dialect: "postgres",
+  dialect: 'postgres',
   pool: {
     max: 5,
     min: 0,
@@ -25,201 +24,159 @@ const sequelize = new Sequelize(USERS_SERVICE_DB, {
     ssl: {
       require: false,
       rejectUnauthorized: false,
-    },
+    }
   },
-  logging: console.log,
+  logging: console.log
 });
-
-// Define ContentType enum values (matching your ContentType enum)
-const ContentTypeValues = ["grammar_rule", "proverb", "normal"];
 
 async function runMigration() {
   const queryInterface = sequelize.getQueryInterface();
-
+  
   try {
-    console.log(
-      "🔄 Starting migration: Add proverb and contentType to Contents table"
-    );
-
+    console.log('🔄 Starting migration: FORCE REMOVE lastLessonId-only unique constraint');
+    
     // Test database connection
     await sequelize.authenticate();
-    console.log("✅ Database connection established successfully");
-
-    // Check current table structure
-    const tableDescription = await queryInterface.describeTable("contents");
-    console.log("📋 Current table structure checked");
-
-    // Step 1: Add proverb column if it doesn't exist
-    if (tableDescription.proverb) {
-      console.log("⚠️  proverb column already exists in contents table");
-    } else {
-      console.log("📝 Adding proverb column to contents table...");
-      await queryInterface.addColumn("contents", "proverb", {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      });
-      console.log("✅ proverb column added successfully");
+    console.log('✅ Database connection established successfully');
+    
+    // First, let's see what constraints and indexes exist
+    console.log('🔍 Checking existing constraints...');
+    const constraints = await sequelize.query(`
+      SELECT constraint_name, constraint_type, table_name
+      FROM information_schema.table_constraints 
+      WHERE table_name = 'user_courses' 
+      AND constraint_type = 'UNIQUE'
+      ORDER BY constraint_name;
+    `, { type: QueryTypes.SELECT });
+    
+    console.log('📋 Current unique constraints:', JSON.stringify(constraints, null, 2));
+    
+    console.log('🔍 Checking existing indexes...');
+    const indexes = await sequelize.query(`
+      SELECT indexname, indexdef 
+      FROM pg_indexes 
+      WHERE tablename = 'user_courses'
+      ORDER BY indexname;
+    `, { type: QueryTypes.SELECT });
+    
+    console.log('📋 Current indexes:', JSON.stringify(indexes, null, 2));
+    
+    // AGGRESSIVELY remove ALL possible variations of the problematic constraint
+    const constraintsToRemove = [
+      'user_courses_lastLessonId_unique',
+      'user_courses_lastLessonId_key',
+      'user_courses_lastLessonId_pkey'
+    ];
+    
+    for (const constraintName of constraintsToRemove) {
+      console.log(`🗑️ Attempting to remove constraint: ${constraintName}`);
+      try {
+        await sequelize.query(`ALTER TABLE user_courses DROP CONSTRAINT IF EXISTS "${constraintName}" CASCADE;`);
+        console.log(`✅ Removed constraint: ${constraintName}`);
+      } catch (error: any) {
+        console.log(`ℹ️ Constraint ${constraintName} not found or already removed:`, error.message);
+      }
     }
-
-    // Step 2: Create contentType ENUM type if it doesn't exist
-    console.log("📝 Creating contentType ENUM type...");
+    
+    // AGGRESSIVELY remove ALL possible variations of the problematic index
+    const indexesToRemove = [
+      'user_courses_lastLessonId_unique',
+      'user_courses_lastLessonId_key',
+      'user_courses_lastLessonId_idx',
+      'user_courses_lastLessonId_pkey'
+    ];
+    
+    for (const indexName of indexesToRemove) {
+      console.log(`🗑️ Attempting to remove index: ${indexName}`);
+      try {
+        await sequelize.query(`DROP INDEX IF EXISTS "${indexName}" CASCADE;`);
+        console.log(`✅ Removed index: ${indexName}`);
+      } catch (error: any) {
+        console.log(`ℹ️ Index ${indexName} not found or already removed:`, error.message);
+      }
+    }
+    
+    // Now let's check what's left
+    console.log('🔍 Checking remaining constraints after removal...');
+    const remainingConstraints = await sequelize.query(`
+      SELECT constraint_name, constraint_type, table_name
+      FROM information_schema.table_constraints 
+      WHERE table_name = 'user_courses' 
+      AND constraint_type = 'UNIQUE'
+      ORDER BY constraint_name;
+    `, { type: QueryTypes.SELECT });
+    
+    console.log('📋 Remaining unique constraints:', JSON.stringify(remainingConstraints, null, 2));
+    
+    console.log('🔍 Checking remaining indexes...');
+    const remainingIndexes = await sequelize.query(`
+      SELECT indexname, indexdef 
+      FROM pg_indexes 
+      WHERE tablename = 'user_courses'
+      ORDER BY indexname;
+    `, { type: QueryTypes.SELECT });
+    
+    console.log('📋 Remaining indexes:', JSON.stringify(remainingIndexes, null, 2));
+    
+    // Now create the correct composite unique constraint
+    console.log('🔧 Creating correct composite unique constraint...');
     try {
-      await sequelize.query(
-        `
-        DO $$ BEGIN
-          CREATE TYPE "enum_contents_contentType" AS ENUM (${ContentTypeValues.map(
-            (v) => `'${v}'`
-          ).join(", ")});
-        EXCEPTION
-          WHEN duplicate_object THEN null;
-        END $$;
-      `,
-        { type: QueryTypes.RAW }
-      );
-      console.log("✅ contentType ENUM type created or already exists");
-    } catch (error) {
-      console.log(
-        "⚠️  contentType ENUM type might already exist, continuing..."
-      );
+      await sequelize.query(`
+        CREATE UNIQUE INDEX user_courses_userId_lastLessonId_unique_idx 
+        ON user_courses ("userId", "lastLessonId") 
+        WHERE "lastLessonId" IS NOT NULL;
+      `);
+      console.log('✅ Added unique constraint on userId+lastLessonId');
+    } catch (error: any) {
+      if (error.message.includes('already exists')) {
+        console.log('ℹ️ userId+lastLessonId unique constraint already exists');
+      } else {
+        console.error('❌ Failed to create composite constraint:', error.message);
+        throw error;
+      }
     }
-
-    // Step 3: Add contentType column if it doesn't exist
-    if (tableDescription.contentType) {
-      console.log("⚠️  contentType column already exists in contents table");
-    } else {
-      console.log("📝 Adding contentType column to contents table...");
-      await queryInterface.addColumn("contents", "contentType", {
-        type: DataTypes.ENUM(...ContentTypeValues),
-        allowNull: true, // Initially allow null
-      });
-      console.log("✅ contentType column added successfully (nullable)");
-    }
-
-    // Step 4: Check how many content records need updating for contentType
-    const [countResult] = (await sequelize.query(
-      'SELECT COUNT(*) as count FROM contents WHERE "contentType" IS NULL',
-      { type: QueryTypes.SELECT }
-    )) as any[];
-
-    const recordsToUpdate = parseInt(countResult.count);
-    console.log(
-      `📊 Found ${recordsToUpdate} content records to update with default contentType`
-    );
-
-    if (recordsToUpdate === 0) {
-      console.log("✅ All content records already have contentType assigned");
-    } else {
-      // Step 5: Update all content records with default contentType value
-      console.log(
-        "🔄 Updating all content records with default contentType (NORMAL)..."
-      );
-      const [, affectedRows] = await sequelize.query(
-        'UPDATE contents SET "contentType" = :defaultContentType WHERE "contentType" IS NULL',
-        {
-          replacements: { defaultContentType: "normal" }, // Using 'normal' as default to match your enum
-          type: QueryTypes.UPDATE,
-        }
-      );
-
-      console.log(
-        `✅ Updated ${affectedRows} content records with default contentType: normal`
-      );
-    }
-
-    // Step 6: Verify all records have contentType before making it NOT NULL
-    console.log("🔍 Verifying all records have contentType...");
-    const [nullCheckResult] = (await sequelize.query(
-      'SELECT COUNT(*) as null_count FROM contents WHERE "contentType" IS NULL',
-      { type: QueryTypes.SELECT }
-    )) as any[];
-
-    const nullCount = parseInt(nullCheckResult.null_count);
-
-    if (nullCount > 0) {
-      throw new Error(
-        `Still have ${nullCount} records with NULL contentType. Cannot proceed with NOT NULL constraint.`
-      );
-    }
-
-    // Step 7: Alter the contentType column to be NOT NULL
-    console.log("🔒 Making contentType column NOT NULL...");
-    await sequelize.query(
-      'ALTER TABLE contents ALTER COLUMN "contentType" SET NOT NULL',
-      { type: QueryTypes.RAW }
-    );
-    console.log("✅ contentType column is now NOT NULL");
-
-    // Step 8: Set default value for contentType column
-    console.log("📝 Setting default value for contentType column...");
-    await sequelize.query(
-      "ALTER TABLE contents ALTER COLUMN \"contentType\" SET DEFAULT 'normal'",
-      { type: QueryTypes.RAW }
-    );
-    console.log("✅ Default value set for contentType column");
-
+    
     // Final verification
-    console.log("🔍 Final verification...");
-    const [verifyResult] = (await sequelize.query(
-      `SELECT 
-        COUNT(*) as total_records, 
-        COUNT("contentType") as records_with_contentType,
-        COUNT("proverb") as records_with_proverb_field,
-        COUNT(CASE WHEN "proverb" IS NOT NULL THEN 1 END) as records_with_proverb_value
-       FROM contents`,
-      { type: QueryTypes.SELECT }
-    )) as any[];
-
-    console.log(`📊 Final verification results:`);
-    console.log(`   - Total content records: ${verifyResult.total_records}`);
-    console.log(
-      `   - Records with contentType: ${verifyResult.records_with_contentType}`
-    );
-    console.log(
-      `   - Records with proverb field: ${verifyResult.records_with_proverb_field}`
-    );
-    console.log(
-      `   - Records with actual proverb values: ${verifyResult.records_with_proverb_value}`
-    );
-
-    if (verifyResult.total_records === verifyResult.records_with_contentType) {
-      console.log(
-        "✅ Migration completed successfully! All records have contentType assigned and both new columns are properly configured."
-      );
-    } else {
-      console.warn(
-        "⚠️  Some records still missing contentType. This should not happen."
-      );
-    }
-
-    // Show sample of contentType distribution
-    console.log("📊 ContentType distribution:");
-    const [distributionResult] = (await sequelize.query(
-      'SELECT "contentType", COUNT(*) as count FROM contents GROUP BY "contentType" ORDER BY count DESC',
-      { type: QueryTypes.SELECT }
-    )) as any[];
-
-    if (Array.isArray(distributionResult)) {
-      distributionResult.forEach((row: any) => {
-        console.log(`   - ${row.contentType}: ${row.count} records`);
-      });
-    }
+    console.log('🔍 Final verification of constraints...');
+    const finalConstraints = await sequelize.query(`
+      SELECT constraint_name, constraint_type, table_name
+      FROM information_schema.table_constraints 
+      WHERE table_name = 'user_courses' 
+      AND constraint_type = 'UNIQUE'
+      ORDER BY constraint_name;
+    `, { type: QueryTypes.SELECT });
+    
+    console.log('📋 Final unique constraints:', JSON.stringify(finalConstraints, null, 2));
+    
+    const finalIndexes = await sequelize.query(`
+      SELECT indexname, indexdef 
+      FROM pg_indexes 
+      WHERE tablename = 'user_courses'
+      AND indexname LIKE '%lastLessonId%'
+      ORDER BY indexname;
+    `, { type: QueryTypes.SELECT });
+    
+    console.log('📋 Final lastLessonId indexes:', JSON.stringify(finalIndexes, null, 2));
+    
+    console.log('✅ Migration completed successfully');
+    
   } catch (error) {
-    console.error("❌ Migration failed:", error);
+    console.error('❌ Migration failed:', error);
     throw error;
   } finally {
     // Close database connection
     await sequelize.close();
-    console.log("🔒 Database connection closed");
+    console.log('🔒 Database connection closed');
   }
 }
 
 // Run the migration
 runMigration()
   .then(() => {
-    console.log("🎉 Migration script completed successfully");
+    console.log('🎉 Migration script completed successfully');
     process.exit(0);
   })
   .catch((error) => {
-    console.error("💥 Migration script failed:", error);
+    console.error('💥 Migration script failed:', error);
     process.exit(1);
   });

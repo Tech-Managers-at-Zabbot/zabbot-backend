@@ -82,16 +82,3 @@ Contents.init({
     // timestamps: true,
 });
 exports.default = Contents;
-//     const content = {
-//   contentType: "grammar",
-//   grammarTitle: "Honorifics and Respect Markers",
-//   grammarSubtitle: "Yoruba is highly respectful in tone, especially when speaking to elders.",
-//   grammarDescription: [
-//     'Prefix "ẹ" is used when addressing elders and when there is more than one person being addressed.',
-//     'Kú is the expression for greetings, weather, temperature and many other purposes.'
-//   ],
-//   grammarExamples: [
-//     { yoruba: "Ẹ káàlẹ́.", translation: "Good evening. (when speaking to older person or multiple people)" },
-//     { yoruba: "Kú ìsinmi", translation: "Greeting someone who is resting (person is a peer or younger)" }
-//   ]
-// }
