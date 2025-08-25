@@ -4,6 +4,7 @@ import {
   ContentAttributes,
   ContentSourceType,
   ContentType,
+  GrammarExample,
 } from "../../../databaseTypes/lesson-service-types";
 
 class Contents extends Model<ContentAttributes> implements ContentAttributes {
@@ -18,6 +19,10 @@ class Contents extends Model<ContentAttributes> implements ContentAttributes {
   public isGrammarRule?: boolean;
   public sourceType!: string;
   public customText?: string;
+  public grammarTitle?: string;
+  public grammarSubtitle?: string;
+  public grammarDescription?: string[];
+  public grammarExamples?: GrammarExample[];
   public ededunPhrases?: string;
 }
 
@@ -44,10 +49,26 @@ Contents.init(
     contentType: {
       type: DataTypes.ENUM(...Object.values(ContentType)),
       allowNull: false,
-      defaultValue: ContentType.NORMAL
+      defaultValue: ContentType.NORMAL,
     },
     proverb: {
       type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    grammarTitle: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    grammarSubtitle: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    grammarDescription: {
+      type: DataTypes.JSON,
+      allowNull: true,
+    },
+    grammarExamples: {
+      type: DataTypes.JSON,
       allowNull: true,
     },
     sourceType: {
