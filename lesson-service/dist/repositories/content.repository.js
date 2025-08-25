@@ -26,10 +26,35 @@ const contentRepositories = {
             throw utilities_1.errorUtilities.createError(`Error fetching content: ${error.message}`, 500);
         }
     },
+    // getLessonContents: async (lessonId: string) => {
+    //   try {
+    //     const contents = await Contents.findAll({ where: { lessonId }, raw: true });
+    //     return contents;
+    //   } catch (error: any) {
+    //     throw errorUtilities.createError(`Error fetching contents for this lesson: ${error.message}`, 500);
+    //   }
+    // },
     getLessonContents: async (lessonId) => {
         try {
             const contents = await content_1.default.findAll({ where: { lessonId }, raw: true });
-            return contents;
+            const sortedContents = contents.sort((a, b) => {
+                const getPriority = (content) => {
+                    if (content.contentType === 'normal')
+                        return 1;
+                    if (content.isGrammarRule === true)
+                        return 2;
+                    if (content.contentType === 'proverbs')
+                        return 3;
+                    return 4;
+                };
+                const priorityA = getPriority(a);
+                const priorityB = getPriority(b);
+                if (priorityA !== priorityB) {
+                    return priorityA - priorityB;
+                }
+                return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            });
+            return sortedContents;
         }
         catch (error) {
             throw utilities_1.errorUtilities.createError(`Error fetching contents for this lesson: ${error.message}`, 500);

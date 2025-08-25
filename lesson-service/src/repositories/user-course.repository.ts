@@ -107,13 +107,13 @@ const userCourseRepositories = {
 
   addUserCourse: async (userCourseData: any, transaction?: Transaction) => {
     try {
-      // Create a new user course
       const newUserCourse = await UserCourses.create(userCourseData, {
         transaction,
       });
 
       return newUserCourse;
     } catch (error: any) {
+      console.log('adding user course error', error)
       throw errorUtilities.createError(
         `Error Adding user course: ${error.message}`,
         500
