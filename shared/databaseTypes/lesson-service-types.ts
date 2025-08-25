@@ -1,8 +1,8 @@
 export enum ContentDataType {
-    // TEXT = 'text',
-    VIDEO = 'video',
-    AUDIO = 'audio',
-    IMAGE = 'image',
+  // TEXT = 'text',
+  VIDEO = "video",
+  AUDIO = "audio",
+  IMAGE = "image",
 }
 
 export interface ContentFileAttributes {
@@ -20,10 +20,10 @@ export interface ContentAttributes {
   lesson?: {
     name: string;
     description: string;
-  }
+  };
   translation?: string;
   customText?: string;
-  isGrammarRule?: boolean
+  isGrammarRule?: boolean;
   contentType: string;
   proverb?: string;
   languageId: string;
@@ -31,23 +31,32 @@ export interface ContentAttributes {
   sourceType: string;
   createdAt?: Date;
   updatedAt?: Date;
+  grammarDescription?: string[];
+  grammarTitle?: string;
+  grammarSubtitle?: string;
+  grammarExamples?: GrammarExample[];
 }
 
 export enum ContentType {
-  GRAMMAR_RULE = 'grammar_rule',
-  PROVERB = 'proverb',
-  NORMAL = 'normal'
+  GRAMMAR_RULE = "grammar_rule",
+  PROVERB = "proverb",
+  NORMAL = "normal",
+}
+
+export interface GrammarExample {
+  yoruba: string;
+  translation: string;
 }
 
 export enum ContentSourceType {
-  NEW = 'new',
-  EDEDUN = 'ededun'
+  NEW = "new",
+  EDEDUN = "ededun",
 }
 
 export enum Level {
-    FOUNDATION = 'foundation',
-    BUILDER = 'builder',
-    EXPLORER = 'explorer',
+  FOUNDATION = "foundation",
+  BUILDER = "builder",
+  EXPLORER = "explorer",
 }
 
 export interface CourseAttributes {
@@ -56,7 +65,7 @@ export interface CourseAttributes {
   description?: string;
   languageId: string;
   isActive: boolean;
-  level: Level
+  level: Level;
   estimatedDuration?: number;
   totalLessons?: number;
   totalContents?: number;
@@ -68,24 +77,23 @@ export interface CourseAttributes {
 }
 
 export enum LanguageCode {
-    ENGLISH = 'EN',
-    SPANISH = 'ES',
-    FRENCH = 'FR',
-    GERMAN = 'DE',
-    ITALIAN = 'IT',
-    PORTUGUESE = 'PT',
-    MANDARIN = 'ZH',
-    JAPANESE = 'JA',
-    KOREAN = 'KO',
-    ARABIC = 'AR',
-    RUSSIAN = 'RU',
-    HINDI = 'HI',
-    YORUBA = 'YO',
-    IGBO = 'IG',
-    HAUSA = 'HA',
-    SWAHILI = 'SW'
+  ENGLISH = "EN",
+  SPANISH = "ES",
+  FRENCH = "FR",
+  GERMAN = "DE",
+  ITALIAN = "IT",
+  PORTUGUESE = "PT",
+  MANDARIN = "ZH",
+  JAPANESE = "JA",
+  KOREAN = "KO",
+  ARABIC = "AR",
+  RUSSIAN = "RU",
+  HINDI = "HI",
+  YORUBA = "YO",
+  IGBO = "IG",
+  HAUSA = "HA",
+  SWAHILI = "SW",
 }
-
 
 export interface LanguageAttributes {
   id?: string;
@@ -136,10 +144,9 @@ export interface QuizAttributes {
 }
 
 export enum QuizType {
-  MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
-  FILL_IN_BLANK = 'FILL_IN_BLANK'
+  MULTIPLE_CHOICE = "MULTIPLE_CHOICE",
+  FILL_IN_BLANK = "FILL_IN_BLANK",
 }
-
 
 export interface UserCourseAttributes {
   id: string;
@@ -151,9 +158,8 @@ export interface UserCourseAttributes {
   lastLessonId?: string;
   lastContentId?: string;
   languageId: string;
-  isActive: boolean
+  isActive: boolean;
 }
-
 
 export interface UserQuizAnswerAttributes {
   id: string;
