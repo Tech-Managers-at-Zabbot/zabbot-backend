@@ -1,7 +1,7 @@
 import Contents from "../../../shared/entities/lesson-service-entities/content/content";
 import { errorUtilities } from "../../../shared/utilities";
 import ContentFiles from "../../../shared/entities/lesson-service-entities/contentFile/content-file";
-import { Transaction } from "sequelize";
+import { Sequelize, Transaction } from "sequelize";
 
 const contentRepositories = {
 
@@ -26,15 +26,44 @@ const contentRepositories = {
     }
   },
 
-  getLessonContents: async (lessonId: string) => {
-    try {
-      const contents = await Contents.findAll({ where: { lessonId }, raw: true });
-      return contents;
+  // getLessonContents: async (lessonId: string) => {
+  //   try {
+  //     const contents = await Contents.findAll({ where: { lessonId }, raw: true });
+  //     return contents;
 
-    } catch (error: any) {
-      throw errorUtilities.createError(`Error fetching contents for this lesson: ${error.message}`, 500);
-    }
-  },
+  //   } catch (error: any) {
+  //     throw errorUtilities.createError(`Error fetching contents for this lesson: ${error.message}`, 500);
+  //   }
+  // },
+
+getLessonContents: async (lessonId: string) => {
+  try {
+    const contents = await Contents.findAll({ where: { lessonId }, raw: true });
+    
+    const sortedContents = contents.sort((a:Record<string, any>, b:Record<string, any>) => {
+      const getPriority = (content: any) => {
+        if (content.contentType === 'normal') return 1;
+        if (content.isGrammarRule === true) return 2;
+        if (content.contentType === 'proverbs') return 3;
+        return 4;
+      };
+      
+      const priorityA = getPriority(a);
+      const priorityB = getPriority(b);
+      
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    });
+    
+    return sortedContents;
+  } catch (error: any) {
+    throw errorUtilities.createError(`Error fetching contents for this lesson: ${error.message}`, 500);
+  }
+},
+
+
 
   getLanguageContents: async (languageId: string) => {
     try {

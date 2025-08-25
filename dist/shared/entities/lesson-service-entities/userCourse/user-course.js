@@ -68,7 +68,21 @@ UserCourses.init({
     indexes: [
         {
             unique: true,
-            fields: ['userId', 'courseId']
+            fields: ['userId', 'lastLessonId'],
+            name: 'user_courses_userId_lastLessonId_unique_idx',
+            where: {
+                lastLessonId: {
+                    [sequelize_1.Op?.ne]: null
+                }
+            }
+        },
+        {
+            fields: ['userId', 'courseId'],
+            name: 'user_courses_userId_courseId_idx'
+        },
+        {
+            fields: ['courseId'],
+            name: 'user_courses_courseId_idx'
         }
     ]
 });
