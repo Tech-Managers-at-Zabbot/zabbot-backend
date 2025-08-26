@@ -10,6 +10,8 @@ const googleAuthFailure = errorUtilities.withControllerErrorHandling(async (requ
         return response.redirect(`${config?.FRONTEND_URL}/signup?error=please_register_first`);
     } else if (errorMessage === 'user_already_exists') {
         return response.redirect(`${config?.FRONTEND_URL}/login?error=user_exists_please_login`)
+    } else if(errorMessage === 'user_used_another_login_method'){
+        return response.redirect(`${config?.FRONTEND_URL}/login?error=user_used_another_login_method`)
     }
 
     return response.redirect(`${config?.FRONTEND_URL}/signup?error=${errorMessage}`)
