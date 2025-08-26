@@ -197,7 +197,6 @@ const getQuizzesQuerySchema = joi_1.default.object({
     page: joi_1.default.number().integer().min(1).default(1),
     limit: joi_1.default.number().integer().min(1).max(100).default(10),
 });
-const addUserCourseSchema = joi_1.default.object({});
 exports.default = {
     inputValidator,
     createQuizSchema,

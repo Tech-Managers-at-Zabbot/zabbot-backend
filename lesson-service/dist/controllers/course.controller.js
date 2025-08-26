@@ -76,7 +76,6 @@ exports.addUserCourseController = utilities_1.errorUtilities.withControllerError
         isCompleted: false,
         isActive: true,
     };
-    console.log('userCourseDataController', userCourseData);
     const addUserCourse = await user_course_service_1.default.addUserCourse(userCourseData);
     return utilities_1.responseUtilities.responseHandler(response, addUserCourse.message, addUserCourse.statusCode, addUserCourse.data);
 });
