@@ -78,7 +78,6 @@ const userCourseRepositories = {
     },
     addUserCourse: async (userCourseData, transaction) => {
         try {
-            console.log('userCourseDataRepository', userCourseData);
             const newUserCourse = await user_course_1.default.create(userCourseData, {
                 transaction,
             });
