@@ -48,7 +48,6 @@ const addUserCourse = utilities_1.errorUtilities.withServiceErrorHandling(async 
         languageId: userCourseData.languageId,
         lastLessonId: userCourseData.lastLessonId,
     });
-    console.log('userCourseDataService', userCourseData);
     if (existingUserCourse) {
         throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.USER_ENROLLED_FOR_COURSE, statusCodes_responses_1.StatusCodes.BadRequest);
     }
