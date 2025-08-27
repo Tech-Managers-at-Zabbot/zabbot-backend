@@ -5,29 +5,43 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const lodash_merge_1 = __importDefault(require("lodash.merge"));
 const dotenv_flow_1 = __importDefault(require("dotenv-flow"));
+const fs_1 = __importDefault(require("fs"));
 const stage = process.env.NODE_ENV || 'development';
-// Load only specific files based on stage
-switch (stage) {
-    case 'development':
+if (stage === 'development') {
+    dotenv_flow_1.default.config({
+        files: ['.env.development'],
+        path: process.cwd()
+    });
+}
+else if (stage === 'staging') {
+    const envFile = '.env.staging';
+    if (fs_1.default.existsSync(envFile)) {
         dotenv_flow_1.default.config({
-            files: ['.env.development'],
+            files: [envFile],
             path: process.cwd()
         });
-        break;
-    case 'staging':
+    }
+    else {
         dotenv_flow_1.default.config({
-            files: ['.env.staging'],
+            files: ['.env'],
             path: process.cwd()
         });
-        break;
-    case 'production':
+    }
+}
+else if (stage === 'production') {
+    const envFile = '.env.production';
+    if (fs_1.default.existsSync(envFile)) {
         dotenv_flow_1.default.config({
-            files: ['.env.production'],
+            files: [envFile],
             path: process.cwd()
         });
-        break;
-    default:
-        throw new Error(`Invalid NODE_ENV: ${stage}`);
+    }
+    else {
+        dotenv_flow_1.default.config({
+            files: ['.env'],
+            path: process.cwd()
+        });
+    }
 }
 let config;
 if (stage === "development") {
