@@ -1,5 +1,12 @@
 import process from "process";
+import dotenvFlow from "dotenv-flow";
+import config from './config/config';
 
+dotenvFlow.config({
+  node_env: process.env.NODE_ENV || "development",
+  pattern: ".env[.node_env]",
+  path: process.cwd(),
+});
 // process.on("uncaughtException", (err) => {
 //   console.error("💥 UNCAUGHT EXCEPTION:", err);
 //   shutdown(1);
@@ -17,9 +24,9 @@ import { spawn, ChildProcess } from "child_process";
 import path from "path";
 import cors from "cors";
 import logger from "morgan";
-import dotenv from "dotenv";
+// import dotenv from "dotenv";
 import http from "http";
-import './shared/modelSync';
+import "./shared/modelSync";
 import { syncDatabases } from "./config/syncDb";
 
 // Configuration for services
@@ -98,7 +105,7 @@ const services: ServiceConfig[] = [
 
 const app = express();
 
-dotenv.config();
+// dotenv.config();
 
 app.use(cors());
 app.use(logger("dev"));
@@ -175,13 +182,17 @@ function startSingleService(service: ServiceConfig): Promise<void> {
     });
 
     childProcess.on("exit", (code, signal) => {
-      console.log(`${service.name} exited with code ${code} and signal ${signal}`);
+      console.log(
+        `${service.name} exited with code ${code} and signal ${signal}`
+      );
       serviceProcesses.delete(service.name);
 
       if (code !== 0 && signal !== "SIGTERM") {
         const newAttempts = attempts + 1;
         restartAttempts.set(service.name, newAttempts);
-        console.log(`Restarting ${service.name} in 5 seconds... (attempt ${newAttempts})`);
+        console.log(
+          `Restarting ${service.name} in 5 seconds... (attempt ${newAttempts})`
+        );
         setTimeout(() => startSingleService(service), 5000);
       }
 

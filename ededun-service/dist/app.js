@@ -12,16 +12,14 @@ const body_parser_1 = __importDefault(require("body-parser"));
 const morgan_1 = __importDefault(require("morgan"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const routes_1 = __importDefault(require("./routes"));
-const dotenv_1 = __importDefault(require("dotenv"));
 const http_1 = require("http");
 const utilities_1 = require("./utilities");
-const path_1 = __importDefault(require("path"));
 // import './models/associations';
+const config_1 = __importDefault(require("../../config/config"));
 const app = (0, express_1.default)();
 const server = (0, http_1.createServer)(app);
-dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '../../.env') });
 exports.externalConfig = {
-    PORT: process.env.EDEDUN_PORT || 3006,
+    PORT: config_1.default.EDEDUN_PORT || 3006,
     // dbUrl: process.env.DB_URL,
     // jwtSecret: process.env.AUTH_SERVICE_JWT_SECRET
 };
