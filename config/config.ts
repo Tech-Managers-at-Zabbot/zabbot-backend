@@ -1,30 +1,40 @@
-import merge from 'lodash.merge'
-import dotenvFlow from 'dotenv-flow'
+import merge from 'lodash.merge';
+import dotenvFlow from 'dotenv-flow';
+import fs from 'fs';
 
 const stage = process.env.NODE_ENV || 'development';
 
-// Load only specific files based on stage
-switch (stage) {
-    case 'development':
+if (stage === 'development') {
+    dotenvFlow.config({
+        files: ['.env.development'],
+        path: process.cwd()
+    });
+} else if (stage === 'staging') {
+    const envFile = '.env.staging';
+       if (fs.existsSync(envFile)) {
         dotenvFlow.config({
-            files: ['.env.development'],
+            files: [envFile],
             path: process.cwd()
         });
-        break;
-    case 'staging':
+    } else {
         dotenvFlow.config({
-            files: ['.env.staging'],
+            files: ['.env'],
             path: process.cwd()
         });
-        break;
-    case 'production':
+    }
+} else if (stage === 'production') {
+    const envFile = '.env.production';
+    if (fs.existsSync(envFile)) {
         dotenvFlow.config({
-            files: ['.env.production'],
+            files: [envFile],
             path: process.cwd()
         });
-        break;
-    default:
-        throw new Error(`Invalid NODE_ENV: ${stage}`)
+    }else {
+        dotenvFlow.config({
+            files: ['.env'],
+            path: process.cwd()
+        });
+    }
 }
 
 let config;
