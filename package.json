@@ -9,6 +9,7 @@
     "start": "cross-env NODE_ENV=production node dist/main-server.js",
     "dev": "cross-env NODE_ENV=development nodemon --exec",
     "staging": "cross-env NODE_ENV=staging nodemon --exec",
+    "staging:start": "cross-env NODE_ENV=staging nodemon --exec",
     "install:all": "ts-node installAll.ts"
   },
   "repository": {

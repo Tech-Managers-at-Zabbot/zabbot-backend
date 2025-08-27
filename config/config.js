@@ -43,6 +43,12 @@ else if (stage === 'production') {
         });
     }
 }
+else if (stage === 'staging:start') {
+    dotenv_flow_1.default.config({
+        files: ['.env'],
+        path: process.cwd()
+    });
+}
 let config;
 if (stage === "development") {
     config = require("./development").default;
@@ -50,7 +56,7 @@ if (stage === "development") {
 else if (stage === "production") {
     config = require("./production").default;
 }
-else if (stage === "staging") {
+else if (stage === "staging" || stage === 'staging:start') {
     config = require("./staging").default;
 }
 else {

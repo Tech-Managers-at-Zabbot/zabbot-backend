@@ -35,6 +35,11 @@ if (stage === 'development') {
             path: process.cwd()
         });
     }
+}else if(stage === 'staging:start'){
+     dotenvFlow.config({
+            files: ['.env'],
+            path: process.cwd()
+        });
 }
 
 let config;
@@ -43,7 +48,7 @@ if (stage === "development") {
     config = require("./development").default
 } else if (stage === "production") {
     config = require("./production").default
-} else if (stage === "staging") {
+} else if (stage === "staging" || stage === 'staging:start') {
     config = require("./staging").default
 } else {
     throw new Error(`Invalid NODE_ENV: ${stage}`)
