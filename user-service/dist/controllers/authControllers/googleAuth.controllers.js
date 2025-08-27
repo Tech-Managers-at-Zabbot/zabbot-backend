@@ -13,6 +13,9 @@ const googleAuthFailure = utilities_1.errorUtilities.withControllerErrorHandling
     else if (errorMessage === 'user_already_exists') {
         return response.redirect(`${config_1.default?.FRONTEND_URL}/login?error=user_exists_please_login`);
     }
+    else if (errorMessage === 'user_used_another_login_method') {
+        return response.redirect(`${config_1.default?.FRONTEND_URL}/login?error=user_used_another_login_method`);
+    }
     return response.redirect(`${config_1.default?.FRONTEND_URL}/signup?error=${errorMessage}`);
 });
 const googleAuthRegistrationCallbackController = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response, next) => {
