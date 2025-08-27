@@ -8,8 +8,7 @@ exports.rolePermit = rolePermit;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const utilities_1 = require("../utilities");
 const users_entities_1 = __importDefault(require("../entities/user-service-entities/users/users.entities"));
-const dotenv_1 = __importDefault(require("dotenv"));
-dotenv_1.default.config();
+const config_1 = __importDefault(require("../../config/config"));
 const generalAuthFunction = async (request, response, next) => {
     try {
         const authorizationHeader = request.headers.authorization;
@@ -28,7 +27,7 @@ const generalAuthFunction = async (request, response, next) => {
         }
         let verifiedUser;
         try {
-            verifiedUser = jsonwebtoken_1.default.verify(authorizationToken, `${process.env.APP_JWT_SECRET}`);
+            verifiedUser = jsonwebtoken_1.default.verify(authorizationToken, `${config_1.default.APP_JWT_SECRET}`);
             const decodedToken = jsonwebtoken_1.default.decode(authorizationToken);
             const projection = ['refreshToken', 'isVerified', "isActive", "isBlocked", "role", "accessToken", "id"];
             const userDetails = await users_entities_1.default.findOne({ where: { id: decodedToken?.userId }, attributes: projection, raw: true });
@@ -71,7 +70,7 @@ const generalAuthFunction = async (request, response, next) => {
                 const refreshToken = userDetails?.refreshToken;
                 let refreshVerifiedUser;
                 try {
-                    refreshVerifiedUser = jsonwebtoken_1.default.verify(refreshToken, `${process.env.APP_JWT_SECRET}`);
+                    refreshVerifiedUser = jsonwebtoken_1.default.verify(refreshToken, `${config_1.default.APP_JWT_SECRET}`);
                 }
                 catch (refreshError) {
                     return response.status(403).json({

@@ -8,6 +8,7 @@
     "build": "tsc",
     "start": "cross-env NODE_ENV=production node dist/main-server.js",
     "dev": "cross-env NODE_ENV=development nodemon --exec",
+    "staging": "cross-env NODE_ENV=staging nodemon --exec",
     "install:all": "ts-node installAll.ts"
   },
   "repository": {
@@ -28,6 +29,7 @@
     "cross-env": "^7.0.3",
     "dayjs": "^1.11.13",
     "dotenv": "^16.5.0",
+    "dotenv-flow": "^4.1.0",
     "dynamic-time-warping": "^1.0.0",
     "express": "^5.1.0",
     "ffmpeg": "^0.0.4",
@@ -51,6 +53,7 @@
     "@types/cors": "^2.8.18",
     "@types/express": "^5.0.1",
     "@types/fs-extra": "^11.0.4",
-    "@types/morgan": "^1.9.9"
+    "@types/morgan": "^1.9.9",
+    "dotenv-cli": "^10.0.0"
   }
 }

@@ -19,18 +19,19 @@ import { v4 } from "uuid";
 import userPronunciationRepositories from "../repositories/user-pronunciation.repository";
 import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
 import UserPronunciation from "../../../shared/entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation";
+import config from '../../../config/config';
 
 Ffmpeg.setFfmpegPath(ffmpegPath as string);
 
 const sampleRate = 16000;
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: config.OPENAI_API_KEY,
 });
 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
-  api_key: process.env.CLOUDINARY_API_KEY!,
-  api_secret: process.env.CLOUDINARY_API_SECRET!,
+  cloud_name: config.CLOUDINARY_CLOUD_NAME!,
+  api_key: config.CLOUDINARY_API_KEY!,
+  api_secret: config.CLOUDINARY_API_SECRET!,
   secure: true,
 });
 

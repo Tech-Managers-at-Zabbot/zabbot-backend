@@ -2,9 +2,7 @@ import { Response, NextFunction, raw } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { helpersUtilities } from '../utilities';
 import Users from '../entities/user-service-entities/users/users.entities';
-import dotenv from 'dotenv';
-
-dotenv.config();
+import config from '../../config/config';
 
 export const generalAuthFunction = async (
   request: JwtPayload,
@@ -34,7 +32,7 @@ export const generalAuthFunction = async (
     let verifiedUser: any;
 
     try {
-      verifiedUser = jwt.verify(authorizationToken, `${process.env.APP_JWT_SECRET}`);
+      verifiedUser = jwt.verify(authorizationToken, `${config.APP_JWT_SECRET}`);
       const decodedToken: any = jwt.decode(authorizationToken);
       const projection = ['refreshToken', 'isVerified', "isActive", "isBlocked", "role", "accessToken", "id"];
 
@@ -87,7 +85,7 @@ export const generalAuthFunction = async (
 
         let refreshVerifiedUser: any;
         try {
-          refreshVerifiedUser = jwt.verify(refreshToken, `${process.env.APP_JWT_SECRET}`);
+          refreshVerifiedUser = jwt.verify(refreshToken, `${config.APP_JWT_SECRET}`);
         } catch (refreshError: any) {
           return response.status(403).json({
             status: 'error',
