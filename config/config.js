@@ -14,10 +14,10 @@ if (stage === 'development') {
     });
 }
 else if (stage === 'staging') {
-    const envFile = '.env.staging';
-    if (fs_1.default.existsSync(envFile)) {
+    // const envFile = '.env.staging';
+    if (fs_1.default.existsSync('.env.staging')) {
         dotenv_flow_1.default.config({
-            files: [envFile],
+            files: ['.env.staging'],
             path: process.cwd()
         });
     }
@@ -29,10 +29,10 @@ else if (stage === 'staging') {
     }
 }
 else if (stage === 'production') {
-    const envFile = '.env.production';
-    if (fs_1.default.existsSync(envFile)) {
+    // const envFile = '.env.production';
+    if (fs_1.default.existsSync('.env.production')) {
         dotenv_flow_1.default.config({
-            files: [envFile],
+            files: ['.env.production'],
             path: process.cwd()
         });
     }
