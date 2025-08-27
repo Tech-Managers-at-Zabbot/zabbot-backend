@@ -148,7 +148,7 @@ function startSingleService(service: ServiceConfig): Promise<void> {
     console.log(`Starting ${service.name} on port ${service.port}...`);
 
     const entryPoint =
-      NODE_ENV === "production"
+      NODE_ENV === "production" || NODE_ENV === "staging:start"
         ? service.entryPoint.prod
         : service.entryPoint.dev;
 
@@ -156,7 +156,7 @@ function startSingleService(service: ServiceConfig): Promise<void> {
     let command: string;
     let args: string[];
 
-    if (NODE_ENV === "production" || !isTypeScript) {
+    if (NODE_ENV === "production" || NODE_ENV === "staging:start" || !isTypeScript) {
       command = "node";
       args = [entryPoint];
     } else {
