@@ -20,7 +20,6 @@ import userPronunciationRepositories from "../repositories/user-pronunciation.re
 import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
 import UserPronunciation from "../../../shared/entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation";
 import config from "../../../config/config";
-import { Request, Response } from 'express';
 
 Ffmpeg.setFfmpegPath(ffmpegPath as string);
 
@@ -151,7 +150,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
   }: {
     userId: string;
     referencePronunciationId: string;
-    file: any | Express.Multer.File;
+    file: any
     voice?: string;
   }) => {
     logMemoryUsage("Start of comparePronounciation");
