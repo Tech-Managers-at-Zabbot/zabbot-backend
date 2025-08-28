@@ -22,11 +22,6 @@ import UserPronunciation from "../../../shared/entities/pronunciation-feedback-s
 import config from "../../../config/config";
 
 
-interface EmbeddingResponse {
-  data: { embedding: number[] }[];
-}
-
-
 Ffmpeg.setFfmpegPath(ffmpegPath as string);
 
 const sampleRate = 16000;
@@ -59,13 +54,13 @@ const safeTensorDispose = (tensor: tf.Tensor | null) => {
 };
 
 // New lightweight embedding function using OpenAI API
-const getTextEmbedding = async (text: string): Promise<number[]> => {
+const getTextEmbedding = async (text: string): Promise<any> => {
   try {
     const response = await openai.embeddings.create({
       model: "text-embedding-3-small", // Most cost-effective option
       input: text.toLowerCase().trim(), // Normalize text
       encoding_format: "float",
-    }) as EmbeddingResponse;;
+    }) as any;
 
     return response.data[0].embedding;
   } catch (error: any) {
