@@ -3,17 +3,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getWaitingListBetaTesterUser = exports.addUsersToRespectiveLists = exports.unsubscribeWaitingList = exports.joinWaitingList = exports.config = void 0;
+exports.getWaitingListBetaTesterUser = exports.addUsersToRespectiveLists = exports.unsubscribeWaitingList = exports.joinWaitingList = void 0;
 const waitingList_1 = __importDefault(require("../entities/waitingList"));
 const uuid_1 = require("uuid");
 const axios_1 = __importDefault(require("axios"));
-const dotenv_1 = __importDefault(require("dotenv"));
-const path_1 = __importDefault(require("path"));
+const config_1 = __importDefault(require("../../../config/config"));
 const utilities_1 = require("../../../shared/utilities");
-dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '../../../.env') });
-exports.config = {
-    NOTIFICATION_SERVICE_ROUTE: process.env.NOTIFICATION_SERVICE_ROUTE
-};
 const joinWaitingList = async (request, response) => {
     try {
         const { name, email, country, sendUpdates, betaTest, contributeSkills } = request.body;
@@ -49,15 +44,15 @@ const joinWaitingList = async (request, response) => {
             lastName: name.split(' ')[1] || "",
             country
         };
-        axios_1.default.post(`${exports.config.NOTIFICATION_SERVICE_ROUTE}/founding-list/welcome-sendgrid`, emailData);
+        axios_1.default.post(`${config_1.default.NOTIFICATION_SERVICE_ROUTE}/founding-list/welcome-sendgrid`, emailData);
         if (sendUpdates) {
-            axios_1.default.post(`${exports.config.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-update-list`, emailData);
+            axios_1.default.post(`${config_1.default.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-update-list`, emailData);
         }
         if (betaTest) {
-            axios_1.default.post(`${exports.config.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-testers-list`, emailData);
+            axios_1.default.post(`${config_1.default.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-testers-list`, emailData);
         }
         if (contributeSkills) {
-            axios_1.default.post(`${exports.config.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-contributors-list`, emailData);
+            axios_1.default.post(`${config_1.default.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-contributors-list`, emailData);
         }
     }
     catch (error) {
@@ -92,7 +87,7 @@ const unsubscribeWaitingList = async (request, response) => {
         if (!existingUser) {
             return response.status(404).json({ message: 'Email not found in founders list' });
         }
-        const sendgridResponse = await axios_1.default.post(`${exports.config.NOTIFICATION_SERVICE_ROUTE}/founding-list/unsubscribe`, { email });
+        const sendgridResponse = await axios_1.default.post(`${config_1.default.NOTIFICATION_SERVICE_ROUTE}/founding-list/unsubscribe`, { email });
         if (sendgridResponse.status !== 200) {
             console.error('Failed to unsubscribe from SendGrid:', sendgridResponse.data, sendgridResponse.status, sendgridResponse);
             return response.status(500).json({ message: 'Failed to unsubscribe from SendGrid' });
@@ -143,15 +138,15 @@ const addUsersToRespectiveLists = async (request, response) => {
                 // axios.post(`${config.NOTIFICATION_SERVICE_ROUTE}/founding-list/welcome-sendgrid`, emailData)
                 const promises = [];
                 if (user.sendUpdates) {
-                    promises.push(axios_1.default.post(`${exports.config.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-update-list`, emailData)
+                    promises.push(axios_1.default.post(`${config_1.default.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-update-list`, emailData)
                         .catch(err => ({ error: 'update-list', details: err })));
                 }
                 if (user.betaTest) {
-                    promises.push(axios_1.default.post(`${exports.config.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-testers-list`, emailData)
+                    promises.push(axios_1.default.post(`${config_1.default.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-testers-list`, emailData)
                         .catch(err => ({ error: 'testers-list', details: err })));
                 }
                 if (user.contributeSkills) {
-                    promises.push(axios_1.default.post(`${exports.config.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-contributors-list`, emailData)
+                    promises.push(axios_1.default.post(`${config_1.default.NOTIFICATION_SERVICE_ROUTE}/founding-list/add-to-contributors-list`, emailData)
                         .catch(err => ({ error: 'contributors-list', details: err })));
                 }
                 // Wait for all API calls for this user to complete

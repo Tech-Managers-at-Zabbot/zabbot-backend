@@ -4,6 +4,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const process_1 = __importDefault(require("process"));
+const dotenv_flow_1 = __importDefault(require("dotenv-flow"));
+dotenv_flow_1.default.config({
+    node_env: process_1.default.env.NODE_ENV || "development",
+    pattern: ".env[.node_env]",
+    path: process_1.default.cwd(),
+});
 require("./cronJob-services/lessonServiceJobs");
 const express_1 = __importDefault(require("express"));
 const http_proxy_middleware_1 = require("http-proxy-middleware");
@@ -11,7 +17,6 @@ const child_process_1 = require("child_process");
 const path_1 = __importDefault(require("path"));
 const cors_1 = __importDefault(require("cors"));
 const morgan_1 = __importDefault(require("morgan"));
-const dotenv_1 = __importDefault(require("dotenv"));
 const http_1 = __importDefault(require("http"));
 require("./shared/modelSync");
 const syncDb_1 = require("./config/syncDb");
@@ -72,7 +77,6 @@ const services = [
     },
 ];
 const app = (0, express_1.default)();
-dotenv_1.default.config();
 app.use((0, cors_1.default)());
 app.use((0, morgan_1.default)("dev"));
 const MAIN_PORT = process_1.default.env.MAIN_PORT || 3010;
@@ -98,13 +102,13 @@ function startSingleService(service) {
             return resolve();
         }
         console.log(`Starting ${service.name} on port ${service.port}...`);
-        const entryPoint = NODE_ENV === "production"
+        const entryPoint = NODE_ENV === "production" || NODE_ENV === "staging:start"
             ? service.entryPoint.prod
             : service.entryPoint.dev;
         const isTypeScript = entryPoint.endsWith(".ts");
         let command;
         let args;
-        if (NODE_ENV === "production" || !isTypeScript) {
+        if (NODE_ENV === "production" || NODE_ENV === "staging:start" || !isTypeScript) {
             command = "node";
             args = [entryPoint];
         }

@@ -2,15 +2,8 @@ import { Request, Response } from 'express';
 import WaitingList from '../entities/waitingList';
 import { v4 } from 'uuid';
 import axios from 'axios';
-import dotenv from 'dotenv';
-import path from 'path';
+import config from '../../../config/config';
 import { errorUtilities, helpersUtilities } from '../../../shared/utilities';
-
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
-
-export const config = {
-  NOTIFICATION_SERVICE_ROUTE: process.env.NOTIFICATION_SERVICE_ROUTE
-};
 
 export const joinWaitingList = async (request: Request, response: Response) => {
   try {

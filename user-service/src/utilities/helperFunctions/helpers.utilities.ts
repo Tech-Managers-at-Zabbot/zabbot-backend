@@ -1,11 +1,8 @@
 import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
 import bcrypt from "bcryptjs";
 import { errorUtilities } from '../../../../shared/utilities';
-import path from 'path';
 import crypto from 'crypto';
-
-dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
+import config from '../../../../config/config';
 
 const hashPassword = async (password: string) => {
   const saltRounds = 10;
@@ -15,7 +12,7 @@ const hashPassword = async (password: string) => {
 };
 
 const generateToken = (data: any) => {
-  return jwt.sign(data.data, `${process.env.APP_JWT_SECRET}`, { expiresIn: `${data.expires}` });
+  return jwt.sign(data.data, `${config.APP_JWT_SECRET}`, { expiresIn: `${data.expires}` });
 };
 
 const convertToDDMMYY = (isoDateString: any) => {
@@ -49,12 +46,12 @@ const validateToken = (token: string) => {
     throw errorUtilities.createError('Token is required', 400);
   }
 
-  if (!process.env.APP_JWT_SECRET) {
+  if (!config.APP_JWT_SECRET) {
     throw errorUtilities.createError('JWT secret is not configured', 400);
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.APP_JWT_SECRET);
+    const decoded = jwt.verify(token, config.APP_JWT_SECRET);
     return decoded;
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
