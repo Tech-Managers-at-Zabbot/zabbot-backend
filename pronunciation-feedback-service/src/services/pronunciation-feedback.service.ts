@@ -54,7 +54,7 @@ const safeTensorDispose = (tensor: tf.Tensor | null) => {
 };
 
 // New lightweight embedding function using OpenAI API
-const getTextEmbedding = async (text: string): Promise<number[] | any[]> => {
+const getTextEmbedding = async (text: string): Promise<any> => {
   try {
     const response = await openai.embeddings.create({
       model: "text-embedding-3-small", // Most cost-effective option
@@ -72,7 +72,7 @@ const getTextEmbedding = async (text: string): Promise<number[] | any[]> => {
 };
 
 // Helper function for cosine similarity
-const calculateCosineSimilarity = (vecA: number[] | any[], vecB: number[] | any[]): number => {
+const calculateCosineSimilarity = (vecA: number[] | any, vecB: number[] | any): number => {
   const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
   const normA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
   const normB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
@@ -562,8 +562,8 @@ const plotOverlay = async (
   const minLen = Math.min(refData.length, userData.length);
   const labels = Array.from({ length: minLen }, (_, i) => i);
 
-  const refSlice: number[] = Array.from(refData.slice(0, minLen));
-  const userSlice: number[] = Array.from(userData.slice(0, minLen));
+  const refSlice = Array.from(refData.slice(0, minLen));
+  const userSlice = Array.from(userData.slice(0, minLen));
 
   const configuration = {
     type: "line" as const,
