@@ -102,13 +102,13 @@ function startSingleService(service) {
             return resolve();
         }
         console.log(`Starting ${service.name} on port ${service.port}...`);
-        const entryPoint = NODE_ENV === "production" || NODE_ENV === "staging:start"
+        const entryPoint = NODE_ENV === "production" || NODE_ENV === "dev:start"
             ? service.entryPoint.prod
             : service.entryPoint.dev;
         const isTypeScript = entryPoint.endsWith(".ts");
         let command;
         let args;
-        if (NODE_ENV === "production" || NODE_ENV === "staging:start" || !isTypeScript) {
+        if (NODE_ENV === "production" || NODE_ENV === "dev:start" || !isTypeScript) {
             command = "node";
             args = [entryPoint];
         }

@@ -2,6 +2,8 @@ import process from "process";
 import dotenvFlow from "dotenv-flow";
 import config from './config/config';
 
+// console.log('config', config)
+
 dotenvFlow.config({
   node_env: process.env.NODE_ENV || "development",
   pattern: ".env[.node_env]",
@@ -148,7 +150,7 @@ function startSingleService(service: ServiceConfig): Promise<void> {
     console.log(`Starting ${service.name} on port ${service.port}...`);
 
     const entryPoint =
-      NODE_ENV === "production" || NODE_ENV === "staging:start"
+      NODE_ENV === "production" || NODE_ENV === "dev:start"
         ? service.entryPoint.prod
         : service.entryPoint.dev;
 
@@ -156,7 +158,7 @@ function startSingleService(service: ServiceConfig): Promise<void> {
     let command: string;
     let args: string[];
 
-    if (NODE_ENV === "production" || NODE_ENV === "staging:start" || !isTypeScript) {
+    if (NODE_ENV === "production" || NODE_ENV === "dev:start" || !isTypeScript) {
       command = "node";
       args = [entryPoint];
     } else {

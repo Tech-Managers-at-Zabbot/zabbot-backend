@@ -13,24 +13,8 @@ if (stage === 'development') {
         path: process.cwd()
     });
 }
-else if (stage === 'staging') {
-    // const envFile = '.env.staging';
-    if (fs_1.default.existsSync('.env.staging')) {
-        dotenv_flow_1.default.config({
-            files: ['.env.staging'],
-            path: process.cwd()
-        });
-    }
-    else {
-        dotenv_flow_1.default.config({
-            files: ['.env'],
-            path: process.cwd()
-        });
-    }
-}
 else if (stage === 'production') {
-    // const envFile = '.env.production';
-    if (fs_1.default.existsSync('.env.production')) {
+    if (fs_1.default.existsSync('../.env.production')) {
         dotenv_flow_1.default.config({
             files: ['.env.production'],
             path: process.cwd()
@@ -43,11 +27,19 @@ else if (stage === 'production') {
         });
     }
 }
-else if (stage === 'staging:start') {
-    dotenv_flow_1.default.config({
-        files: ['.env'],
-        path: process.cwd()
-    });
+else if (stage === 'dev:start') {
+    if (fs_1.default.existsSync('../.env.development')) {
+        dotenv_flow_1.default.config({
+            files: ['.env.development'],
+            path: process.cwd()
+        });
+    }
+    else {
+        dotenv_flow_1.default.config({
+            files: ['.env'],
+            path: process.cwd()
+        });
+    }
 }
 let config;
 if (stage === "development") {
@@ -56,8 +48,8 @@ if (stage === "development") {
 else if (stage === "production") {
     config = require("./production").default;
 }
-else if (stage === "staging" || stage === 'staging:start') {
-    config = require("./staging").default;
+else if (stage === 'dev:start') {
+    config = require("./dev:start").default;
 }
 else {
     throw new Error(`Invalid NODE_ENV: ${stage}`);

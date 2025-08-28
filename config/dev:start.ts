@@ -32,7 +32,7 @@ const {
   DEV_CLOUDINARY_API_SECRET,
 } = process.env;
 
-console.log("Running in staging mode");
+console.log("Running in hosted development mode");
 
 export default {
   FOUNDERS_LIST_SERVICE_SERVER_PORT,
