@@ -22,19 +22,21 @@ UserDailyGoals.init({
         type: sequelize_1.DataTypes.UUID,
         allowNull: false,
         references: {
-            model: 'users',
-            key: 'id',
+            model: "users",
+            key: "id",
         },
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE",
     },
     languageId: {
         type: sequelize_1.DataTypes.UUID,
         allowNull: true,
         references: {
-            model: 'languages',
-            key: 'id',
+            model: "languages",
+            key: "id",
         },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE',
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE",
     },
     isCompleted: {
         type: sequelize_1.DataTypes.BOOLEAN,
@@ -49,11 +51,11 @@ UserDailyGoals.init({
     date: {
         type: sequelize_1.DataTypes.DATEONLY,
         allowNull: false,
-    }
+    },
 }, {
     sequelize: databases_1.users_service_db,
-    modelName: 'UserDailyGoals',
-    tableName: 'userDailyGoals',
+    modelName: "UserDailyGoals",
+    tableName: "userDailyGoals",
     timestamps: true,
 });
 exports.default = UserDailyGoals;

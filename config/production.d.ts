@@ -1,4 +1,17 @@
 declare const _default: {
+    FOUNDERS_LIST_SERVICE_SERVER_PORT: string | undefined;
+    GOOGLE_API_KEY: string | undefined;
+    GOOGLE_CLIENT_ID: string | undefined;
+    GOOGLE_CLIENT_SECRET: string | undefined;
+    USERS_PORT: string | undefined;
+    CLOUDINARY_CLOUD_NAME: string | undefined;
+    CLOUDINARY_API_KEY: string | undefined;
+    CLOUDINARY_API_SECRET: string | undefined;
+    OPENAI_API_KEY: string | undefined;
+    PRONUNCIATION_SERVICE_PORT: string | undefined;
+    LESSON_SERVICE_PORT: string | undefined;
+    NOTIFICATION_SERVICE_PORT: string | undefined;
+    EDEDUN_PORT: string | undefined;
     FOUNDERS_LIST_DB: string;
     USERS_SERVICE_DB: string;
     GOOGLE_REGISTER_CALLBACK_URL: string;

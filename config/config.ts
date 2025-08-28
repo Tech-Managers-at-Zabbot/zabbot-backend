@@ -1,15 +1,57 @@
-import merge from 'lodash.merge'
-import dotenv from 'dotenv'
+import merge from 'lodash.merge';
+import dotenvFlow from 'dotenv-flow';
+import fs from 'fs';
 
-dotenv.config()
+const stage = process.env.NODE_ENV || 'development';
 
-const stage: any = process.env.NODE_ENV;
+if (stage === 'development') {
+    dotenvFlow.config({
+        files: ['.env.development'],
+        path: process.cwd()
+    });
+} else if (stage === 'staging') {
+    // const envFile = '.env.staging';
+       if (fs.existsSync('.env.staging')) {
+        dotenvFlow.config({
+            files: ['.env.staging'],
+            path: process.cwd()
+        });
+    } else {
+        dotenvFlow.config({
+            files: ['.env'],
+            path: process.cwd()
+        });
+    }
+} else if (stage === 'production') {
+    // const envFile = '.env.production';
+    if (fs.existsSync('.env.production')) {
+        dotenvFlow.config({
+            files: ['.env.production'],
+            path: process.cwd()
+        });
+    }else {
+        dotenvFlow.config({
+            files: ['.env'],
+            path: process.cwd()
+        });
+    }
+}else if(stage === 'staging:start'){
+     dotenvFlow.config({
+            files: ['.env'],
+            path: process.cwd()
+        });
+}
+
 let config;
 
-if(stage === "development"){
+if (stage === "development") {
     config = require("./development").default
-}else if(stage === "production"){
+} else if (stage === "production") {
     config = require("./production").default
+} else if (stage === "staging" || stage === 'staging:start') {
+    config = require("./staging").default
+} else {
+    throw new Error(`Invalid NODE_ENV: ${stage}`)
 }
 
 export default merge({
