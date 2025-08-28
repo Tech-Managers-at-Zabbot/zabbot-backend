@@ -54,7 +54,7 @@ const safeTensorDispose = (tensor: tf.Tensor | null) => {
 };
 
 // New lightweight embedding function using OpenAI API
-const getTextEmbedding = async (text: string): Promise<any> => {
+const getTextEmbedding = async (text: string): Promise<number[]> => {
   try {
     const response = await openai.embeddings.create({
       model: "text-embedding-3-small", // Most cost-effective option
@@ -62,7 +62,7 @@ const getTextEmbedding = async (text: string): Promise<any> => {
       encoding_format: "float",
     });
 
-    return response.data[0].embedding;
+    return response.data[0].embedding as number[];;
   } catch (error: any) {
     throw errorUtilities.createError(
       `Error getting text embedding: ${error.message}`,
@@ -72,7 +72,7 @@ const getTextEmbedding = async (text: string): Promise<any> => {
 };
 
 // Helper function for cosine similarity
-const calculateCosineSimilarity = (vecA: number[] | any, vecB: number[] | any): number => {
+const calculateCosineSimilarity = (vecA: number[] | any, vecB: number[] | any[]): number => {
   const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
   const normA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
   const normB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
@@ -151,7 +151,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
   }: {
     userId: string;
     referencePronunciationId: string;
-    file: Express.Multer.File;
+    file: any | Express.Multer.File;
     voice?: string;
   }) => {
     logMemoryUsage("Start of comparePronounciation");
