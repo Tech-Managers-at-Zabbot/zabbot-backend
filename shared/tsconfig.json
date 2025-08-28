@@ -9,7 +9,8 @@
     "strict": true,
     "skipLibCheck": true,
     "baseUrl": ".",
-    "rootDir": "."
+    "rootDir": ".",
+    "noImplicitAny": false
   },
   "include": ["./**/*"],
    "references": [
