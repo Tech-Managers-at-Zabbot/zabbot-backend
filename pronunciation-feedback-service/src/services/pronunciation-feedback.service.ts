@@ -459,7 +459,7 @@ export const loadAndTrimAudio = async ({
     console.log("Decoded WAV file");
 
     const rawAudio = result.channelData[0];
-    const audioSamples = Array.from(rawAudio);
+    const audioSamples = Array.from(rawAudio) as number[] | any;
 
     tensorAudio = tf.tensor2d([audioSamples]);
 
@@ -478,20 +478,12 @@ export const loadAndTrimAudio = async ({
 };
 
 const isInvalid = (
-  audio: Float32Array,
+  audio: Float32Array | any,
   threshold = 0.01,
   minDuration = 0.5
 ): boolean => {
   const isTooShort = audio.length < sampleRate * minDuration;
-  
-  let maxAmplitude = 0;
-  for (let i = 0; i < audio.length; i++) {
-    const absValue = Math.abs(audio[i]);
-    if (absValue > maxAmplitude) {
-      maxAmplitude = absValue;
-    }
-  }
-  
+  const maxAmplitude = Math.max(...audio.map(Math.abs));
   const isTooQuiet = maxAmplitude < threshold;
 
   return isTooShort || isTooQuiet;
