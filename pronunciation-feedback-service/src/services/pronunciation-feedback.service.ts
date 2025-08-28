@@ -53,7 +53,7 @@ const safeTensorDispose = (tensor: tf.Tensor | null) => {
 };
 
 // New lightweight embedding function using OpenAI API
-const getTextEmbedding = async (text: string): Promise<number[]> => {
+const getTextEmbedding = async (text: string): Promise<number[] | any[]> => {
   try {
     const response = await openai.embeddings.create({
       model: "text-embedding-3-small", // Most cost-effective option
@@ -71,7 +71,7 @@ const getTextEmbedding = async (text: string): Promise<number[]> => {
 };
 
 // Helper function for cosine similarity
-const calculateCosineSimilarity = (vecA: number[], vecB: number[]): number => {
+const calculateCosineSimilarity = (vecA: number[] | any[], vecB: number[] | any[]): number => {
   const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
   const normA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
   const normB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
