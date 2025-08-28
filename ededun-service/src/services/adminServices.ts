@@ -144,7 +144,7 @@ const deletePhrase = errorUtilities.withErrorHandling(
 
 const addManyPhrases = errorUtilities.withErrorHandling(
     async (phraseArray: Record<string, any>[]): Promise<Record<string, any>> => {
-        const createdPhrases = [];
+        const createdPhrases:Record<string, any>[] = [];
 
         for (const phrasePayload of phraseArray) {
             let { yoruba_text, english_text, pronounciation_note, phrase_category } = phrasePayload;
@@ -158,7 +158,7 @@ const addManyPhrases = errorUtilities.withErrorHandling(
 
             const phraseId = v4();
             const phraseCreationPayload = { id: phraseId, yoruba_text, english_text, pronounciation_note, phrase_category };
-            const newPhrase = await phraseRepository.phrasesRepository.create(phraseCreationPayload);
+            const newPhrase:Record<string, any> = await phraseRepository.phrasesRepository.create(phraseCreationPayload);
 
             if (newPhrase) {
                 createdPhrases.push(newPhrase);
