@@ -20,6 +20,7 @@ import userPronunciationRepositories from "../repositories/user-pronunciation.re
 import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
 import UserPronunciation from "../../../shared/entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation";
 import config from "../../../config/config";
+import { Request, Response } from 'express';
 
 Ffmpeg.setFfmpegPath(ffmpegPath as string);
 
@@ -561,8 +562,8 @@ const plotOverlay = async (
   const minLen = Math.min(refData.length, userData.length);
   const labels = Array.from({ length: minLen }, (_, i) => i);
 
-  const refSlice = Array.from(refData.slice(0, minLen));
-  const userSlice = Array.from(userData.slice(0, minLen));
+  const refSlice: number[] = Array.from(refData.slice(0, minLen));
+  const userSlice: number[] = Array.from(userData.slice(0, minLen));
 
   const configuration = {
     type: "line" as const,
