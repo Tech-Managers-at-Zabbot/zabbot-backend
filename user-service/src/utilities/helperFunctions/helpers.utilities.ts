@@ -53,7 +53,7 @@ const validateToken = (token: string) => {
   try {
     const decoded = jwt.verify(token, config.APP_JWT_SECRET);
     return decoded;
-  } catch (error) {
+  } catch (error:any) {
     if (error instanceof jwt.TokenExpiredError) {
       throw errorUtilities.createError('Token has expired, please request for another verification link', 400);
     }
@@ -74,7 +74,7 @@ const comparePasswords = async (password: string, hashedPassword: string) => {
   try {
     const isMatch = await bcrypt.compare(password, hashedPassword);
     return isMatch;
-  } catch (error) {
+  } catch (error:any) {
     console.error(`Error validating password: ${error}`);
     throw errorUtilities.createError('Error validating password', 500);
   }
