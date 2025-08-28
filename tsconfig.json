@@ -10,6 +10,7 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "outDir": "./dist",
+    "noImplicitAny": false,
     "paths": {
       "@shared/*": ["./shared/*"],
       "@config/*": ["./config/*"]
