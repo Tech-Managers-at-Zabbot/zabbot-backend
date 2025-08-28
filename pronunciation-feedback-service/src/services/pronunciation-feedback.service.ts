@@ -21,6 +21,12 @@ import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
 import UserPronunciation from "../../../shared/entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation";
 import config from "../../../config/config";
 
+
+interface EmbeddingResponse {
+  data: { embedding: number[] }[];
+}
+
+
 Ffmpeg.setFfmpegPath(ffmpegPath as string);
 
 const sampleRate = 16000;
@@ -59,9 +65,9 @@ const getTextEmbedding = async (text: string): Promise<number[]> => {
       model: "text-embedding-3-small", // Most cost-effective option
       input: text.toLowerCase().trim(), // Normalize text
       encoding_format: "float",
-    });
+    }) as EmbeddingResponse;;
 
-    return response.data[0].embedding as number[];;
+    return response.data[0].embedding;
   } catch (error: any) {
     throw errorUtilities.createError(
       `Error getting text embedding: ${error.message}`,
