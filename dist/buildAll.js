@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const child_process_1 = require("child_process");
 const path_1 = __importDefault(require("path"));
-const fs_extra_1 = __importDefault(require("fs-extra"));
+const fs_1 = __importDefault(require("fs"));
 const services = [
     { name: "config", path: "./config" },
     { name: "shared", path: "./shared" },
@@ -23,7 +23,7 @@ const services = [
 function buildService(service) {
     const servicePath = path_1.default.join(__dirname, service.path);
     const packageJson = path_1.default.join(servicePath, "package.json");
-    if (fs_extra_1.default.existsSync(packageJson)) {
+    if (fs_1.default.existsSync(packageJson)) {
         try {
             console.log(`\n🏗️  Building ${service.name}...`);
             if (service.name === "root") {

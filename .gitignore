@@ -14,5 +14,5 @@ migration-config
 contents.json
 store.ts
 holder
-dist
 .env*
+dist
