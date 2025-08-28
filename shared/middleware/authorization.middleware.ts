@@ -1,4 +1,4 @@
-import { Response, NextFunction, raw } from 'express';
+import { Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { helpersUtilities } from '../utilities';
 import Users from '../entities/user-service-entities/users/users.entities';
