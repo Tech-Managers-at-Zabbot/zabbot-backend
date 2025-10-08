@@ -35,7 +35,9 @@ const referenePronunciationRepositories = {
 
   getPronunciations: async () => {
     try {
-      const pronunciations = await ReferencePronunciation.findAll();
+      const pronunciations = await ReferencePronunciation.findAll({
+        order: [["createdAt", "ASC"]],
+      });
       return pronunciations;
     } catch (error: any) {
       throw errorUtilities.createError(
@@ -70,10 +72,9 @@ const referenePronunciationRepositories = {
     updateFilter: Record<string, any>
   ) => {
     try {
-      await ReferencePronunciation.update(
-        pronunciationData,
-        { where: updateFilter }
-      );
+      await ReferencePronunciation.update(pronunciationData, {
+        where: updateFilter,
+      });
 
       return pronunciationData;
     } catch (error: any) {
