@@ -4,8 +4,8 @@ import fs from "fs";
 
 const services = [
   "./shared",
-  "./waiting-list-service",
   "./config",
+  "./waiting-list-service",
   "./notification-service",
   "./user-service",
   "./lesson-service",

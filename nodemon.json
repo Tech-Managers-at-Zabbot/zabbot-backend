@@ -14,7 +14,9 @@
     "package.json",
     ".env",
     "tsconfig.json",
-    "pronunciation-feedback-service"
+    "pronunciation-feedback-service",
+    ".env.development",
+    ".env.production"
   ],
   "ext": "ts,json",
   "verbose": true,

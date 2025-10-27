@@ -18,7 +18,7 @@ const inputValidator = (schema: Joi.Schema): any => {
         });
       }
       return next();
-    } catch (err) {
+    } catch (err:any) {
       return response.status(500).json({
         status: "error",
         message: "Internal Server Error",

@@ -5,11 +5,12 @@
     "moduleResolution": "node",
     "esModuleInterop": true,
     "declaration": false,
-    "strict": true,
+    "strict": false,
     "skipLibCheck": true,
     "outDir": "./dist",
     "rootDir": "./src",
     "baseUrl": ".",
+    "noImplicitAny": false,
   },
   "include": [
     "src/**/*"

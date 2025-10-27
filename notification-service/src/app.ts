@@ -1,24 +1,14 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
-import path from 'path';
 import { errorUtilities } from '../../shared/utilities';
 import rootRouter from './routes';
 import compression from "compression";
 import logger from "morgan";
 import cookieParser from "cookie-parser";
+import config from '../../config/config';
 
 const app = express();
-
-// Load environment variables
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
-
-export const config = {
-  port: process.env.NOTIFICATION_SERVICE_PORT || 3003,
-  // dbUrl: process.env.DB_URL,
-  // jwtSecret: process.env.AUTH_SERVICE_JWT_SECRET
-};
 
 app.disable("x-powered-by");
 
@@ -51,7 +41,7 @@ app.use(errorUtilities.globalErrorHandler as any);
 
 // Start server if not imported as a module
 if (require.main === module) {
-  const PORT = config.port;
+  const PORT = config.NOTIFICATION_SERVICE_PORT;
   app.listen(PORT, () => {
     console.log(`Notification Server running on port ${PORT}`);
   });

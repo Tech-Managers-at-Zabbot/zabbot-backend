@@ -48,6 +48,7 @@
     "@types/cookie-parser": "^1.4.9",
     "@types/difflib": "^0.2.7",
     "@types/dynamic-time-warping": "^1.0.3",
+    "@types/express": "^5.0.1",
     "@types/fluent-ffmpeg": "^2.1.27",
     "@types/js-levenshtein": "^1.1.2",
     "@types/multer": "^2.0.0",

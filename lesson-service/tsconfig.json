@@ -10,7 +10,8 @@
     "rootDir": "./src",
     "baseUrl": ".",
     "composite": false,
-    "declaration": false 
+    "declaration": false,
+    "noImplicitAny": false
   },
   "include": [
     "src/**/*"

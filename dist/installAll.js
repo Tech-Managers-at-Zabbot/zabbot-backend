@@ -8,8 +8,8 @@ const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const services = [
     "./shared",
-    "./waiting-list-service",
     "./config",
+    "./waiting-list-service",
     "./notification-service",
     "./user-service",
     "./lesson-service",

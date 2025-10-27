@@ -6,20 +6,18 @@ import bodyParser from "body-parser";
 import logger from "morgan";
 import cookieParser from "cookie-parser";
 import apiRouter from "./routes";
-import dotenv from 'dotenv';
 import { createServer } from "http";
 import { errorUtilities } from './utilities';
 import path from "path";
 // import './models/associations';
+import config from '../../config/config';
 
 const app = express();
 
 const server = createServer(app);
 
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
-
 export const externalConfig = {
-  PORT: process.env.EDEDUN_PORT || 3006,
+  PORT: config.EDEDUN_PORT || 3006,
   // dbUrl: process.env.DB_URL,
   // jwtSecret: process.env.AUTH_SERVICE_JWT_SECRET
 };

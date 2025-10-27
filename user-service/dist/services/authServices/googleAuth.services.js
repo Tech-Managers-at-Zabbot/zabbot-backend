@@ -15,47 +15,47 @@ const googleOAuthRegister = async (request, accessToken, refreshToken, profile, 
     try {
         let user = await users_repositories_1.default.getOne({ email: profile.emails?.[0].value }, ["id", "email"]);
         if (user) {
-            return done(new Error('user_already_exists'));
+            return done(new Error("user_already_exists"));
         }
         try {
             const isBetaTester = await axios_1.default.get(`${config_1.default.LOCAL_FOUNDERS_LIST_URL}/beta-tester-check?email=${profile.emails?.[0].value}`, {
                 timeout: 10000,
                 headers: {
-                    'Content-Type': 'application/json'
-                }
+                    "Content-Type": "application/json",
+                },
             });
             if (isBetaTester.status !== statusCodes_responses_1.StatusCodes.OK) {
                 const errorMessage = isBetaTester.status === statusCodes_responses_1.StatusCodes.Forbidden
-                    ? 'unauthorized_for_testing'
-                    : 'failed_tester_check';
+                    ? "unauthorized_for_testing"
+                    : "failed_tester_check";
                 return done(new Error(errorMessage));
             }
         }
         catch (err) {
-            console.log('📊 Registration Error details:', {
+            console.log("📊 Registration Error details:", {
                 status: err.response?.status,
                 statusText: err.response?.statusText,
                 data: err.response?.data,
-                code: err.code
+                code: err.code,
             });
-            let customError = 'authentication_failed';
+            let customError = "authentication_failed";
             if (err.response?.status === statusCodes_responses_1.StatusCodes.NotFound) {
-                customError = 'signup_as_tester';
+                customError = "signup_as_tester";
             }
             else if (err.response?.status === 403) {
-                customError = 'unauthorized_for_testing';
+                customError = "unauthorized_for_testing";
             }
             else {
-                customError = 'failed_tester_check';
+                customError = "failed_tester_check";
             }
             return done(new Error(customError));
         }
         // Create new user
         const createUserPayload = {
             id: (0, uuid_1.v4)(),
-            firstName: profile?.name?.givenName || '',
-            lastName: profile?.name?.familyName || '',
-            email: profile?.emails?.[0].value || '',
+            firstName: profile?.name?.givenName || "",
+            lastName: profile?.name?.familyName || "",
+            email: profile?.emails?.[0].value || "",
             isVerified: true,
             isActive: true,
             isBlocked: false,
@@ -65,7 +65,8 @@ const googleOAuthRegister = async (request, accessToken, refreshToken, profile, 
             googleAccessToken: accessToken,
             googleRefreshToken: refreshToken,
             registerMethod: user_service_types_1.RegisterMethods.GOOGLE,
-            timeZone: request.query?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
+            timeZone: request?.query?.state ||
+                Intl.DateTimeFormat().resolvedOptions().timeZone,
         };
         await users_repositories_1.default.create(createUserPayload);
         const newUser = await users_repositories_2.default.getByPK(createUserPayload.id);
@@ -90,7 +91,7 @@ const googleOAuthRegister = async (request, accessToken, refreshToken, profile, 
         await users_repositories_2.default.updateOne({
             id: newUser.id,
         }, {
-            refreshToken: appRefreshToken
+            refreshToken: appRefreshToken,
         });
         const userDetails = await users_repositories_1.default.extractUserDetails(newUser);
         userDetails.languageId = config_1.default.YORUBA_LANGUAGE_ID;
@@ -100,25 +101,42 @@ const googleOAuthRegister = async (request, accessToken, refreshToken, profile, 
         };
         const emailPayload = {
             url: `${config_1.default.NOTIFICATION_SERVICE_ROUTE}/auth-notification/welcome-otp`,
-            emailData
+            emailData,
         };
-        index_1.endpointCallsUtilities.processEmailsInBackground(emailPayload).catch(error => {
+        index_1.endpointCallsUtilities
+            .processEmailsInBackground(emailPayload)
+            .catch((error) => {
             console.error(`Background email processing failed for ${createUserPayload.email}:`, error.message);
         });
-        done(null, { token: appAccessToken, user: userDetails, authType: 'registration' });
+        done(null, {
+            token: appAccessToken,
+            user: userDetails,
+            authType: "registration",
+        });
     }
     catch (err) {
-        return done(new Error('registration_failed'));
+        return done(new Error("registration_failed"));
     }
 };
 const googleOAuthLogin = async (request, accessToken, refreshToken, profile, done) => {
     try {
-        let user = await users_repositories_1.default.getOne({ email: profile.emails?.[0].value }, ["id", "email", "firstName", "lastName", "isActive", "isBlocked"]);
+        let user = await users_repositories_1.default.getOne({ email: profile.emails?.[0].value }, [
+            "id",
+            "email",
+            "firstName",
+            "lastName",
+            "isActive",
+            "isBlocked",
+            "registerMethod",
+        ]);
         if (!user) {
-            return done(new Error('user_not_found_please_register'));
+            return done(new Error("user_not_found_please_register"));
+        }
+        if (user.registerMethod !== "google") {
+            return done(new Error("user_used_another_login_method"));
         }
         if (!user.isActive || user.isBlocked) {
-            return done(new Error('account_inactive_or_blocked'));
+            return done(new Error("account_inactive_or_blocked"));
         }
         const newUser = await users_repositories_2.default.getByPK(user.id);
         const accessTokenData = {
@@ -143,17 +161,18 @@ const googleOAuthLogin = async (request, accessToken, refreshToken, profile, don
             googleAccessToken: accessToken,
             googleRefreshToken: refreshToken,
             refreshToken: appRefreshToken,
-            timeZone: request.query?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
+            timeZone: request?.query?.state ||
+                Intl.DateTimeFormat().resolvedOptions().timeZone,
         });
         const userDetails = await users_repositories_1.default.extractUserDetails(newUser);
         userDetails.languageId = config_1.default.YORUBA_LANGUAGE_ID;
-        done(null, { token: appAccessToken, user: userDetails, authType: 'login' });
+        done(null, { token: appAccessToken, user: userDetails, authType: "login" });
     }
     catch (err) {
-        return done(new Error('login_failed'));
+        return done(new Error("login_failed"));
     }
 };
 exports.default = {
     googleOAuthRegister,
-    googleOAuthLogin
+    googleOAuthLogin,
 };

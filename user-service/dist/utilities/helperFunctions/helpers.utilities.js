@@ -4,12 +4,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const dotenv_1 = __importDefault(require("dotenv"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const utilities_1 = require("../../../../shared/utilities");
-const path_1 = __importDefault(require("path"));
 const crypto_1 = __importDefault(require("crypto"));
-dotenv_1.default.config({ path: path_1.default.resolve(__dirname, '../../../../.env') });
+const config_1 = __importDefault(require("../../../../config/config"));
 const hashPassword = async (password) => {
     const saltRounds = 10;
     const salt = await bcryptjs_1.default.genSalt(saltRounds);
@@ -17,7 +15,7 @@ const hashPassword = async (password) => {
     return hash;
 };
 const generateToken = (data) => {
-    return jsonwebtoken_1.default.sign(data.data, `${process.env.APP_JWT_SECRET}`, { expiresIn: `${data.expires}` });
+    return jsonwebtoken_1.default.sign(data.data, `${config_1.default.APP_JWT_SECRET}`, { expiresIn: `${data.expires}` });
 };
 const convertToDDMMYY = (isoDateString) => {
     const date = new Date(isoDateString);
@@ -43,11 +41,11 @@ const validateToken = (token) => {
     if (!token) {
         throw utilities_1.errorUtilities.createError('Token is required', 400);
     }
-    if (!process.env.APP_JWT_SECRET) {
+    if (!config_1.default.APP_JWT_SECRET) {
         throw utilities_1.errorUtilities.createError('JWT secret is not configured', 400);
     }
     try {
-        const decoded = jsonwebtoken_1.default.verify(token, process.env.APP_JWT_SECRET);
+        const decoded = jsonwebtoken_1.default.verify(token, config_1.default.APP_JWT_SECRET);
         return decoded;
     }
     catch (error) {
