@@ -124,7 +124,8 @@ const updateUserCourse = errorUtilities.withServiceErrorHandling(
       );
     }
 
-    if (userCourse.isCompleted && userCourse.progress === 100) {
+    if (userCourse.isCompleted //&& userCourse.progress === 100
+      ) {
       return responseUtilities.handleServicesResponse(
         StatusCodes.OK,
         CourseResponses.PROCESS_SUCCESSFUL,
