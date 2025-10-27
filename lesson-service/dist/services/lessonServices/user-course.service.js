@@ -74,7 +74,8 @@ const updateUserCourse = utilities_1.errorUtilities.withServiceErrorHandling(asy
     if (!lessonExists) {
         throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.LESSON_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
     }
-    if (userCourse.isCompleted && userCourse.progress === 100) {
+    if (userCourse.isCompleted //&& userCourse.progress === 100
+    ) {
         return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.CourseResponses.PROCESS_SUCCESSFUL, userCourse);
     }
     Object.assign(userCourse, userCourseData);
