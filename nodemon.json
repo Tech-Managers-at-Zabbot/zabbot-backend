@@ -12,6 +12,7 @@
     "main-server.ts",
     "installAll.ts",
     "package.json",
+    "payment-service",
     ".env",
     "tsconfig.json",
     "pronunciation-feedback-service",

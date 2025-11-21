@@ -11,6 +11,7 @@ const services = [
   "./lesson-service",
   "./ededun-service",
   "./pronunciation-feedback-service",
+  "./payment-service",
 ];
 
 function installDependencies(service: string) {
