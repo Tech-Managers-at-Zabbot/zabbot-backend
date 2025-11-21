@@ -75,6 +75,15 @@ const services = [
             prod: path_1.default.resolve(__dirname, "../pronunciation-feedback-service/dist/app.js"),
         },
     },
+    {
+        name: "payment-service",
+        path: "/api/v1/payments",
+        port: 3008,
+        entryPoint: {
+            dev: path_1.default.resolve(__dirname, "./payment-service/src/app.ts"),
+            prod: path_1.default.resolve(__dirname, "../payment-service/dist/app.js"),
+        },
+    },
 ];
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());

@@ -18,6 +18,7 @@ const services = [
         name: "pronunciation-feedback-service",
         path: "./pronunciation-feedback-service",
     },
+    { name: "payment-service", path: "./payment-service" },
     { name: "root", path: "./" },
 ];
 function buildService(service) {
