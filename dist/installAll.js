@@ -15,6 +15,7 @@ const services = [
     "./lesson-service",
     "./ededun-service",
     "./pronunciation-feedback-service",
+    "./payment-service",
 ];
 function installDependencies(service) {
     const servicePath = path_1.default.join(__dirname, service);

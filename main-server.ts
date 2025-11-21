@@ -103,6 +103,15 @@ const services: ServiceConfig[] = [
       ),
     },
   },
+    {
+    name: "payment-service",
+    path: "/api/v1/payments",
+    port: 3008,
+    entryPoint: {
+      dev: path.resolve(__dirname, "./payment-service/src/app.ts"),
+      prod: path.resolve(__dirname, "../payment-service/dist/app.js"),
+    },
+  },
 ];
 
 const app = express();

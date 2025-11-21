@@ -1,4 +1,13 @@
 declare const _default: {
+    STRIPE_SUCCESS_URL: string | undefined;
+    STRIPE_FAILURE_URL: string | undefined;
+    STRIPE_PUBLISHABLE_KEY: string | undefined;
+    STRIPE_SECRET_KEY: string | undefined;
+    STRIPE_BASE_URL: string | undefined;
+    MONTHLY_SUBSCRIPTION_PRICE_ID: string | undefined;
+    ANNUAL_SUBSCRIPTION_PRICE_ID: string | undefined;
+    LIFTIME_SUBSCRIPTION_PRICE_ID: string | undefined;
+    PAYMENT_SERVICE_PORT: string | undefined;
     FOUNDERS_LIST_SERVICE_SERVER_PORT: string | undefined;
     GOOGLE_API_KEY: string | undefined;
     GOOGLE_CLIENT_ID: string | undefined;
