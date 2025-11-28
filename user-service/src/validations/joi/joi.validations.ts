@@ -139,6 +139,40 @@ const resetPasswordSchema = Joi.object({
   }),
 })
 
+const changePasswordSchema = Joi.object({
+  currentPassword: Joi.string()
+    .trim()
+    .min(8)
+    .required()
+    .messages({
+      'string.empty': 'Current Password is required',
+      'string.min': 'Current Password must be at least 8 characters long',
+    }),
+
+  newPassword: Joi.string()
+    .trim()
+    .min(8)
+    .required()
+    .messages({
+      'string.empty': 'Password is required',
+      'string.min': 'Password must be at least 8 characters long',
+    }),
+
+  confirmNewPassword: Joi.string()
+    .trim()
+    .required()
+    .valid(Joi.ref('newPassword'))
+    .messages({
+      'any.only': 'Passwords do not match',
+      'string.empty': 'Confirm Password is required',
+    }),
+})
+
+const updateUserNameSchema = Joi.object({
+  firstName: Joi.string().trim().optional(),
+  lastName: Joi.string().trim().optional(),
+}).or("firstName", "lastName");
+
 // const createPhraseSchema = Joi.object({
 //   english_text: Joi.string().trim().required().messages({
 //     "string.base": "The English Phrase is required",
@@ -160,7 +194,9 @@ export default {
   userRegisterSchemaViaEmail,
   loginUserSchema,
   // createPhraseSchema,
+  changePasswordSchema,
   inputValidator,
   resendVerificationLinkSchema,
-  resetPasswordSchema
+  resetPasswordSchema,
+  updateUserNameSchema
 };

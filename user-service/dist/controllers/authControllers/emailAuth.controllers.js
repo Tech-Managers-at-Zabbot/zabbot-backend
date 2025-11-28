@@ -24,8 +24,8 @@ const userRegistrationController = utilities_1.errorUtilities.withControllerErro
         const isBetaTester = await axios_1.default.get(`${config_1.default.LOCAL_FOUNDERS_LIST_URL}/beta-tester-check?email=${email}`, {
             timeout: 10000,
             headers: {
-                'Content-Type': 'application/json'
-            }
+                "Content-Type": "application/json",
+            },
         });
         if (isBetaTester.status !== statusCodes_responses_1.StatusCodes.OK) {
             const errorMessage = isBetaTester.status === statusCodes_responses_1.StatusCodes.Forbidden
@@ -35,11 +35,11 @@ const userRegistrationController = utilities_1.errorUtilities.withControllerErro
         }
     }
     catch (error) {
-        console.log('📊 Error details:', {
+        console.log("📊 Error details:", {
             status: error.response?.status,
             statusText: error.response?.statusText,
             data: error.response?.data,
-            code: error.code
+            code: error.code,
         });
         if (error.response?.status === statusCodes_responses_1.StatusCodes.NotFound) {
             throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.SIGNUP_AS_TESTER, statusCodes_responses_1.StatusCodes.NotFound);
@@ -79,8 +79,29 @@ const userPasswordResetRequestController = utilities_1.errorUtilities.withContro
 });
 const userResetPasswordController = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {
     const { token, newPassword, confirmNewPassword } = request.body;
-    const resetPassword = await services_1.emailAuthServices.resetPasswordService({ token, newPassword, confirmNewPassword });
+    const resetPassword = await services_1.emailAuthServices.resetPasswordService({
+        token,
+        newPassword,
+        confirmNewPassword,
+    });
     return utilities_1.responseUtilities.responseHandler(response, resetPassword.message, resetPassword.statusCode, resetPassword.data);
+});
+const changeUserPasswordController = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {
+    const { userId } = request.user;
+    const { currentPassword, newPassword, confirmNewPassword } = request.body;
+    const changePassword = await services_1.emailAuthServices.changePasswordService(userId, currentPassword, newPassword, confirmNewPassword);
+    return utilities_1.responseUtilities.responseHandler(response, changePassword.message, changePassword.statusCode, changePassword.data);
+});
+const updateUserNamesController = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {
+    const { userId } = request.user;
+    const updatedData = await services_1.emailAuthServices.editUserNamesService(request.body, userId);
+    return utilities_1.responseUtilities.responseHandler(response, updatedData.message, updatedData.statusCode, updatedData.data);
+});
+const getSingleUserDetailsController = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {
+    const { userId } = request.user;
+    console.log("11", userId);
+    const singleUserDetails = await services_1.emailAuthServices.getSingleUserDetailsService(userId);
+    return utilities_1.responseUtilities.responseHandler(response, singleUserDetails.message, singleUserDetails.statusCode, singleUserDetails.data);
 });
 exports.default = {
     userRegistrationController,
@@ -88,5 +109,8 @@ exports.default = {
     resendVerificationOtpController,
     userLoginController,
     userPasswordResetRequestController,
-    userResetPasswordController
+    userResetPasswordController,
+    changeUserPasswordController,
+    updateUserNamesController,
+    getSingleUserDetailsController,
 };

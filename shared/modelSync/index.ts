@@ -14,3 +14,4 @@ import '../entities/user-service-entities/otp/otp.entities';
 // import '../entities/user-service-entities/securityLogs.entities';
 // import '../entities/user-service-entities/userActivityLogs.entities';
 import '../entities/user-service-entities/users/users.entities';
+import '../entities/payment-service-entities/transactions/transactions';

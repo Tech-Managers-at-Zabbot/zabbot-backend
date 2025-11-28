@@ -36,7 +36,38 @@ const stripeCreateCheckoutSessionSchema = Joi.object({
 });
 
 
+const createTransactionSchema = Joi.object({
+  amount: Joi.number()
+    .positive()
+    .required()
+    .messages({
+      "number.base": "Amount must be a valid number",
+      "number.positive": "Amount must be greater than 0",
+      "any.required": "Amount is required",
+    }),
+
+  planType: Joi.string()
+    .valid("lifetime", "annual", "monthly")
+    .required()
+    .messages({
+      "any.only": "Plan type must be one of: basic, pro, premium",
+      "string.empty": "Plan type is required",
+      "any.required": "Plan type is required",
+    }),
+
+  status: Joi.string()
+    .valid("pending", "success", "failed")
+    .required()
+    .messages({
+      "any.only": "Status must be one of: pending, success, failed",
+      "string.empty": "Status is required",
+      "any.required": "Status is required",
+    }),
+});
+
+
 export default {
   stripeCreateCheckoutSessionSchema,
+  createTransactionSchema,
   inputValidator,
 };

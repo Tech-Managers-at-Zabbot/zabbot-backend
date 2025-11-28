@@ -8,6 +8,7 @@ const controllers_1 = require("../../controllers");
 const express_1 = __importDefault(require("express"));
 const passport_1 = __importDefault(require("passport"));
 const config_1 = __importDefault(require("../../../../config/config"));
+const authorization_middleware_1 = require("../../../../shared/middleware/authorization.middleware");
 const router = express_1.default.Router();
 router.post("/signup", joi_validations_1.default.inputValidator(joi_validations_1.default.userRegisterSchemaViaEmail), controllers_1.emailAuthControllers.userRegistrationController);
 router.post("/verify-user", controllers_1.emailAuthControllers.verifyUserAccountController);
@@ -15,6 +16,9 @@ router.post("/resend-verification-otp", controllers_1.emailAuthControllers.resen
 router.post("/login", joi_validations_1.default.inputValidator(joi_validations_1.default.loginUserSchema), controllers_1.emailAuthControllers.userLoginController);
 router.post("/reset-password-request", joi_validations_1.default.inputValidator(joi_validations_1.default.resendVerificationLinkSchema), controllers_1.emailAuthControllers.userPasswordResetRequestController);
 router.post("/reset-password", joi_validations_1.default.inputValidator(joi_validations_1.default.resetPasswordSchema), controllers_1.emailAuthControllers.userResetPasswordController);
+router.post("/change-password", joi_validations_1.default.inputValidator(joi_validations_1.default.changePasswordSchema), authorization_middleware_1.generalAuthFunction, controllers_1.emailAuthControllers.changeUserPasswordController);
+router.patch("/update-user-names", joi_validations_1.default.inputValidator(joi_validations_1.default.updateUserNameSchema), authorization_middleware_1.generalAuthFunction, controllers_1.emailAuthControllers.updateUserNamesController);
+router.get("/single-user", authorization_middleware_1.generalAuthFunction, controllers_1.emailAuthControllers.getSingleUserDetailsController);
 // Google Registration Route
 router.get("/google/register", (request, response, next) => {
     const timezone = `${request.query.timezone}`;
