@@ -1,11 +1,15 @@
-import { Request, Response, NextFunction, ErrorRequestHandler } from 'express';
+import { Request, Response, NextFunction, ErrorRequestHandler } from "express";
 
 export interface CustomError extends Error {
   status?: number;
   code?: string;
 }
 
-const createError = (message: string, statusCode: number, specialCodeMessage?: string[]) => ({
+const createError = (
+  message: string,
+  statusCode: number,
+  specialCodeMessage?: string[]
+) => ({
   message,
   statusCode,
   specialCodeMessage,
@@ -14,7 +18,7 @@ const createError = (message: string, statusCode: number, specialCodeMessage?: s
 });
 
 export const createUnknownError = (error: any) => ({
-  message: `Something went wrong: ${error.message || 'Unknown error'}`,
+  message: `Something went wrong: ${error.message || "Unknown error"}`,
   statusCode: error.statusCode || 500,
   timestamp: new Date(),
   details: error.stack || error.message,
@@ -35,38 +39,42 @@ const withServiceErrorHandling = (fn: (...args: any[]) => Promise<any>) => {
   return async (...args: any[]) => {
     try {
       return await fn(...args);
-    } catch (error:any) {
-      console.error('Service error:', error.message);
+    } catch (error: any) {
+      console.error("Service error:", error.message);
       throw error;
     }
   };
 };
 
-export const globalErrorHandler: ErrorRequestHandler = (err: any, req: Request, res: Response, next: NextFunction): any => {
+export const globalErrorHandler: ErrorRequestHandler = (
+  err: any,
+  req: Request,
+  res: Response,
+  next: NextFunction
+): any => {
   const errorResponse = err.isOperational ? err : createUnknownError(err);
 
-  console.error('❌ Error:', errorResponse.details || err);
+  console.error("❌ Error:", errorResponse.details || err);
 
   return res.status(errorResponse.statusCode).json({
-    status: 'error',
+    status: "error",
     message: errorResponse.message,
     timestamp: errorResponse.timestamp,
     specialCodeMessage: errorResponse?.specialCodeMessage,
-    details: !err.isOperational ? errorResponse.details : '',
+    details: !err.isOperational ? errorResponse.details : "",
   });
 };
 
 const processErrorHandler = () => {
-  process.on('uncaughtException', (err) => {
-  console.error('💥 UNCAUGHT EXCEPTION:', err);
-  process.exit(1);
-});
+  process.on("uncaughtException", (err) => {
+    console.error("💥 UNCAUGHT EXCEPTION:", err);
+    process.exit(1);
+  });
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('💥 UNHANDLED REJECTION:', reason);
-});
-
-}
+  process.on("unhandledRejection", (reason, promise) => {
+    console.error("💥 UNHANDLED REJECTION:", reason);
+  });
+};
 
 export default {
   createError,
@@ -74,5 +82,5 @@ export default {
   withServiceErrorHandling,
   withControllerErrorHandling,
   globalErrorHandler,
-  processErrorHandler
+  processErrorHandler,
 };

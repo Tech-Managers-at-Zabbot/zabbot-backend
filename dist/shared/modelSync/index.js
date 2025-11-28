@@ -14,3 +14,4 @@ require("../entities/pronunciation-feedback-service-entities/referencePronunciat
 require("../entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation");
 require("../entities/user-service-entities/otp/otp.entities");
 require("../entities/user-service-entities/users/users.entities");
+require("../entities/payment-service-entities/transactions/transactions");

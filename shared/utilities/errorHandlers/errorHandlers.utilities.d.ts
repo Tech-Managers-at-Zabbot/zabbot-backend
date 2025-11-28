@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction, ErrorRequestHandler } from 'express';
+import { Request, Response, NextFunction, ErrorRequestHandler } from "express";
 export interface CustomError extends Error {
     status?: number;
     code?: string;
