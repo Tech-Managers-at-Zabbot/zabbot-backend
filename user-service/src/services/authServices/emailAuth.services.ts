@@ -16,11 +16,18 @@ import { OtpResponses } from "../../responses/otpResponses/otp.responses";
 import userRepositories from "../../repositories/userRepositories/users.repositories";
 import otpRepositories from "../../repositories/otpRepositories/otp.repositories";
 import config from "../../../../config/config";
-import { UserAttributes, UserRoles, RegisterMethods, OtpNotificationType, OtpAttributes } from "../../../../shared/databaseTypes/user-service-types";
+import {
+  UserAttributes,
+  UserRoles,
+  RegisterMethods,
+  OtpNotificationType,
+  OtpAttributes,
+} from "../../../../shared/databaseTypes/user-service-types";
 
 const registerUserService = errorUtilities.withServiceErrorHandling(
   async (registerPayload: UserAttributes) => {
-    const { firstName, lastName, email, password, role, timeZone } = registerPayload;
+    const { firstName, lastName, email, password, role, timeZone } =
+      registerPayload;
 
     const userExists = await usersRepositories.getOne({ email: email }, [
       "id",
@@ -112,7 +119,7 @@ const registerUserService = errorUtilities.withServiceErrorHandling(
 );
 
 const verifyUserAccountService = errorUtilities.withServiceErrorHandling(
-  async (email: string, otp: string) => {
+  async (email, otp: string) => {
     const user = await userRepositories.getOne({ email }, [
       "id",
       "email",
@@ -400,13 +407,14 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
       },
       {
         refreshToken,
-        timeZone
+        timeZone,
       }
     );
 
-    const userDetails:Record<string, any> = await usersRepositories.extractUserDetails(user);
+    const userDetails: Record<string, any> =
+      await usersRepositories.extractUserDetails(user);
 
-    userDetails.languageId = config.YORUBA_LANGUAGE_ID!
+    userDetails.languageId = config.YORUBA_LANGUAGE_ID!;
 
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
@@ -521,7 +529,7 @@ const resetPasswordService = errorUtilities.withServiceErrorHandling(
     const { token, newPassword, confirmNewPassword } = resetPayload;
     if (newPassword !== confirmNewPassword) {
       throw errorUtilities.createError(
-        GeneralResponses.MISMATCHED_PASSEORD,
+        GeneralResponses.MISMATCHED_PASSWORD,
         StatusCodes.BadRequest
       );
     }
@@ -606,7 +614,124 @@ const resetPasswordService = errorUtilities.withServiceErrorHandling(
   }
 );
 
+const changePasswordService = errorUtilities.withServiceErrorHandling(
+  async (userId, currentPassword, newPassword, confirmNewPassword) => {
+    if (newPassword !== confirmNewPassword) {
+      throw errorUtilities.createError(
+        GeneralResponses.MISMATCHED_PASSWORD,
+        StatusCodes.BadRequest
+      );
+    }
 
+    const user = await usersRepositories.getOne({ id: userId }, [
+      "id",
+      "email",
+      "password",
+      "firstName",
+    ]);
+
+    if (!user) {
+      throw errorUtilities.createError(
+        GeneralResponses.USER_NOT_FOUND,
+        StatusCodes.NotFound
+      );
+    }
+
+    const isCurrentPasswordValid = await helperFunctions.comparePasswords(
+      currentPassword,
+      user.password
+    );
+
+    if (!isCurrentPasswordValid) {
+      throw errorUtilities.createError(
+        "The current password you entered is incorrect",
+        StatusCodes.Unauthorized
+      );
+    }
+
+    const hashedNewPassword = await helperFunctions.hashPassword(newPassword);
+
+    const updatedUser = await usersRepositories.updateOne(
+      { id: userId },
+      { password: hashedNewPassword }
+    );
+
+    if (!updatedUser) {
+      throw errorUtilities.createError(
+        GeneralResponses.FAILED_PASSWORD_CHANGE,
+        StatusCodes.InternalServerError
+      );
+    }
+
+    const emailData = {
+      email: user.email,
+      firstName: user.firstName,
+    };
+
+    const emailPayload = {
+      url: `${config.NOTIFICATION_SERVICE_ROUTE}/auth-notification/password-change-success`,
+      emailData,
+    };
+
+    endpointCallsUtilities
+      .processEmailsInBackground(emailPayload)
+      .catch((error) => {
+        console.error(
+          `Background email processing failed for ${user.email}:`,
+          error.message
+        );
+      });
+
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.OK,
+      GeneralResponses.SUCCESSFUL_PASSWORD_CHANGE,
+      { email: user.email }
+    );
+  }
+);
+
+const editUserNamesService = errorUtilities.withServiceErrorHandling(
+  async (
+    updateData: { firstName?: string; lastName?: string },
+    userId: string
+  ) => {
+    const updatedUser = await usersRepositories.updateOne(
+      { id: userId },
+      updateData
+    );
+
+    if (!updatedUser) {
+      throw errorUtilities.createError(
+        GeneralResponses.PROCESS_UNSSUCCESSFUL,
+        StatusCodes.InternalServerError
+      );
+    }
+
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.OK,
+      GeneralResponses.PROCESS_SUCCESSFUL
+    );
+  }
+);
+
+const getSingleUserDetailsService = errorUtilities.withServiceErrorHandling(
+  async (userId: string) => {
+    const getUser = await userRepositories.getOne({ id: userId });
+    if (!getUser) {
+      throw errorUtilities.createError(
+        GeneralResponses.USER_NOT_FOUND,
+        StatusCodes.NotFound
+      );
+    }
+    const newUser = await userRepositories.extractUserDetails(getUser)
+
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.OK,
+      GeneralResponses.PROCESS_SUCCESSFUL,
+      newUser
+    );
+  }
+);
 
 export default {
   registerUserService,
@@ -615,4 +740,7 @@ export default {
   loginUserService,
   passwordResetRequestService,
   resetPasswordService,
+  changePasswordService,
+  editUserNamesService,
+  getSingleUserDetailsService,
 };

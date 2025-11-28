@@ -16,7 +16,18 @@ const getAllUsersCount = utilities_1.errorUtilities.withControllerErrorHandling(
     const userCount = await services_1.userServices.getAllUserCountService();
     return utilities_1.responseUtilities.responseHandler(response, userCount.message, userCount.statusCode, userCount.data);
 });
+const changeUserProfilePicture = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {
+    const { userId } = request.user;
+    const { mediaType } = request.body;
+    const files = request.files;
+    if (!files || files.length === 0 || !mediaType) {
+        return utilities_1.responseUtilities.responseHandler(response, "No file uploaded", 401);
+    }
+    const uploadStatus = await services_1.userServices.changeProfilePicture(userId, mediaType, files);
+    return utilities_1.responseUtilities.responseHandler(response, uploadStatus.message, uploadStatus.statusCode, uploadStatus.data);
+});
 exports.default = {
     getSingleUser,
-    getAllUsersCount
+    getAllUsersCount,
+    changeUserProfilePicture,
 };

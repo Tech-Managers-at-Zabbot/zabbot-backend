@@ -12,3 +12,4 @@ import '../entities/pronunciation-feedback-service-entities/referencePronunciati
 import '../entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation';
 import '../entities/user-service-entities/otp/otp.entities';
 import '../entities/user-service-entities/users/users.entities';
+import '../entities/payment-service-entities/transactions/transactions';
