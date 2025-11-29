@@ -1,10 +1,11 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { MediaType, UploadResponse } from './types';
+import config from '../../config/config';
 
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: config.CLOUDINARY_CLOUD_NAME,
+  api_key: config.CLOUDINARY_API_KEY,
+  api_secret: config.CLOUDINARY_API_SECRET,
 });
 
 export class CloudinaryService {
@@ -104,14 +105,14 @@ export class CloudinaryService {
         folder: uploadFolder,
         resource_type: mediaType === 'video' ? 'video' : 'image',
       },
-      process.env.CLOUDINARY_API_SECRET!
+      config.CLOUDINARY_API_SECRET!
     );
 
     return {
       signature,
       timestamp,
-      apiKey: process.env.CLOUDINARY_API_KEY!,
-      cloudName: process.env.CLOUDINARY_CLOUD_NAME!,
+      apiKey: config.CLOUDINARY_API_KEY!,
+      cloudName: config.CLOUDINARY_CLOUD_NAME!,
       folder: uploadFolder,
     };
   }

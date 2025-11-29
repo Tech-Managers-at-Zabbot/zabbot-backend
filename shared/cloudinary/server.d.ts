@@ -18,8 +18,8 @@ export declare class CloudinaryService {
     static generateUploadSignature(folder: string, mediaType: MediaType): {
         signature: string;
         timestamp: number;
-        apiKey: string;
-        cloudName: string;
+        apiKey: any;
+        cloudName: any;
         folder: string;
     };
 }
