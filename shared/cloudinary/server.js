@@ -1,11 +1,15 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CloudinaryService = void 0;
 const cloudinary_1 = require("cloudinary");
+const config_1 = __importDefault(require("../../config/config"));
 cloudinary_1.v2.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
+    cloud_name: config_1.default.CLOUDINARY_CLOUD_NAME,
+    api_key: config_1.default.CLOUDINARY_API_KEY,
+    api_secret: config_1.default.CLOUDINARY_API_SECRET,
 });
 class CloudinaryService {
     /**
@@ -85,12 +89,12 @@ class CloudinaryService {
             timestamp,
             folder: uploadFolder,
             resource_type: mediaType === 'video' ? 'video' : 'image',
-        }, process.env.CLOUDINARY_API_SECRET);
+        }, config_1.default.CLOUDINARY_API_SECRET);
         return {
             signature,
             timestamp,
-            apiKey: process.env.CLOUDINARY_API_KEY,
-            cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+            apiKey: config_1.default.CLOUDINARY_API_KEY,
+            cloudName: config_1.default.CLOUDINARY_CLOUD_NAME,
             folder: uploadFolder,
         };
     }

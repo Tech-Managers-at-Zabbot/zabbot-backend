@@ -63,14 +63,11 @@ const changeProfilePicture = errorUtilities.withServiceErrorHandling(
   async (userId: string, mediaType: string, files: Record<string, any>[]) => {
     const category = "profile-pictures";
 
-    console.log('Test1', userId, category, mediaType, files)
-
     const uploadProfilePicture: any = await uploadFile(
       category,
       mediaType,
       files
     );
-    console.log('Test2', uploadProfilePicture)
     if (uploadProfilePicture.status === "invalid") {
       throw errorUtilities.createError(
         uploadProfilePicture.message,
