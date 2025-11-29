@@ -34,7 +34,8 @@ export const uploadFile = async (
           mediaType as MediaType
         );
         result.successful.push(uploadResponse);
-      } catch (error) {
+      } catch (error:any) {
+        console.log('error25', error.message)
         result.failed.push({
           file: file.originalname,
           error: error instanceof Error ? error.message : "Unknown error",
@@ -60,8 +61,8 @@ export const uploadFile = async (
     uploadResponse.message = "Process Partially Successful";
     uploadResponse.data = result;
     return uploadResponse;
-  } catch (error) {
-    console.log(error);
+  } catch (error:any) {
+    console.log('upload error21', error.message);
     uploadResponse.status = "error";
     uploadResponse.message =
       error instanceof Error
