@@ -24,6 +24,7 @@ const uploadFile = async (category, mediaType, files) => {
                 result.successful.push(uploadResponse);
             }
             catch (error) {
+                console.log('error25', error.message);
                 result.failed.push({
                     file: file.originalname,
                     error: error instanceof Error ? error.message : "Unknown error",
@@ -48,7 +49,7 @@ const uploadFile = async (category, mediaType, files) => {
         return uploadResponse;
     }
     catch (error) {
-        console.log(error);
+        console.log('upload error21', error.message);
         uploadResponse.status = "error";
         uploadResponse.message =
             error instanceof Error

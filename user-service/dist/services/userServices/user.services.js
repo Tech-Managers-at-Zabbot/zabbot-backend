@@ -28,7 +28,9 @@ const updateSingleUserService = utilities_1.errorUtilities.withServiceErrorHandl
 //WRITE A MIGRATION TO STORE PROFILE IMAGE PUBLIC IDs IN DATABASE FOR EASY DELETION
 const changeProfilePicture = utilities_1.errorUtilities.withServiceErrorHandling(async (userId, mediaType, files) => {
     const category = "profile-pictures";
+    console.log('Test1', userId, category, mediaType, files);
     const uploadProfilePicture = await (0, api_1.uploadFile)(category, mediaType, files);
+    console.log('Test2', uploadProfilePicture);
     if (uploadProfilePicture.status === "invalid") {
         throw utilities_1.errorUtilities.createError(uploadProfilePicture.message, statusCodes_responses_1.StatusCodes.BadRequest);
     }
