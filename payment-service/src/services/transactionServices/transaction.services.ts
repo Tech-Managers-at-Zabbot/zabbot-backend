@@ -286,7 +286,7 @@ const getUserTransactionsService = errorUtilities.withServiceErrorHandling(
     if (!allUserTransactions || !getUserLastPayment) {
       throw errorUtilities.createError(
         StripeResponses.UNSUCCESSFUL_PROCESS,
-        StatusCodes.BadRequest
+        StatusCodes.NotFound
       );
     }
 
