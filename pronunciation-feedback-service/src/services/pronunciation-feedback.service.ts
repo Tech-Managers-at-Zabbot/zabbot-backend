@@ -21,7 +21,6 @@ import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
 import UserPronunciation from "../../../shared/entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation";
 import config from "../../../config/config";
 
-
 Ffmpeg.setFfmpegPath(ffmpegPath as string);
 
 const sampleRate = 16000;
@@ -56,11 +55,11 @@ const safeTensorDispose = (tensor: tf.Tensor | null) => {
 // New lightweight embedding function using OpenAI API
 const getTextEmbedding = async (text: string): Promise<any> => {
   try {
-    const response = await openai.embeddings.create({
+    const response = (await openai.embeddings.create({
       model: "text-embedding-3-small", // Most cost-effective option
       input: text.toLowerCase().trim(), // Normalize text
       encoding_format: "float",
-    }) as any;
+    })) as any;
 
     return response.data[0].embedding;
   } catch (error: any) {
@@ -72,7 +71,10 @@ const getTextEmbedding = async (text: string): Promise<any> => {
 };
 
 // Helper function for cosine similarity
-const calculateCosineSimilarity = (vecA: number[] | any, vecB: number[] | any[]): number => {
+const calculateCosineSimilarity = (
+  vecA: number[] | any,
+  vecB: number[] | any[]
+): number => {
   const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
   const normA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
   const normB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
@@ -151,7 +153,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
   }: {
     userId: string;
     referencePronunciationId: string;
-    file: any
+    file: any;
     voice?: string;
   }) => {
     logMemoryUsage("Start of comparePronounciation");
