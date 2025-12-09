@@ -15,3 +15,6 @@ require("../entities/pronunciation-feedback-service-entities/userPronunciation/u
 require("../entities/user-service-entities/otp/otp.entities");
 require("../entities/user-service-entities/users/users.entities");
 require("../entities/payment-service-entities/transactions/transactions");
+require("../entities/payment-service-entities/subscriptions/subscriptions");
+require("../entities/payment-service-entities/subscriptions/userSubscriptions");
+require("../entities/user-service-entities/userNotificationSettings/userNotificationSettings.entities");

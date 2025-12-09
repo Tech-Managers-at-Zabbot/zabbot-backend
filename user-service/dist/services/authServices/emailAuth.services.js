@@ -242,8 +242,20 @@ const loginUserService = utilities_1.errorUtilities.withServiceErrorHandling(asy
         refreshToken,
         timeZone,
     });
+    let userSub;
+    try {
+        userSub = await axios_1.default.get(`${config_1.default.PAYMENT_SERVICE_ROUTE}/subscription-plans/user-subscription`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        });
+    }
+    catch (error) {
+        console.error(`Error fetching user Sub: ${error.message}`);
+    }
     const userDetails = await users_repositories_1.default.extractUserDetails(user);
     userDetails.languageId = config_1.default.YORUBA_LANGUAGE_ID;
+    userDetails.userSubscription = userSub?.data?.data;
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, general_responses_1.GeneralResponses.SUCCESSFUL_LOGIN, { token: accessToken, user: userDetails });
 });
 const passwordResetRequestService = utilities_1.errorUtilities.withServiceErrorHandling(async (email) => {

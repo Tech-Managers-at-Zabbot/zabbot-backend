@@ -1,4 +1,5 @@
 declare const _default: {
+    STRIPE_WEBHOOK_SECRET: string | undefined;
     STRIPE_SUCCESS_URL: string | undefined;
     STRIPE_FAILURE_URL: string | undefined;
     STRIPE_PUBLISHABLE_KEY: string | undefined;

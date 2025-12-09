@@ -13,3 +13,6 @@ import '../entities/pronunciation-feedback-service-entities/userPronunciation/us
 import '../entities/user-service-entities/otp/otp.entities';
 import '../entities/user-service-entities/users/users.entities';
 import '../entities/payment-service-entities/transactions/transactions';
+import '../entities/payment-service-entities/subscriptions/subscriptions';
+import '../entities/payment-service-entities/subscriptions/userSubscriptions';
+import '../entities/user-service-entities/userNotificationSettings/userNotificationSettings.entities';
