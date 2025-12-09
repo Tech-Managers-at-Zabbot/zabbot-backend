@@ -7,10 +7,17 @@ import cookieParser from "cookie-parser";
 import { errorUtilities } from "../../shared/utilities";
 import config from "../../config/config";
 import routes from "./routes";
+import { stripeControllers } from "./controllers";
 
 const app = express();
 
 app.disable("x-powered-by");
+
+app.post(
+  "/payment-services/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  stripeControllers.stripeWebhookController
+);
 
 // Middlewares
 app.use(helmet());
@@ -30,7 +37,6 @@ app.get("/", (req, res) => {
     "Payment Service is running. Please refer to the documentation for usage details."
   );
 });
-
 
 // Error handling
 app.use(errorUtilities.globalErrorHandler as any);

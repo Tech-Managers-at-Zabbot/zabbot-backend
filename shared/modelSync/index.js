@@ -17,3 +17,6 @@ require("../entities/user-service-entities/otp/otp.entities");
 // import '../entities/user-service-entities/userActivityLogs.entities';
 require("../entities/user-service-entities/users/users.entities");
 require("../entities/payment-service-entities/transactions/transactions");
+require("../entities/payment-service-entities/subscriptions/subscriptions");
+require("../entities/payment-service-entities/subscriptions/userSubscriptions");
+require("../entities/user-service-entities/userNotificationSettings/userNotificationSettings.entities");
