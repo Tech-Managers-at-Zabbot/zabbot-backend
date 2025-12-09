@@ -411,10 +411,26 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
       }
     );
 
+    let userSub;
+    try {
+      userSub = await axios.get(
+        `${config.PAYMENT_SERVICE_ROUTE}/subscription-plans/user-subscription`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+    } catch (error: any) {
+      console.error(`Error fetching user Sub: ${error.message}`);
+    }
+
     const userDetails: Record<string, any> =
       await usersRepositories.extractUserDetails(user);
 
     userDetails.languageId = config.YORUBA_LANGUAGE_ID!;
+
+    userDetails.userSubscription = userSub?.data?.data
 
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
@@ -723,7 +739,7 @@ const getSingleUserDetailsService = errorUtilities.withServiceErrorHandling(
         StatusCodes.NotFound
       );
     }
-    const newUser = await userRepositories.extractUserDetails(getUser)
+    const newUser = await userRepositories.extractUserDetails(getUser);
 
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,

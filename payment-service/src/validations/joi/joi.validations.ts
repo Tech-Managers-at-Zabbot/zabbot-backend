@@ -1,5 +1,6 @@
 import Joi from "joi";
 import { Request, Response, NextFunction } from "express";
+import { PlanType } from "../../../../shared/entities/payment-service-entities/transactions/transactions";
 
 const inputValidator = (schema: Joi.Schema): any => {
   return async (
@@ -65,9 +66,28 @@ const createTransactionSchema = Joi.object({
     }),
 });
 
+const createSubscriptionPlanSchema = Joi.object({
+  planType: Joi.string()
+    .valid(PlanType.MONTHLY, PlanType.ANNUAL, PlanType.LIFETIME)
+    .required(),
+
+  price: Joi.number()
+    .precision(2)
+    .min(0)
+    .required(),
+
+  currency: Joi.string()
+    .length(3)
+    .uppercase()
+    .default("USD"),
+
+  features: Joi.object().optional(),
+});
+
 
 export default {
   stripeCreateCheckoutSessionSchema,
   createTransactionSchema,
+  createSubscriptionPlanSchema,
   inputValidator,
 };

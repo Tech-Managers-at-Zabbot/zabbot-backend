@@ -1,8 +1,21 @@
 import { Model, Optional } from "sequelize";
 export declare enum TransactionStatus {
     PENDING = "pending",
+    PROCESSING = "processing",
     SUCCESS = "success",
-    FAILED = "failed"
+    FAILED = "failed",
+    REFUNDED = "refunded",
+    CANCELLED = "cancelled"
+}
+export declare enum TransactionType {
+    SUBSCRIPTION = "subscription",
+    ONE_TIME = "one_time",
+    RENEWAL = "renewal",
+    REFUND = "refund"
+}
+export declare enum PaymentGateway {
+    STRIPE = "stripe",
+    PAYPAL = "paypal"
 }
 export declare enum PlanType {
     LIFETIME = "lifetime",
@@ -12,10 +25,26 @@ export declare enum PlanType {
 export interface TransactionAttributes {
     id: string;
     userId: string;
-    planType: PlanType;
+    paymentGateway: PaymentGateway;
+    gatewayTransactionId?: string;
+    gatewayCustomerId?: string;
+    gatewaySubscriptionId?: string;
+    transactionType: TransactionType;
     amount: number;
     currency: string;
     status: TransactionStatus;
+    planType?: PlanType;
+    planId?: string;
+    paymentMethod?: string;
+    last4?: string;
+    paidAt?: Date;
+    failedAt?: Date;
+    refundedAt?: Date;
+    cancelledAt?: Date;
+    failureReason?: string;
+    failureCode?: string;
+    description?: string;
+    metadata?: Record<string, any>;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -24,10 +53,26 @@ interface TransactionCreationAttributes extends Optional<TransactionAttributes, 
 declare class Transactions extends Model<TransactionAttributes, TransactionCreationAttributes> implements TransactionAttributes {
     id: string;
     userId: string;
-    planType: PlanType;
+    paymentGateway: PaymentGateway;
+    gatewayTransactionId?: string;
+    gatewayCustomerId?: string;
+    gatewaySubscriptionId?: string;
+    transactionType: TransactionType;
     amount: number;
     currency: string;
     status: TransactionStatus;
+    planType?: PlanType;
+    planId?: string;
+    paymentMethod?: string;
+    last4?: string;
+    paidAt?: Date;
+    failedAt?: Date;
+    refundedAt?: Date;
+    cancelledAt?: Date;
+    failureReason?: string;
+    failureCode?: string;
+    description?: string;
+    metadata?: Record<string, any>;
     createdAt?: Date;
     updatedAt?: Date;
 }

@@ -12,4 +12,7 @@ router.post(
   stripeControllers.createCheckoutSessionController
 );
 
+router.post("/webhook", express.raw({ type: "application/json" }), stripeControllers.stripeWebhookController)
+// localhost:3010/api/v1/payments/payment-services/stripe/webhook
+
 export default router;
