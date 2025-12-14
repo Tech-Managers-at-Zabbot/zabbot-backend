@@ -430,7 +430,7 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
 
     userDetails.languageId = config.YORUBA_LANGUAGE_ID!;
 
-    userDetails.userSubscription = userSub?.data?.data
+    userDetails.userSubscription = userSub?.data?.data;
 
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
