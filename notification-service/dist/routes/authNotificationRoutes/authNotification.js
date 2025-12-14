@@ -11,4 +11,5 @@ router.post('/welcome-otp', controllers_1.userAuthNotifications.sendWelcomeEmail
 router.post('/resend-verification-otp', controllers_1.userAuthNotifications.sendResendOtpNotificationController);
 router.post('/reset-password-link', controllers_1.userAuthNotifications.sendResetPasswordLinkController);
 router.post('/password-reset-success', controllers_1.userAuthNotifications.sendPasswordResetConfirmationController);
+router.post('/notification-preference-change', controllers_1.userAuthNotifications.userNotificationFrequencyChangeController);
 exports.default = router;
