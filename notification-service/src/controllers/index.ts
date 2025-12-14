@@ -1,5 +1,5 @@
 import emailControllers from "./foundersListControllers";
-import userAuthNotifications from "./userAuthNotifications";
+import userAuthNotifications from "./userNotifications";
 
 
 export { 

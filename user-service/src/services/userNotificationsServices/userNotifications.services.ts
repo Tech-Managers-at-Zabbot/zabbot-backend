@@ -8,9 +8,20 @@ import userNotificationsRepositories from "../../repositories/userNotificationRe
 import { v4 } from "uuid";
 import { NotificationFrequency } from "../../../../shared/entities/user-service-entities/userNotificationSettings/userNotificationSettings.entities";
 import { NotificationResponses } from "../../responses/userNotifcationsResponses/userNotifications.responses";
+import { endpointCallsUtilities } from "../../utilities";
+import config from "../../../../config/config";
+import userRepositories from "../../repositories/userRepositories/users.repositories";
 
 const upsertUserNotificationService = errorUtilities.withServiceErrorHandling(
   async (userId: string, frequency?: string) => {
+    const user = await userRepositories.getOne({ id: userId });
+
+    if (!user) {
+      throw errorUtilities.createError(
+        GeneralResponses.USER_NOT_FOUND,
+        StatusCodes.NotFound
+      );
+    }
     const existing = await userNotificationsRepositories.getOne({ userId });
 
     if (existing) {
@@ -21,6 +32,24 @@ const upsertUserNotificationService = errorUtilities.withServiceErrorHandling(
         }
       );
 
+      const emailData = {
+        email: user.email,
+        firstName: user.firstName,
+        notificationPreference: frequency || existing.frequency,
+      };
+      const emailPayload = {
+        url: `${config.NOTIFICATION_SERVICE_ROUTE}/auth-notification/notification-preference-change`,
+        emailData,
+      };
+
+      endpointCallsUtilities
+        .processEmailsInBackground(emailPayload)
+        .catch((error) => {
+          console.error(
+            `Background email processing failed for ${user.email}:`,
+            error.message
+          );
+        });
       return responseUtilities.handleServicesResponse(
         StatusCodes.OK,
         GeneralResponses.PROCESS_SUCCESSFUL,
@@ -40,6 +69,25 @@ const upsertUserNotificationService = errorUtilities.withServiceErrorHandling(
         StatusCodes.InternalServerError
       );
     }
+
+    const emailData = {
+      email: user.email,
+      firstName: user.firstName,
+      notificationPreference: frequency || newRecord.frequency,
+    };
+    const emailPayload = {
+      url: `${config.NOTIFICATION_SERVICE_ROUTE}/auth-notification/notification-preference-change`,
+      emailData,
+    };
+
+    endpointCallsUtilities
+      .processEmailsInBackground(emailPayload)
+      .catch((error) => {
+        console.error(
+          `Background email processing failed for ${user.email}:`,
+          error.message
+        );
+      });
 
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,

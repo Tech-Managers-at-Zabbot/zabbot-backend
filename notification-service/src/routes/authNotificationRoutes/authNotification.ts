@@ -10,6 +10,6 @@ router.post('/welcome-otp', userAuthNotifications.sendWelcomeEmailWithNotificati
 router.post('/resend-verification-otp', userAuthNotifications.sendResendOtpNotificationController)
 router.post('/reset-password-link', userAuthNotifications.sendResetPasswordLinkController)
 router.post('/password-reset-success', userAuthNotifications.sendPasswordResetConfirmationController)
-
+router.post('/notification-preference-change', userAuthNotifications.userNotificationFrequencyChangeController)
 
 export default router;
