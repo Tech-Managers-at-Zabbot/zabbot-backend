@@ -615,13 +615,13 @@ const sendNotificationChangeService = utilities_1.errorUtilities.withServiceErro
     const html = (0, renderEmailTemplate_1.renderEmailTemplate)("notification-preference.html", {
         firstName,
         notificationPreference,
-        LOGO_URL: "../assets/zabbot-logo-white.png",
+        //   LOGO_URL: "../assets/zabbot-logo-white.png",
     });
     let messageDetails = {
         to: email,
         from: process.env.SENDGRID_FROM_EMAIL,
         subject: `Ẹ káàbọ̀! (Welcome!) ${firstName}`,
-        //   text: `Hello ${firstName},\n\nWelcome to Zabbot!\n\nThank you!`,
+        text: `Hello ${firstName},\n\nWelcome to Zabbot!\n\nThank you!`,
         html,
     };
     try {
@@ -634,6 +634,21 @@ const sendNotificationChangeService = utilities_1.errorUtilities.withServiceErro
         // throw errorUtilities.createError(`Failed to send email: ${error.message}`, 500);
     }
 });
+// const sendSubscriptionPaymentConfirmationEmailService =
+//   errorUtilities.withServiceErrorHandling(
+//     async (email: string, firstName: string, planName: string, amountPaid:string, billingCycle: string, nextBillingDate: string) => {
+//       // Implementation for sending subscription payment confirmation email
+//     }
+//   );
+//   {
+//   firstName: "Bola",
+//   planName: "Annual Subscription",
+//   amountPaid: "US$69.99",
+//   billingCycle: "Yearly",
+//   nextBillingDate: "March 12, 2026",
+//   LOGO_URL: "https://cdn.zabbot.ai/logo-white.png",
+//   DASHBOARD_URL: "https://app.zabbot.ai/dashboard"
+// }
 exports.default = {
     sendWelcomeFoundingListEmailService,
     addToSendGridFoundersList,
@@ -646,5 +661,6 @@ exports.default = {
     sendgridResendOtpService,
     sendgridSendPasswordResetLinkService,
     sendgridSendPasswordResetConfirmationService,
-    sendNotificationChangeService
+    sendNotificationChangeService,
+    //   sendSubscriptionPaymentConfirmationEmailService
 };
