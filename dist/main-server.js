@@ -11,6 +11,7 @@ dotenv_flow_1.default.config({
     path: process_1.default.cwd(),
 });
 require("./cronJob-services/lessonServiceJobs");
+const sendNotificationsJobs_1 = __importDefault(require("./cronJob-services/sendNotificationsJobs"));
 const express_1 = __importDefault(require("express"));
 const http_proxy_middleware_1 = require("http-proxy-middleware");
 const child_process_1 = require("child_process");
@@ -229,6 +230,7 @@ process_1.default.on("SIGINT", () => shutdown(0));
 async function init() {
     await startServices();
     await (0, syncDb_1.syncDatabases)();
+    sendNotificationsJobs_1.default.testNotificationCron();
 }
 init();
 app.use((req, res, next) => {
