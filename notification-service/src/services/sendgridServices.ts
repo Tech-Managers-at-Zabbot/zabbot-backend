@@ -7,6 +7,9 @@ import {
 import sendgridDetails from "../config/sendgridConfig";
 import { SendgridListTypes, SendgridListName } from "../constants/enums";
 import { nodemailerService } from "../services";
+import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
+import userNotificationsRepositories from "../../../shared/repositories/userNotification.repositories";
+
 
 const listIdMap: Record<SendgridListName, string | undefined> = {
   [SendgridListName.FOUNDERS_LIST]: process.env.SENDGRID_FOUNDERS_LIST_ID,
@@ -859,6 +862,111 @@ const sendNotificationChangeService = errorUtilities.withServiceErrorHandling(
   }
 );
 
+const sendFrequentNotificationService = errorUtilities.withServiceErrorHandling(
+  async (email: string, firstName: string, userId: string) => {
+    const templates = [
+      "reminder-1-heritage.html",
+      "reminder-2-consistency.html",
+      "reminder-3-family.html",
+      "reminder-4-preservation.html",
+      "reminder-5-pronunciation.html",
+      "reminder-6-stories.html",
+      "reminder-7-progress.html",
+      "reminder-8-busy.html",
+      "reminder-9-confidence.html",
+      "reminder-10-momentum.html",
+      "reminder-11-community.html",
+      "reminder-12-brain.html",
+      "reminder-13-music.html",
+      "reminder-14-names.html",
+      "reminder-15-generations.html",
+      "reminder-16-morning.html",
+      "reminder-17-weekend.html",
+      "reminder-18-travel.html",
+      "reminder-19-food.html",
+      "reminder-20-greetings.html",
+      "reminder-21-children.html",
+      "reminder-22-proverbs.html",
+      "reminder-23-evening.html",
+      "reminder-24-celebrations.html",
+      "reminder-25-numbers.html",
+      "reminder-26-emotions.html",
+      "reminder-27-professional.html",
+      "reminder-28-nature.html",
+      "reminder-29-streak.html",
+      "reminder-30-pride.html",
+    ];
+    const notificationSetting = await userNotificationsRepositories.getOne({
+      userId,
+    });
+
+    if (!notificationSetting) {
+      throw errorUtilities.createError(
+        "Notification settings not found",
+        StatusCodes.NotFound
+      );
+    }
+
+    const sentTemplates = notificationSetting.sentTemplates || [];
+
+    // Get available templates (ones not sent yet)
+    const availableTemplates = templates.filter(
+      (template) => !sentTemplates.includes(template)
+    );
+
+    // If all templates have been used, reset the list
+    const templatesToChooseFrom =
+      availableTemplates.length > 0 ? availableTemplates : templates;
+
+    // Randomly select a template
+    const randomIndex = Math.floor(
+      Math.random() * templatesToChooseFrom.length
+    );
+    const selectedTemplate = templatesToChooseFrom[randomIndex];
+
+    // Update sentTemplates array
+    const updatedSentTemplates =
+      availableTemplates.length > 0
+        ? [...sentTemplates, selectedTemplate]
+        : [selectedTemplate]; // Reset if we cycled through all
+
+    // Update the notification setting with the new template
+    await userNotificationsRepositories.updateOne(
+      { userId },
+      { sentTemplates: updatedSentTemplates }
+    );
+
+    const html = renderEmailTemplate(selectedTemplate, {
+      firstName,
+      LOGO_URL:
+        "https://res.cloudinary.com/dgotesgcy/image/upload/v1765748764/zabbot-logo-white_yojqzm.png",
+      APP_URL: "https://zabbot-app-development-4cnub.ondigitalocean.app/",
+    });
+
+    let messageDetails = {
+      to: email,
+      from: process.env.SENDGRID_FROM_EMAIL!,
+      subject: `Ẹ káàbọ̀! (Welcome!) ${firstName}`,
+      text: `Hello ${firstName},\n\nWelcome to Zabbot!\n\nThank you!`,
+      html,
+    };
+
+    try {
+      const emailResponse = await nodemailerService.sendEmailService(
+        messageDetails
+      );
+      console.log("Email sent:", emailResponse);
+      return responseUtilities.handleServicesResponse(
+        200,
+        "Email sent successfully",
+        emailResponse
+      );
+    } catch (error: any) {
+      console.error("Nodemailer error:", error);
+    }
+  }
+);
+
 
 // const sendSubscriptionPaymentConfirmationEmailService =
 //   errorUtilities.withServiceErrorHandling(
@@ -892,5 +1000,6 @@ export default {
   sendgridSendPasswordResetLinkService,
   sendgridSendPasswordResetConfirmationService,
   sendNotificationChangeService,
+  sendFrequentNotificationService
 //   sendSubscriptionPaymentConfirmationEmailService
 };

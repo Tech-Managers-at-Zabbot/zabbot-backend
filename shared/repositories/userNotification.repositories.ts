@@ -1,6 +1,6 @@
-import NotificationSetting from "../../../../shared/entities/user-service-entities/userNotificationSettings/userNotificationSettings.entities";
+import NotificationSetting from "../entities/user-service-entities/userNotificationSettings/userNotificationSettings.entities";
 import { Transaction } from "sequelize";
-import { errorUtilities } from "../../../../shared/utilities";
+import { errorUtilities } from "../utilities";
 
 const userNotificationsRepositories = {
   create: async (data: any, transaction?: Transaction) => {
