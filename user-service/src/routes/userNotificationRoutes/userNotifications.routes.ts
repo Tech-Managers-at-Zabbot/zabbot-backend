@@ -17,4 +17,6 @@ router.get(
   userNotificationControllers.getUserNotificationSettingController
 );
 
+router.get("/cron-update", userNotificationControllers.getUserNotificationSettingForCronJobController)
+
 export default router;

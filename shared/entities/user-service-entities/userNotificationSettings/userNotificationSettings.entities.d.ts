@@ -9,6 +9,9 @@ export interface NotificationSettingAttributes {
     id: string;
     userId: string;
     frequency: NotificationFrequency;
+    lastNotificationDate: Date;
+    nextNotificationDate: Date;
+    sentTemplates: string[];
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -16,6 +19,9 @@ declare class NotificationSetting extends Model<NotificationSettingAttributes> i
     id: string;
     userId: string;
     frequency: NotificationFrequency;
+    lastNotificationDate: Date;
+    nextNotificationDate: Date;
+    sentTemplates: string[];
     createdAt?: Date;
     updatedAt?: Date;
 }

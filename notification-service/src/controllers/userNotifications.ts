@@ -108,6 +108,7 @@ const userNotificationFrequencyChangeController =
       );
     }
   );
+  
 export default {
   sendWelcomeEmailWithNotificationController,
   sendResendOtpNotificationController,

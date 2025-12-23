@@ -20,6 +20,7 @@ dotenvFlow.config({
 // });
 
 import "./cronJob-services/lessonServiceJobs";
+import notificationCron from "./cronJob-services/sendNotificationsJobs";
 import express from "express";
 import { createProxyMiddleware, Options } from "http-proxy-middleware";
 import { spawn, ChildProcess } from "child_process";
@@ -316,6 +317,7 @@ process.on("SIGINT", () => shutdown(0));
 async function init() {
   await startServices();
   await syncDatabases();
+  notificationCron.startNotificationCron()
 }
 
 init();

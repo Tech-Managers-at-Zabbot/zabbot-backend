@@ -22,8 +22,8 @@ NotificationSetting.init({
         type: sequelize_1.DataTypes.UUID,
         allowNull: false,
         references: {
-            model: 'users',
-            key: 'id',
+            model: "users",
+            key: "id",
         },
         unique: true,
     },
@@ -31,6 +31,25 @@ NotificationSetting.init({
         type: sequelize_1.DataTypes.ENUM(...Object.values(NotificationFrequency)),
         allowNull: false,
         defaultValue: NotificationFrequency.WEEKLY,
+    },
+    lastNotificationDate: {
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true,
+        defaultValue: Date.now(),
+    },
+    sentTemplates: {
+        type: sequelize_1.DataTypes.JSON,
+        allowNull: false,
+        defaultValue: [],
+    },
+    nextNotificationDate: {
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true,
+        defaultValue: () => {
+            const now = new Date();
+            now.setDate(now.getDate() + 7);
+            return now;
+        },
     },
 }, {
     sequelize: databases_1.users_service_db,
