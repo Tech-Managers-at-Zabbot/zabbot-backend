@@ -654,7 +654,7 @@ const sendFrequentNotificationService = utilities_1.errorUtilities.withServiceEr
         "reminder-14-names.html",
         "reminder-15-generations.html",
         "reminder-16-morning.html",
-        "reminder-17-weekened.html",
+        "reminder-17-weekend.html",
         "reminder-18-travel.html",
         "reminder-19-food.html",
         "reminder-20-greetings.html",

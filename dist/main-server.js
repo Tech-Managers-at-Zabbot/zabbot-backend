@@ -230,7 +230,7 @@ process_1.default.on("SIGINT", () => shutdown(0));
 async function init() {
     await startServices();
     await (0, syncDb_1.syncDatabases)();
-    sendNotificationsJobs_1.default.testNotificationCron();
+    sendNotificationsJobs_1.default.startNotificationCron();
 }
 init();
 app.use((req, res, next) => {
