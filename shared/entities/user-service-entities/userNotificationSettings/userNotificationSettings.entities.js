@@ -38,7 +38,7 @@ NotificationSetting.init({
         defaultValue: Date.now(),
     },
     sentTemplates: {
-        type: sequelize_1.DataTypes.JSON,
+        type: sequelize_1.DataTypes.JSONB,
         allowNull: false,
         defaultValue: [],
     },
