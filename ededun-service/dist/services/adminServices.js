@@ -9,6 +9,7 @@ const uuid_1 = require("uuid");
 const cloudinary_1 = require("../utilities/cloudinary");
 const recordingModel_1 = __importDefault(require("../models/recordings/recordingModel"));
 const recordingRepository_1 = __importDefault(require("../repositories/recordingRepository"));
+const generalHelpers_1 = __importDefault(require("../helpers/generalHelpers"));
 const addPhrase = utilities_1.errorUtilities.withErrorHandling(async (phrasePayload) => {
     let { yoruba_text, english_text, pronounciation_note, phrase_category } = phrasePayload;
     const existingEnglishPhrase = (await phrasesRepository_1.default.phrasesRepository.getOne({
@@ -18,10 +19,10 @@ const addPhrase = utilities_1.errorUtilities.withErrorHandling(async (phrasePayl
         yoruba_text,
     }));
     if (existingEnglishPhrase) {
-        throw utilities_1.errorUtilities.createError('English phrase already exists', 400);
+        throw utilities_1.errorUtilities.createError("English phrase already exists", 400);
     }
     if (existingYorubaPhrase) {
-        throw utilities_1.errorUtilities.createError('Yoruba phrase already exists', 400);
+        throw utilities_1.errorUtilities.createError("Yoruba phrase already exists", 400);
     }
     const phraseId = (0, uuid_1.v4)();
     const phraseCreationPayload = {
@@ -33,7 +34,7 @@ const addPhrase = utilities_1.errorUtilities.withErrorHandling(async (phrasePayl
     };
     const newPhrase = await phrasesRepository_1.default.phrasesRepository.create(phraseCreationPayload);
     if (!newPhrase) {
-        throw utilities_1.errorUtilities.createError('Unable to create phrase', 400);
+        throw utilities_1.errorUtilities.createError("Unable to create phrase", 400);
     }
     const phrase = await phrasesRepository_1.default.phrasesRepository.getOne({
         id: phraseId,
@@ -43,13 +44,15 @@ const addPhrase = utilities_1.errorUtilities.withErrorHandling(async (phrasePayl
 const updatePhrase = utilities_1.errorUtilities.withErrorHandling(async (profilePayload) => {
     const { body } = profilePayload;
     const { phraseId } = profilePayload;
-    const phrase = await phrasesRepository_1.default.phrasesRepository.getOne({ id: phraseId });
+    const phrase = await phrasesRepository_1.default.phrasesRepository.getOne({
+        id: phraseId,
+    });
     if (!phrase) {
-        throw utilities_1.errorUtilities.createError('Phrase not found, please try again', 400);
+        throw utilities_1.errorUtilities.createError("Phrase not found, please try again", 400);
     }
     if ((!body.english_text || body.english_text === "") &&
         (!body.yoruba_text || body.yoruba_text === "")) {
-        throw utilities_1.errorUtilities.createError('Please select at least a field to update', 400);
+        throw utilities_1.errorUtilities.createError("Please select at least a field to update", 400);
     }
     let updateDetails = {};
     if (body.english_text) {
@@ -59,18 +62,22 @@ const updatePhrase = utilities_1.errorUtilities.withErrorHandling(async (profile
         updateDetails.yoruba_text = body.yoruba_text.trim();
     }
     const updatedPhrase = await phrasesRepository_1.default.phrasesRepository.updateOne({ id: phraseId }, updateDetails);
-    return utilities_1.responseUtilities.handleServicesResponse(200, 'phrase updated successfully', updatedPhrase);
+    return utilities_1.responseUtilities.handleServicesResponse(200, "phrase updated successfully", updatedPhrase);
 });
 const deletePhrase = utilities_1.errorUtilities.withErrorHandling(async (phraseId) => {
-    const phrase = await phrasesRepository_1.default.phrasesRepository.getOne({ id: phraseId });
+    const phrase = await phrasesRepository_1.default.phrasesRepository.getOne({
+        id: phraseId,
+    });
     if (!phrase) {
-        throw utilities_1.errorUtilities.createError('Phrase not found, please try again', 400);
+        throw utilities_1.errorUtilities.createError("Phrase not found, please try again", 400);
     }
-    const deletedPhrase = await phrasesRepository_1.default.phrasesRepository.deleteOne({ phraseId });
+    const deletedPhrase = await phrasesRepository_1.default.phrasesRepository.deleteOne({
+        phraseId,
+    });
     if (!deletedPhrase) {
-        throw utilities_1.errorUtilities.createError('Phrase not deleted, please try again', 400);
+        throw utilities_1.errorUtilities.createError("Phrase not deleted, please try again", 400);
     }
-    return utilities_1.responseUtilities.handleServicesResponse(200, 'phrase deleted successfully');
+    return utilities_1.responseUtilities.handleServicesResponse(200, "phrase deleted successfully");
 });
 const addManyPhrases = utilities_1.errorUtilities.withErrorHandling(async (phraseArray) => {
     const createdPhrases = [];
@@ -82,16 +89,22 @@ const addManyPhrases = utilities_1.errorUtilities.withErrorHandling(async (phras
             continue;
         }
         const phraseId = (0, uuid_1.v4)();
-        const phraseCreationPayload = { id: phraseId, yoruba_text, english_text, pronounciation_note, phrase_category };
+        const phraseCreationPayload = {
+            id: phraseId,
+            yoruba_text,
+            english_text,
+            pronounciation_note,
+            phrase_category,
+        };
         const newPhrase = await phrasesRepository_1.default.phrasesRepository.create(phraseCreationPayload);
         if (newPhrase) {
             createdPhrases.push(newPhrase);
         }
     }
     if (createdPhrases.length === 0) {
-        throw utilities_1.errorUtilities.createError('No new phrases were created because all the phrases already exist', 400);
+        throw utilities_1.errorUtilities.createError("No new phrases were created because all the phrases already exist", 400);
     }
-    return utilities_1.responseUtilities.handleServicesResponse(201, 'Phrases added successfully', createdPhrases);
+    return utilities_1.responseUtilities.handleServicesResponse(201, "Phrases added successfully", createdPhrases);
 });
 const getAllClouinaryRecordingsService = utilities_1.errorUtilities.withErrorHandling(async (folderPath) => {
     let allResources = [];
@@ -99,15 +112,15 @@ const getAllClouinaryRecordingsService = utilities_1.errorUtilities.withErrorHan
     do {
         // Get a batch of resources (max 500 per request)
         const options = {
-            type: 'upload',
+            type: "upload",
             prefix: folderPath,
-            resource_type: 'raw',
-            max_results: 200
+            resource_type: "raw",
+            max_results: 200,
         };
         if (nextCursor) {
             options.next_cursor = nextCursor;
         }
-        const result = await cloudinary_1.cloudinary.api.resources(options);
+        const result = (await cloudinary_1.cloudinary.api.resources(options));
         // Add this batch to our collected resources
         allResources = [...allResources, ...result.resources];
         // Set cursor for next iteration (if any)
@@ -116,20 +129,21 @@ const getAllClouinaryRecordingsService = utilities_1.errorUtilities.withErrorHan
     return allResources;
 });
 const findOrphanedFilesService = utilities_1.errorUtilities.withErrorHandling(async (cloudinaryFiles, databaseFiles) => {
-    console.log('cloudinaryFiles length:', cloudinaryFiles.length);
-    console.log('databaseFiles length:', databaseFiles.length);
-    return cloudinaryFiles.filter(cloudFile => {
+    console.log("cloudinaryFiles length:", cloudinaryFiles.length);
+    console.log("databaseFiles length:", databaseFiles.length);
+    return cloudinaryFiles.filter((cloudFile) => {
         // For each Cloudinary file, check if it exists in the database
         // If you store public_ids directly in the DB
         if (databaseFiles.includes(cloudFile.public_id)) {
             return false; // Not orphaned, keep it
         }
         // If you store full URLs in the DB
-        if (databaseFiles.includes(cloudFile.url) || databaseFiles.includes(cloudFile.secure_url)) {
+        if (databaseFiles.includes(cloudFile.url) ||
+            databaseFiles.includes(cloudFile.secure_url)) {
             return false; // Not orphaned, keep it
         }
         // If the URL might be stored differently, check for partial matches
-        const isReferenced = databaseFiles.some(dbUrl => {
+        const isReferenced = databaseFiles.some((dbUrl) => {
             return dbUrl.includes(cloudFile.public_id);
         });
         // If not found in the database, it's orphaned
@@ -139,9 +153,9 @@ const findOrphanedFilesService = utilities_1.errorUtilities.withErrorHandling(as
 const getAllDatabaseAudioFilesService = utilities_1.errorUtilities.withErrorHandling(async () => {
     // Using Sequelize syntax for PostgreSQL
     const audioRecords = await recordingModel_1.default.findAll({
-        attributes: ['recording_url']
+        attributes: ["recording_url"],
     });
-    return audioRecords.map(record => {
+    return audioRecords.map((record) => {
         const plainRecord = record instanceof recordingModel_1.default ? record.get({ plain: true }) : record;
         const url = plainRecord.recording_url;
         // Extract the full path after the version number
@@ -154,19 +168,20 @@ const getAllDatabaseAudioFilesService = utilities_1.errorUtilities.withErrorHand
     });
 });
 const deleteOrphanedFilesService = utilities_1.errorUtilities.withErrorHandling(async (orphanedFiles) => {
-    console.log('eddy', orphanedFiles);
-    const deletionPromises = orphanedFiles.map(file => {
-        return cloudinary_1.cloudinary.uploader.destroy(file.public_id, { resource_type: 'raw' })
-            .then(result => ({
+    console.log("eddy", orphanedFiles);
+    const deletionPromises = orphanedFiles.map((file) => {
+        return cloudinary_1.cloudinary.uploader
+            .destroy(file.public_id, { resource_type: "raw" })
+            .then((result) => ({
             public_id: file.public_id,
             result: result.result,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
         }))
-            .catch(error => ({
+            .catch((error) => ({
             public_id: file.public_id,
-            result: 'error',
+            result: "error",
             error: error.message,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
         }));
     });
     return Promise.all(deletionPromises);
@@ -182,11 +197,18 @@ const getPhraseWithAllRecordingsForZabbot = utilities_1.errorUtilities.withError
     else if (englishText) {
         filter.english_text = englishText;
     }
-    const checkPhrase = await phrasesRepository_1.default.phrasesRepository.getOne(filter, ["id", "yoruba_text", "english_text", "pronounciation_note"]);
+    const checkPhrase = await phrasesRepository_1.default.phrasesRepository.getOne(filter, [
+        "id",
+        "yoruba_text",
+        "english_text",
+        "pronounciation_note",
+    ]);
     if (!checkPhrase) {
         throw utilities_1.errorUtilities.createError("This phrase does not have a recording in our database", 404);
     }
-    const findRecordings = await recordingRepository_1.default.recordingRepository.getMany({ phrase_id: checkPhrase.id });
+    const findRecordings = await recordingRepository_1.default.recordingRepository.getMany({
+        phrase_id: checkPhrase.id,
+    });
     const recordingsUrl = findRecordings
         .filter((recording) => recording.recording_url)
         .map((recording) => recording.recording_url);
@@ -194,9 +216,9 @@ const getPhraseWithAllRecordingsForZabbot = utilities_1.errorUtilities.withError
         recordings: recordingsUrl,
         englishText: checkPhrase.english_text,
         yorubaText: checkPhrase.yoruba_text,
-        pronunciationNote: checkPhrase.pronounciation_note
+        pronunciationNote: checkPhrase.pronounciation_note,
     };
-    return utilities_1.responseUtilities.handleServicesResponse(201, 'Recordings fetched successfully', fullrecodingDetails);
+    return utilities_1.responseUtilities.handleServicesResponse(201, "Recordings fetched successfully", fullrecodingDetails);
 });
 const getPhrasesWithAllRecordingsForZabbotParallel = utilities_1.errorUtilities.withErrorHandling(async (phrases) => {
     if (!phrases || !Array.isArray(phrases) || phrases.length === 0) {
@@ -209,7 +231,7 @@ const getPhrasesWithAllRecordingsForZabbotParallel = utilities_1.errorUtilities.
                 error: "Either English Text or Yoruba Text must be provided",
                 englishText: englishText || null,
                 yorubaText: yorubaText || null,
-                recordings: []
+                recordings: [],
             };
         }
         try {
@@ -220,17 +242,22 @@ const getPhrasesWithAllRecordingsForZabbotParallel = utilities_1.errorUtilities.
             else if (englishText) {
                 filter.english_text = englishText;
             }
-            const checkPhrase = await phrasesRepository_1.default.phrasesRepository.getOne(filter, ["id", "yoruba_text", "english_text", "pronounciation_note"]);
+            const checkPhrase = await phrasesRepository_1.default.phrasesRepository.getOne(filter, [
+                "id",
+                "yoruba_text",
+                "english_text",
+                "pronounciation_note",
+            ]);
             if (!checkPhrase) {
                 return {
                     error: "This phrase does not have a recording in our database",
                     englishText: englishText || null,
                     yorubaText: yorubaText || null,
-                    recordings: []
+                    recordings: [],
                 };
             }
             const findRecordings = await recordingRepository_1.default.recordingRepository.getMany({
-                phrase_id: checkPhrase.id
+                phrase_id: checkPhrase.id,
             });
             const recordingsUrl = findRecordings
                 .filter((recording) => recording.recording_url)
@@ -239,7 +266,7 @@ const getPhrasesWithAllRecordingsForZabbotParallel = utilities_1.errorUtilities.
                 recordings: recordingsUrl,
                 englishText: checkPhrase.english_text,
                 yorubaText: checkPhrase.yoruba_text,
-                pronunciationNote: checkPhrase.pronounciation_note
+                pronunciationNote: checkPhrase.pronounciation_note,
             };
         }
         catch (error) {
@@ -247,13 +274,62 @@ const getPhrasesWithAllRecordingsForZabbotParallel = utilities_1.errorUtilities.
                 error: error.message || "An error occurred while processing this phrase",
                 englishText: englishText || null,
                 yorubaText: yorubaText || null,
-                recordings: []
+                recordings: [],
             };
         }
     });
     const results = await Promise.all(processPhrasePromises);
-    console.log('Batch Results', results);
-    return utilities_1.responseUtilities.handleServicesResponse(200, 'Batch recordings fetched successfully', results);
+    console.log("Batch Results", results);
+    return utilities_1.responseUtilities.handleServicesResponse(200, "Batch recordings fetched successfully", results);
+});
+const getAllRecordings = utilities_1.errorUtilities.withErrorHandling(async (page = 1, search) => {
+    const limit = 10;
+    const offset = (page - 1) * limit;
+    const recordings = await recordingRepository_1.default.recordingRepository.getMany({});
+    if (!recordings || recordings.length === 0) {
+        throw new Error(`Error fetching recordings or recordings not found`);
+    }
+    const phraseIds = recordings
+        .map((rec) => rec.phrase_id)
+        .filter(Boolean);
+    const phrases = await phrasesRepository_1.default.phrasesRepository.getMany({
+        id: phraseIds,
+    });
+    const phraseMap = new Map(phrases.map((phrase) => [phrase.id, phrase]));
+    let formattedResponse = recordings.map((recording) => {
+        const phrase = phraseMap.get(recording.phrase_id);
+        return {
+            id: recording.id,
+            yorubaText: phrase?.yoruba_text ?? "",
+            englishTranslation: phrase?.english_text ?? "",
+            audioUrl: recording.recording_url,
+            category: phrase?.phrase_category ?? "",
+        };
+    });
+    if (search) {
+        const normalizedSearch = generalHelpers_1.default.normalizeYoruba(search);
+        formattedResponse = formattedResponse.filter((item) => {
+            const normalizedYoruba = generalHelpers_1.default.normalizeYoruba(item.yorubaText);
+            return (normalizedYoruba.includes(normalizedSearch) ||
+                item.englishTranslation
+                    .toLowerCase()
+                    .includes(search.toLowerCase()) ||
+                item.category.toLowerCase().includes(search.toLowerCase()));
+        });
+    }
+    // 7. Pagination (AFTER search)
+    const total = formattedResponse.length;
+    const totalPages = Math.ceil(total / limit);
+    const paginatedData = formattedResponse.slice(offset, offset + limit);
+    return utilities_1.responseUtilities.handleServicesResponse(200, "Batch recordings fetched successfully", {
+        data: paginatedData,
+        pagination: {
+            total,
+            totalPages,
+            currentPage: page,
+            perPage: limit,
+        },
+    });
 });
 exports.default = {
     addPhrase,
@@ -265,5 +341,6 @@ exports.default = {
     getAllDatabaseAudioFilesService,
     deleteOrphanedFilesService,
     getPhraseWithAllRecordingsForZabbot,
-    getPhrasesWithAllRecordingsForZabbotParallel
+    getPhrasesWithAllRecordingsForZabbotParallel,
+    getAllRecordings,
 };

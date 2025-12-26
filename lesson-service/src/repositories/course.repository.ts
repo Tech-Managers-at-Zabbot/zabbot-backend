@@ -3,100 +3,123 @@ import { errorUtilities } from "../../../shared/utilities";
 import Courses from "../../../shared/entities/lesson-service-entities/course/course";
 // import LanguageContents from "../entities/language-content";
 
-
 const courseRepositories = {
-	getCourses: async (isActive: boolean = true, languageId: string) => {
-		try {
-			const where: any = {
-				isActive,
-				languageId
-			};
-			const courses = await Courses.findAll({ where: where });
+  getCourses: async (isActive: boolean = true, languageId: string) => {
+    try {
+      const where: any = {
+        isActive,
+        languageId,
+      };
+      const courses = await Courses.findAll({ where: where });
 
-			return courses;
-		} catch (error: any) {
-			throw errorUtilities.createError(`Error Fetching courses: ${error.message}`, 500);
-		}
-	},
+      return courses;
+    } catch (error: any) {
+      throw errorUtilities.createError(
+        `Error Fetching courses: ${error.message}`,
+        500
+      );
+    }
+  },
 
-	getCourse: async (id: string, projections?: string[]) => {
-		try {
-			const course = await Courses.findOne(
-				{
-					where: {
-						id
-					},
-					raw: true,
-					attributes: projections ? projections : undefined
-				}
-			);
+  getCourse: async (id: string, projections?: string[]) => {
+    try {
+      const course = await Courses.findOne({
+        where: {
+          id,
+        },
+        raw: true,
+        attributes: projections ? projections : undefined,
+      });
 
-			return course;
+      return course;
+    } catch (error: any) {
+      throw errorUtilities.createError(
+        `Error Fetching course: ${error.message}`,
+        500
+      );
+    }
+  },
 
-		} catch (error: any) {
-			throw errorUtilities.createError(`Error Fetching course: ${error.message}`, 500);
-		}
-	},
+  getCourseWithLanguageId: async (languageId: string) => {
+    try {
+      const course = await Courses.findOne({
+        where: { languageId },
+        raw: true,
+      });
 
-	getCourseWithLanguageId: async (languageId: string) => {
-		try {
-			const course = await Courses.findOne({
-				where: { languageId },
-				raw: true
-			});
+      return course;
+    } catch (error: any) {
+      throw errorUtilities.createError(
+        `Error Fetching course: ${error.message}`,
+        500
+      );
+    }
+  },
 
-			return course;
+  getCourseByTitle: async (title: string) => {
+    try {
+      const course = await Courses.findOne({ where: { title } });
 
-		} catch (error: any) {
-			throw errorUtilities.createError(`Error Fetching course: ${error.message}`, 500);
-		}
-	},
+      return course;
+    } catch (error: any) {
+      throw errorUtilities.createError(
+        `Error Fetching course by title: ${error.message}`,
+        500
+      );
+    }
+  },
 
-	getCourseByTitle: async (title: string) => {
-		try {
-			const course = await Courses.findOne({ where: { title } });
+  addCourse: async (courseData: any, transaction?: Transaction) => {
+    try {
+      // Create a new course
+      const newCourse = await Courses.create(courseData, { transaction });
 
-			return course;
+      return newCourse;
+    } catch (error: any) {
+      throw errorUtilities.createError(
+        `Error Adding course: ${error.message}`,
+        500
+      );
+    }
+  },
 
-		} catch (error: any) {
-			throw errorUtilities.createError(`Error Fetching course by title: ${error.message}`, 500);
-		}
-	},
+  updateCourse: async (id:string, courseData: any, transaction?: Transaction) => {
+    try {
+      if (!id) {
+        throw errorUtilities.createError("Course id is required", 400);
+      }
+      const [rowsUpdated, [updatedRecord]] = await Courses.update(courseData, {
+        where: {
+          id
+        },
+        returning: true,
+      });
 
-	addCourse: async (courseData: any, transaction?: Transaction) => {
-		try {
-			// Create a new course
-			const newCourse = await Courses.create(courseData, { transaction });
+      if (rowsUpdated === 0) {
+        throw errorUtilities.createError("No course updated", 400);
+      }
 
-			return newCourse;
+      return updatedRecord;
+    } catch (error: any) {
+      throw errorUtilities.createError(
+        `Error Updating course: ${error.message}`,
+        500
+      );
+    }
+  },
 
-		} catch (error: any) {
-			throw errorUtilities.createError(`Error Adding course: ${error.message}`, 500);
-		}
-	},
+  deleteCourse: async (id: string) => {
+    try {
+      await Courses.destroy({ where: { id } });
 
-	updateCourse: async (courseData: any, transaction?: Transaction) => {
-		try {
-			// Update the course
-			await courseData.update(courseData, { transaction });
-
-			return courseData;
-
-		} catch (error: any) {
-			throw errorUtilities.createError(`Error Updating course: ${error.message}`, 500);
-		}
-	},
-
-	deleteCourse: async (id: string) => {
-		try {
-			await Courses.destroy({ where: { id } });
-
-			return { message: "Course deleted successfully" };
-
-		} catch (error: any) {
-			throw errorUtilities.createError(`Error Deleting course: ${error.message}`, 500);
-		}
-	}
-}
+      return { message: "Course deleted successfully" };
+    } catch (error: any) {
+      throw errorUtilities.createError(
+        `Error Deleting course: ${error.message}`,
+        500
+      );
+    }
+  },
+};
 
 export default courseRepositories;

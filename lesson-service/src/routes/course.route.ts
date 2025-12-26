@@ -3,6 +3,7 @@ import {
   generalAuthFunction,
   rolePermit,
 } from "../../../shared/middleware/authorization.middleware";
+import multer from 'multer';
 
 import {
   getCoursesController,
@@ -18,8 +19,10 @@ import {
   createCourseWithLessonsController,
   getCourseWithLessonsController,
   getUserCompletedCoursesController,
+  updateCourseImageController,
 } from "../controllers/course.controller";
 
+const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
 router.get("/:languageId", getCoursesController);
@@ -69,5 +72,13 @@ router.get(
   generalAuthFunction,
   getCourseWithLessonsController
 );
-//generalAuthFunction, rolePermit(["admin"]),
+
+router.put(
+  "/change-course-image/:courseId",
+  upload.array('files', 50),
+  generalAuthFunction,
+  rolePermit(["admin"]),
+  updateCourseImageController
+);
+
 export default router;

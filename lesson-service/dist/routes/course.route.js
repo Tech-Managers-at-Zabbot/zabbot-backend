@@ -5,7 +5,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const authorization_middleware_1 = require("../../../shared/middleware/authorization.middleware");
+const multer_1 = __importDefault(require("multer"));
 const course_controller_1 = require("../controllers/course.controller");
+const upload = (0, multer_1.default)({ storage: multer_1.default.memoryStorage() });
 const router = express_1.default.Router();
 router.get("/:languageId", course_controller_1.getCoursesController);
 router.get("/single-course/:courseId", course_controller_1.getCourseController);
@@ -20,5 +22,5 @@ router.delete("/users/:id", authorization_middleware_1.generalAuthFunction, cour
 router.get("/user-completed-courses/:languageId", authorization_middleware_1.generalAuthFunction, course_controller_1.getUserCompletedCoursesController);
 router.post("/course-with-lesson/:languageId", course_controller_1.createCourseWithLessonsController);
 router.get("/get-course-with-lesson/:languageId", authorization_middleware_1.generalAuthFunction, course_controller_1.getCourseWithLessonsController);
-//generalAuthFunction, rolePermit(["admin"]),
+router.put("/change-course-image/:courseId", upload.array('files', 50), authorization_middleware_1.generalAuthFunction, (0, authorization_middleware_1.rolePermit)(["admin"]), course_controller_1.updateCourseImageController);
 exports.default = router;
