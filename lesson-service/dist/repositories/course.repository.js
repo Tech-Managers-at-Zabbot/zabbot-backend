@@ -11,7 +11,7 @@ const courseRepositories = {
         try {
             const where = {
                 isActive,
-                languageId
+                languageId,
             };
             const courses = await course_1.default.findAll({ where: where });
             return courses;
@@ -24,10 +24,10 @@ const courseRepositories = {
         try {
             const course = await course_1.default.findOne({
                 where: {
-                    id
+                    id,
                 },
                 raw: true,
-                attributes: projections ? projections : undefined
+                attributes: projections ? projections : undefined,
             });
             return course;
         }
@@ -39,7 +39,7 @@ const courseRepositories = {
         try {
             const course = await course_1.default.findOne({
                 where: { languageId },
-                raw: true
+                raw: true,
             });
             return course;
         }
@@ -66,11 +66,21 @@ const courseRepositories = {
             throw utilities_1.errorUtilities.createError(`Error Adding course: ${error.message}`, 500);
         }
     },
-    updateCourse: async (courseData, transaction) => {
+    updateCourse: async (id, courseData, transaction) => {
         try {
-            // Update the course
-            await courseData.update(courseData, { transaction });
-            return courseData;
+            if (!id) {
+                throw utilities_1.errorUtilities.createError("Course id is required", 400);
+            }
+            const [rowsUpdated, [updatedRecord]] = await course_1.default.update(courseData, {
+                where: {
+                    id
+                },
+                returning: true,
+            });
+            if (rowsUpdated === 0) {
+                throw utilities_1.errorUtilities.createError("No course updated", 400);
+            }
+            return updatedRecord;
         }
         catch (error) {
             throw utilities_1.errorUtilities.createError(`Error Updating course: ${error.message}`, 500);
@@ -84,6 +94,6 @@ const courseRepositories = {
         catch (error) {
             throw utilities_1.errorUtilities.createError(`Error Deleting course: ${error.message}`, 500);
         }
-    }
+    },
 };
 exports.default = courseRepositories;

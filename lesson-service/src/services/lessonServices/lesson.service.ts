@@ -1,18 +1,20 @@
 import { v4 } from "uuid";
-import lessonRepositories from "../../repositories/lesson.repository"
-import { errorUtilities, responseUtilities } from "../../../../shared/utilities";
+import lessonRepositories from "../../repositories/lesson.repository";
+import {
+  errorUtilities,
+  responseUtilities,
+} from "../../../../shared/utilities";
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
 import contentRepositories from "../../repositories/content.repository";
 import { CourseResponses } from "../../responses/responses";
 import quizRepositories from "../../repositories/quiz.repository";
+import { uploadFile } from "../../../../shared/cloudinary/api";
 // import languageRepositories from "src/repositories/language.repository";
 
-const getLessons = errorUtilities.withServiceErrorHandling(
-  async () => {
-    const lessons = await lessonRepositories.getLessons();
-    return responseUtilities.handleServicesResponse(StatusCodes.OK, "", lessons);
-  }
-);
+const getLessons = errorUtilities.withServiceErrorHandling(async () => {
+  const lessons = await lessonRepositories.getLessons();
+  return responseUtilities.handleServicesResponse(StatusCodes.OK, "", lessons);
+});
 
 const getLesson = errorUtilities.withServiceErrorHandling(
   async (id: string) => {
@@ -27,7 +29,9 @@ const getLesson = errorUtilities.withServiceErrorHandling(
 
 const getLessonsForLanguage = errorUtilities.withServiceErrorHandling(
   async (languageId: string) => {
-    const getLanguageLessons = await lessonRepositories.getLanguageLessons(languageId);
+    const getLanguageLessons = await lessonRepositories.getLanguageLessons(
+      languageId
+    );
     if (!getLanguageLessons) {
       throw errorUtilities.createError(
         CourseResponses.LESSONS_NOT_FOUND,
@@ -53,11 +57,13 @@ const getLessonsForCourse = errorUtilities.withServiceErrorHandling(
     }
 
     const getLessonsContents = await Promise.all(
-      getCourseLessons.map(async (lesson:Record<string, any>) => {
-        const contents = await contentRepositories.getLessonContents(lesson?.id);
+      getCourseLessons.map(async (lesson: Record<string, any>) => {
+        const contents = await contentRepositories.getLessonContents(
+          lesson?.id
+        );
         return {
           ...lesson,
-          contents: contents || []
+          contents: contents || [],
         };
       })
     );
@@ -76,20 +82,27 @@ const getLessonWithContents = errorUtilities.withServiceErrorHandling(
       throw errorUtilities.createError(`Lesson not found`, 404);
     }
 
-    const contentsData = await contentRepositories.getLessonContents(lessonId)
+    const contentsData = await contentRepositories.getLessonContents(lessonId);
 
     const contents = await Promise.all(
-      contentsData.map(async (content:Record<string, any>) => {
-        const contentFiles = await contentRepositories.getContentFiles(content.id);
+      contentsData.map(async (content: Record<string, any>) => {
+        const contentFiles = await contentRepositories.getContentFiles(
+          content.id
+        );
         return {
           ...content,
-          files: contentFiles
+          files: contentFiles,
         };
-      }))
+      })
+    );
 
     const lessonQuizzes = await quizRepositories.getQuizzes({ lessonId });
 
-    return responseUtilities.handleServicesResponse(StatusCodes.OK, "Successful", { lesson, contents, lessonQuizzes });
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.OK,
+      "Successful",
+      { lesson, contents, lessonQuizzes }
+    );
   }
 );
 
@@ -102,17 +115,20 @@ const createLesson = errorUtilities.withServiceErrorHandling(
       lessonOutcomes: lessonData.outcomes,
       lessonObjectives: lessonData.objectives,
       estimatedDuration: lessonData.estimatedDuration || 0,
-    }
+    };
     const newLesson = await lessonRepositories.addLesson(payload);
-    return responseUtilities.handleServicesResponse(StatusCodes.Created, "Lesson created successfully", newLesson);
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.Created,
+      "Lesson created successfully",
+      newLesson
+    );
   }
 );
 
 const updateLesson = errorUtilities.withServiceErrorHandling(
   async (id: string, lessonData: Record<string, any>) => {
     const lesson = await lessonRepositories.getLesson(id);
-    if (!lesson)
-      throw errorUtilities.createError(`Lesson not found`, 404);
+    if (!lesson) throw errorUtilities.createError(`Lesson not found`, 404);
 
     lesson.updatedAt = new Date();
     lesson.title = lessonData.title;
@@ -121,6 +137,49 @@ const updateLesson = errorUtilities.withServiceErrorHandling(
     const updatedLesson = await lessonRepositories.updateLesson(lesson);
 
     return updatedLesson;
+  }
+);
+
+const updateLessonImageService = errorUtilities.withServiceErrorHandling(
+  async (lessonId: string, mediaType: string, files: Record<string, any>[]) => {
+    const lesson = await lessonRepositories.getLesson(lessonId);
+    if (!lesson) {
+      throw errorUtilities.createError(`Lesson not found`, 404);
+    }
+    const category = "lesson-images";
+    const uploadCourseImage: any = await uploadFile(category, mediaType, files);
+    if (uploadCourseImage.status === "invalid") {
+      throw errorUtilities.createError(
+        uploadCourseImage.message,
+        StatusCodes.BadRequest
+      );
+    } else if (uploadCourseImage.status === "error") {
+      throw errorUtilities.createError(
+        uploadCourseImage.message,
+        StatusCodes.InternalServerError
+      );
+    }
+    const successfulUploads = uploadCourseImage.data.successful;
+
+    const updateData = {
+      lessonImg: successfulUploads[0].secure_url,
+    };
+    const update = await lessonRepositories.newUpdateLesson(
+      lessonId,
+      updateData
+    );
+
+    if (!update) {
+      throw errorUtilities.createError(
+        "Unable to update Lesson Image",
+        StatusCodes.BadRequest
+      );
+    }
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.OK,
+      "Lesson image updated successfully",
+      update
+    );
   }
 );
 
@@ -134,7 +193,6 @@ const updateLesson = errorUtilities.withServiceErrorHandling(
 //     return deletedLesson;
 //   }
 // );
-// Add this to your course service exports:
 
 export default {
   getLessons,
@@ -143,5 +201,6 @@ export default {
   updateLesson,
   getLessonWithContents,
   getLessonsForLanguage,
-  getLessonsForCourse
-}
+  getLessonsForCourse,
+  updateLessonImageService,
+};

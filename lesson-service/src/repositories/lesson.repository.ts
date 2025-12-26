@@ -1,62 +1,79 @@
 import { Transaction } from "sequelize";
 import { errorUtilities } from "../../../shared/utilities";
 import Lessons from "../../../shared/entities/lesson-service-entities/lesson/lesson";
+import { LessonAttributes } from "../../../shared/databaseTypes/lesson-service-types";
 
 const lessonRepositories = {
-
   getLessons: async (filter?: { courseId: string }) => {
     try {
       const where: any = {};
-      if (typeof filter?.courseId === 'string') {
+      if (typeof filter?.courseId === "string") {
         where.courseId = filter.courseId;
       }
 
-      const lessons = await Lessons.findAll({ where, raw: true, order: [['orderNumber', 'ASC']] });
+      const lessons = await Lessons.findAll({
+        where,
+        raw: true,
+        order: [["orderNumber", "ASC"]],
+      });
 
       return lessons;
-
     } catch (error: any) {
-      throw errorUtilities.createError(`Error Fetching lessons: ${error.message}`, 500);
+      throw errorUtilities.createError(
+        `Error Fetching lessons: ${error.message}`,
+        500
+      );
     }
   },
 
   getLessonsOnly: async (courseId: string) => {
     try {
-      const lessons = await Lessons.findAll({ where: { courseId }, order: [['orderNumber', 'ASC']], raw: true });
+      const lessons = await Lessons.findAll({
+        where: { courseId },
+        order: [["orderNumber", "ASC"]],
+        raw: true,
+      });
 
       return lessons;
-
     } catch (error: any) {
-      throw errorUtilities.createError(`Error Fetching lessons: ${error.message}`, 500);
+      throw errorUtilities.createError(
+        `Error Fetching lessons: ${error.message}`,
+        500
+      );
     }
   },
-
 
   getLanguageLessons: async (languageId: string) => {
     try {
-      const lessons = await Lessons.findAll({ where: { languageId }, order: [['orderNumber', 'ASC']], raw: true });
+      const lessons = await Lessons.findAll({
+        where: { languageId },
+        order: [["orderNumber", "ASC"]],
+        raw: true,
+      });
 
       return lessons;
-
     } catch (error: any) {
-      throw errorUtilities.createError(`Error Fetching lessons: ${error.message}`, 500);
+      throw errorUtilities.createError(
+        `Error Fetching lessons: ${error.message}`,
+        500
+      );
     }
   },
 
-  getLesson: async (id: string, attributes?:string[]) => {
+  getLesson: async (id: string, attributes?: string[]) => {
     try {
-      const lesson = await Lessons.findOne(
-        { 
-        where: { id }, 
-        attributes: attributes ? attributes : undefined, 
-        raw: true 
-      }
-    );
+      const lesson = await Lessons.findOne({
+        where: { id },
+        attributes: attributes ? attributes : undefined,
+        raw: true,
+      });
 
       return lesson;
-
     } catch (error: any) {
-      throw errorUtilities.createError(`Error Fetching lesson: ${error.message}`, 500);
+      throw errorUtilities.createError(
+        `Error Fetching lesson: ${error.message}`,
+        500
+      );
     }
   },
 
@@ -66,23 +83,57 @@ const lessonRepositories = {
       const newLesson = await Lessons.create(lessonData, { transaction });
 
       return newLesson;
-
     } catch (error: any) {
-      throw errorUtilities.createError(`Error creating a new lesson: ${error.message}`, 500);
+      throw errorUtilities.createError(
+        `Error creating a new lesson: ${error.message}`,
+        500
+      );
     }
   },
 
   updateLesson: async (lessonData: any, transaction?: Transaction) => {
     try {
       // Update the language
-      const updatedLesson = await lessonData.update(lessonData, { transaction });
+      const updatedLesson = await lessonData.update(lessonData, {
+        transaction,
+      });
 
       return updatedLesson;
-
     } catch (error: any) {
-      throw errorUtilities.createError(`Error Updating lesson: ${error.message}`, 500);
+      throw errorUtilities.createError(
+        `Error Updating lesson: ${error.message}`,
+        500
+      );
     }
-  }
-}
+  },
+
+  newUpdateLesson: async (
+    lessonId: string,
+    lessonData: Partial<LessonAttributes> | any,
+    transaction?: Transaction
+  ) => {
+    try {
+      const [updatedCount, updatedLessons] = await Lessons.update(lessonData, {
+        where: { id: lessonId },
+        returning: true,
+        transaction,
+      });
+      
+      if (updatedCount === 0) {
+        throw errorUtilities.createError(
+          `Lesson not found or no changes applied`,
+          400
+        );
+      }
+
+      return updatedLessons[0];
+    } catch (error: any) {
+      throw errorUtilities.createError(
+        `Error updating lesson: ${error.message}`,
+        500
+      );
+    }
+  },
+};
 
 export default lessonRepositories;

@@ -11,6 +11,7 @@ declare class Lessons extends Model<LessonAttributes> implements LessonAttribute
     totalContents?: number;
     languageId: string;
     headLineTag?: string;
+    lessonImg: string;
     outcomes?: string;
     objectives?: string;
     estimatedDuration: number;

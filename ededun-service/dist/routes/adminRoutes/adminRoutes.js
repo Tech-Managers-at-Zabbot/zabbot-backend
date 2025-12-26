@@ -16,4 +16,5 @@ router.post('/add-many-phrases', controllers_1.adminControllers.adminCreatesMany
 router.post('/cleanup-cloudinary-files', controllers_1.adminControllers.adminDeletesCloudinaryLeftOverRecordings);
 router.get('/recordings-for-zabbot', controllers_1.adminControllers.adminGetsPhraseWithRecordingsForZabbot);
 router.get('/many-recordings', controllers_1.adminControllers.adminGetsPhraseWithRecordingsForZabbotBatch);
+router.get('/all-recordings', controllers_1.adminControllers.adminGetsAllRecordings);
 exports.default = router;

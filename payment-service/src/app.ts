@@ -7,7 +7,7 @@ import cookieParser from "cookie-parser";
 import { errorUtilities } from "../../shared/utilities";
 import config from "../../config/config";
 import routes from "./routes";
-import { stripeControllers } from "./controllers";
+import { paypalControllers, stripeControllers } from "./controllers";
 
 const app = express();
 
@@ -17,6 +17,12 @@ app.post(
   "/payment-services/stripe/webhook",
   express.raw({ type: "application/json" }),
   stripeControllers.stripeWebhookController
+);
+
+app.post(
+  "/payment-services/paypal/webhook",
+  express.json(),
+  paypalControllers.paypalWebhookController
 );
 
 // Middlewares

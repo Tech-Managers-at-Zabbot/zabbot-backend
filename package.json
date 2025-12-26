@@ -32,6 +32,7 @@
   "dependencies": {
     "@mailchimp/mailchimp_marketing": "^3.0.80",
     "@mailchimp/mailchimp_transactional": "^1.1.2",
+    "@paypal/checkout-server-sdk": "^1.0.3",
     "@sendgrid/client": "^8.1.6",
     "@sendgrid/mail": "^8.1.5",
     "@types/lodash.merge": "^4.6.9",

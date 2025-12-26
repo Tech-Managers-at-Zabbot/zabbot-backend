@@ -13,6 +13,7 @@ class Lessons extends Model<LessonAttributes> implements LessonAttributes {
   public totalContents?: number;
   public languageId!: string;
   public headLineTag?: string;
+  public lessonImg!: string;
   public outcomes?: string;
   public objectives?: string;
   public estimatedDuration!: number;
@@ -52,6 +53,10 @@ Lessons.init(
     headLineTag: {
       type: DataTypes.TEXT('long'),
       allowNull: true,
+    },
+    lessonImg:{
+      type: DataTypes.TEXT,
+      allowNull: true
     },
     courseId: {
       type: DataTypes.UUID,

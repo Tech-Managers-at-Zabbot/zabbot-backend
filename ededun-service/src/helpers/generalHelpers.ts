@@ -79,11 +79,20 @@ const dateFormatter = (dateString: Date) => {
     return password === userPassword;
   };
 
+
+const normalizeYoruba = (text: string) =>
+  text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+
 export default {
   hashPassword,
   bcryptValidate,
   generateTokens,
   dateFormatter,
   calculateEndTime,
-  comparePasswords
+  comparePasswords, 
+  normalizeYoruba
 };
