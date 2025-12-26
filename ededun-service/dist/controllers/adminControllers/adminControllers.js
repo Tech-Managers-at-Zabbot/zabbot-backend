@@ -69,6 +69,12 @@ const adminGetsPhraseWithRecordingsForZabbotBatch = async (request, response) =>
     const fetchRecordings = await services_1.adminServices.getPhrasesWithAllRecordingsForZabbotParallel(phrasesArr);
     return utilities_1.responseUtilities.responseHandler(response, fetchRecordings.message, fetchRecordings.statusCode, fetchRecordings.data);
 };
+const adminGetsAllRecordings = async (request, response) => {
+    const page = Number(request.query.page) || 1;
+    const search = request.query.search;
+    const fetchRecordings = await services_1.adminServices.getAllRecordings(page, search);
+    return utilities_1.responseUtilities.responseHandler(response, fetchRecordings.message, fetchRecordings.statusCode, fetchRecordings.data);
+};
 exports.default = {
     adminCreatePhrase,
     adminUpdatesPhrase,
@@ -76,5 +82,6 @@ exports.default = {
     adminCreatesManyPhrases,
     adminDeletesCloudinaryLeftOverRecordings,
     adminGetsPhraseWithRecordingsForZabbot,
-    adminGetsPhraseWithRecordingsForZabbotBatch
+    adminGetsPhraseWithRecordingsForZabbotBatch,
+    adminGetsAllRecordings
 };

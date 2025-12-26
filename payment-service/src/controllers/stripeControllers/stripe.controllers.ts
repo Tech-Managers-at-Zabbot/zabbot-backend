@@ -31,7 +31,6 @@ const createCheckoutSessionController =
     }
   );
 
-// You already have this - just make sure it's working correctly
 const stripeWebhookController = errorUtilities.withControllerErrorHandling(
   async (request: Request, response: Response) => {
     const signature = request.headers["stripe-signature"] as string;
@@ -77,7 +76,6 @@ const stripeWebhookController = errorUtilities.withControllerErrorHandling(
         await stripeServices.handleSubscriptionDeleted(event.data.object);
         break;
 
-      // Optional: upcoming renewal reminder (sent 3 days before renewal)
       case "invoice.upcoming":
         await stripeServices.handleUpcomingInvoice(event.data.object);
         break;
@@ -98,7 +96,7 @@ const stripeWebhookController = errorUtilities.withControllerErrorHandling(
 const cancelSubscriptionController = errorUtilities.withControllerErrorHandling(
   async (request: JwtPayload, response: Response) => {
     const { subscriptionId } = request.params;
-    const { cancelImmediately } = request.body; // Optional: default false
+    const { cancelImmediately } = request.body;
     const { userId } = request.user;
 
     const serviceResponse = await stripeServices.cancelUserSubscription(

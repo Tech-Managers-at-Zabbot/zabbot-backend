@@ -98,6 +98,7 @@ export interface LessonAttributes {
     description: string;
     courseId: string;
     orderNumber: string;
+    lessonImg: string;
     contents?: {
         id?: string;
         translation: string;

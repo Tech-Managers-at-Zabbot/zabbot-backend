@@ -13,6 +13,7 @@ class Lessons extends sequelize_1.Model {
     totalContents;
     languageId;
     headLineTag;
+    lessonImg;
     outcomes;
     objectives;
     estimatedDuration;
@@ -50,6 +51,10 @@ Lessons.init({
     headLineTag: {
         type: sequelize_1.DataTypes.TEXT('long'),
         allowNull: true,
+    },
+    lessonImg: {
+        type: sequelize_1.DataTypes.TEXT,
+        allowNull: true
     },
     courseId: {
         type: sequelize_1.DataTypes.UUID,

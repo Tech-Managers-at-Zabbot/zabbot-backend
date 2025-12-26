@@ -9,10 +9,14 @@ const lessonRepositories = {
     getLessons: async (filter) => {
         try {
             const where = {};
-            if (typeof filter?.courseId === 'string') {
+            if (typeof filter?.courseId === "string") {
                 where.courseId = filter.courseId;
             }
-            const lessons = await lesson_1.default.findAll({ where, raw: true, order: [['orderNumber', 'ASC']] });
+            const lessons = await lesson_1.default.findAll({
+                where,
+                raw: true,
+                order: [["orderNumber", "ASC"]],
+            });
             return lessons;
         }
         catch (error) {
@@ -21,7 +25,11 @@ const lessonRepositories = {
     },
     getLessonsOnly: async (courseId) => {
         try {
-            const lessons = await lesson_1.default.findAll({ where: { courseId }, order: [['orderNumber', 'ASC']], raw: true });
+            const lessons = await lesson_1.default.findAll({
+                where: { courseId },
+                order: [["orderNumber", "ASC"]],
+                raw: true,
+            });
             return lessons;
         }
         catch (error) {
@@ -30,7 +38,11 @@ const lessonRepositories = {
     },
     getLanguageLessons: async (languageId) => {
         try {
-            const lessons = await lesson_1.default.findAll({ where: { languageId }, order: [['orderNumber', 'ASC']], raw: true });
+            const lessons = await lesson_1.default.findAll({
+                where: { languageId },
+                order: [["orderNumber", "ASC"]],
+                raw: true,
+            });
             return lessons;
         }
         catch (error) {
@@ -42,7 +54,7 @@ const lessonRepositories = {
             const lesson = await lesson_1.default.findOne({
                 where: { id },
                 attributes: attributes ? attributes : undefined,
-                raw: true
+                raw: true,
             });
             return lesson;
         }
@@ -63,12 +75,30 @@ const lessonRepositories = {
     updateLesson: async (lessonData, transaction) => {
         try {
             // Update the language
-            const updatedLesson = await lessonData.update(lessonData, { transaction });
+            const updatedLesson = await lessonData.update(lessonData, {
+                transaction,
+            });
             return updatedLesson;
         }
         catch (error) {
             throw utilities_1.errorUtilities.createError(`Error Updating lesson: ${error.message}`, 500);
         }
-    }
+    },
+    newUpdateLesson: async (lessonId, lessonData, transaction) => {
+        try {
+            const [updatedCount, updatedLessons] = await lesson_1.default.update(lessonData, {
+                where: { id: lessonId },
+                returning: true,
+                transaction,
+            });
+            if (updatedCount === 0) {
+                throw utilities_1.errorUtilities.createError(`Lesson not found or no changes applied`, 400);
+            }
+            return updatedLessons[0];
+        }
+        catch (error) {
+            throw utilities_1.errorUtilities.createError(`Error updating lesson: ${error.message}`, 500);
+        }
+    },
 };
 exports.default = lessonRepositories;

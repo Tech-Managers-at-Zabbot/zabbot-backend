@@ -122,7 +122,7 @@ export const getUserCourseController =
     async (request: JwtPayload, response: Response) => {
       const { userId }: string | any = request?.user;
       const { languageId, courseId } = request.params;
-      const { lastLessonId } = request.query
+      const { lastLessonId } = request.query;
       const userCourse = await userCourseService.getUserCourse(
         languageId,
         userId,
@@ -172,7 +172,7 @@ export const updateUserCourseController =
     async (request: JwtPayload, response: Response) => {
       const { courseId } = request.params;
       const { userId } = request.user;
-      const lessonId = request.body.lastLessonId
+      const lessonId = request.body.lastLessonId;
       const updateUserCourse = await userCourseService.updateUserCourse(
         courseId,
         userId,
@@ -257,6 +257,36 @@ export const createCourseWithLessonsController =
         course.message,
         course.statusCode,
         course.data
+      );
+    }
+  );
+
+export const updateCourseImageController =
+  errorUtilities.withControllerErrorHandling(
+    async (request: JwtPayload, response: Response) => {
+      const { mediaType } = request.body;
+      const { courseId } = request.params;
+      const files = request.files;
+
+      if (!files || files.length === 0 || !mediaType) {
+        return responseUtilities.responseHandler(
+          response,
+          "No file uploaded",
+          401
+        );
+      }
+
+      const uploadStatus = await courseService.updateCourseImageService(
+        courseId,
+        mediaType,
+        files
+      );
+
+      return responseUtilities.responseHandler(
+        response,
+        uploadStatus.message,
+        uploadStatus.statusCode,
+        uploadStatus.data
       );
     }
   );
