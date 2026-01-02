@@ -137,7 +137,7 @@ const cleanupFiles = async (filePaths: string[]) => {
       await fsPromises.unlink(filePath);
     } catch (error) {
       // Ignore errors if file doesn't exist
-      console.warn(`Could not delete file ${filePath}:`, error);
+      // console.warn(`Could not delete file ${filePath}:`, error);
     }
   });
 
@@ -150,11 +150,17 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
     file,
     userId,
     voice = "femaleVoice",
+    isInLesson = false,
+    isInLessonUrl,
+    isInLessonAudioId,
   }: {
     userId: string;
     referencePronunciationId: string;
     file: any;
     voice?: string;
+    isInLesson?: boolean;
+    isInLessonUrl?: string;
+    isInLessonAudioId: string;
   }) => {
     logMemoryUsage("Start of comparePronounciation");
 
@@ -186,16 +192,27 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
     let userTensorScaled: tf.Tensor | null = null;
 
     try {
-      const masterPronunciation =
-        await referenePronunciationRepositories.getPronunciation(
-          referencePronunciationId
-        );
-      if (!masterPronunciation) {
-        throw errorUtilities.createError("Reference file not found", 404);
-      }
+      let url: string;
+      let audioId: string;
 
-      const url = masterPronunciation.get(voice) as string;
-      await getMasterFile(url, masterRawFilePath);
+      if (!isInLesson) {
+        const masterPronunciation =
+          await referenePronunciationRepositories.getPronunciation(
+            referencePronunciationId
+          );
+        if (!masterPronunciation) {
+          throw errorUtilities.createError("Reference file not found", 404);
+        }
+        url = masterPronunciation.get(voice) as string;
+
+        await getMasterFile(url, masterRawFilePath);
+
+        audioId = masterPronunciation.get("id");
+      } else {
+        url = isInLessonUrl;
+        await getMasterFile(url, masterRawFilePath);
+        audioId = isInLessonAudioId;
+      }
 
       logMemoryUsage("Before user audio processing");
       const { tensor: userTensorRaw, raw: userRawAudio } =
@@ -304,7 +321,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
 
       const userPronunciationData = await saveUserPronunciation({
         userId,
-        pronunciationId: masterPronunciation.get("id"),
+        pronunciationId: audioId, //masterPronunciation.get("id"),
         recordingUrl: userPronunciationUpload,
         pronuciationPlotUrl: plotResult,
       });
@@ -642,6 +659,7 @@ const saveUserPronunciation = async ({
     recordingUrl,
     pronuciationPlotUrl,
   };
+
   return userPronunciationRepositories.addPronunciation(userPronunciationData);
 };
 
