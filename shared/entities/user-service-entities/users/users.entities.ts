@@ -22,6 +22,7 @@ class Users extends Model<UserAttributes> implements UserAttributes {
     public refreshToken?: string;
     public country?: string;
     public phoneNumber?: string;
+    noOfSubscriptions?: number;
     public deletedAt?: Date;
     public profilePicture?: string;
     public bio?: string;
@@ -118,6 +119,11 @@ Users.init(
         phoneNumber: {
             type: DataTypes.STRING,
             allowNull: true,
+        },
+        noOfSubscriptions:{
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            defaultValue: 0
         },
         deletedAt: {
             type: DataTypes.DATE,

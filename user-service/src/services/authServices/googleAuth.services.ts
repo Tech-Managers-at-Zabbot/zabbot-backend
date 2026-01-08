@@ -84,6 +84,7 @@ const googleOAuthRegister = async (
       isBlocked: false,
       isFirstTimeLogin: true,
       role: UserRoles.USER,
+      noOfSubscriptions: 0,
       profilePicture: profile?.photos?.[0].value,
       googleAccessToken: accessToken,
       googleRefreshToken: refreshToken,
