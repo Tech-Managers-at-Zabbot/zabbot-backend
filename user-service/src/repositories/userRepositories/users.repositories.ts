@@ -118,6 +118,7 @@ const userRepositories = {
         verifiedAt: userData.verifiedAt,
         registerMethod: userData.registerMethod,
         country: userData.country,
+        noOfSubscriptions: userData.noOfSubscriptions,
         phoneNumber: userData.phoneNumber,
         deletedAt: userData.deletedAt,
         profilePicture: userData.profilePicture,

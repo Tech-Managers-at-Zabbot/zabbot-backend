@@ -26,6 +26,7 @@ export interface UserAttributes {
   verifiedAt: Date;
   country?: string;
   phoneNumber?: string;
+  noOfSubscriptions?: number;
   deletedAt?: Date;
   profilePicture?: string;
   bio?: string;
