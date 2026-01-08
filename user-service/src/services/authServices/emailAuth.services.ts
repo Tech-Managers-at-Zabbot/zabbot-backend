@@ -53,6 +53,7 @@ const registerUserService = errorUtilities.withServiceErrorHandling(
       isActive: true,
       isBlocked: false,
       timeZone,
+      noOfSubscriptions: 0,
       isFirstTimeLogin: true,
       role: role ?? UserRoles.USER,
       registerMethod: RegisterMethods.EMAIL,
