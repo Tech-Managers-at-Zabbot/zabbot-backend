@@ -16,6 +16,7 @@ const users_repositories_2 = __importDefault(require("../../repositories/userRep
 const otp_repositories_1 = __importDefault(require("../../repositories/otpRepositories/otp.repositories"));
 const config_1 = __importDefault(require("../../../../config/config"));
 const user_service_types_1 = require("../../../../shared/databaseTypes/user-service-types");
+// import UserLeaderboard from "../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities";
 const leaderboard_entities_1 = __importDefault(require("../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities"));
 const registerUserService = utilities_1.errorUtilities.withServiceErrorHandling(async (registerPayload) => {
     const { firstName, lastName, email, password, role, timeZone } = registerPayload;
