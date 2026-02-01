@@ -5,8 +5,8 @@ import fs from "fs";
 const services = [
   { name: "config", path: "./config" },
   { name: "shared", path: "./shared" },
-  { name: "user-service", path: "./user-service" },
   { name: "founding-list-service", path: "./waiting-list-service" },
+  { name: "user-service", path: "./user-service" },
   { name: "notification-service", path: "./notification-service" },
   { name: "ededun-service", path: "./ededun-service" },
   { name: "lesson-service", path: "./lesson-service" },
