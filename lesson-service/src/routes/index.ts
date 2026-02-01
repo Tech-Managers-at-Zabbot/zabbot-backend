@@ -6,6 +6,7 @@ import contentRouter from './content.route';
 import goalRouter from './dailyGoal.route';
 import courseRouter from './course.route';
 import quizRouter from './quiz.route';
+import leaderboardRouter from './leaderboard.route';
 
 const rootRouter = express.Router()
 
@@ -16,5 +17,6 @@ rootRouter.use('/contents', contentRouter);
 rootRouter.use('/goals', goalRouter)
 rootRouter.use('/courses', courseRouter);
 rootRouter.use('/quizzes', quizRouter);
+rootRouter.use('/leaderboard', leaderboardRouter)
 
 export default rootRouter;
