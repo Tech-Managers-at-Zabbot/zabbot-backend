@@ -16,3 +16,4 @@ import '../entities/payment-service-entities/transactions/transactions';
 import '../entities/payment-service-entities/subscriptions/subscriptions';
 import '../entities/payment-service-entities/subscriptions/userSubscriptions';
 import '../entities/user-service-entities/userNotificationSettings/userNotificationSettings.entities';
+import '../entities/user-service-entities/leaderboard/leaderboard.entities';

@@ -18,3 +18,4 @@ require("../entities/payment-service-entities/transactions/transactions");
 require("../entities/payment-service-entities/subscriptions/subscriptions");
 require("../entities/payment-service-entities/subscriptions/userSubscriptions");
 require("../entities/user-service-entities/userNotificationSettings/userNotificationSettings.entities");
+require("../entities/user-service-entities/leaderboard/leaderboard.entities");
