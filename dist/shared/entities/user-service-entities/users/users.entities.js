@@ -22,6 +22,7 @@ class Users extends sequelize_1.Model {
     refreshToken;
     country;
     phoneNumber;
+    noOfSubscriptions;
     deletedAt;
     profilePicture;
     bio;
@@ -95,6 +96,11 @@ Users.init({
     phoneNumber: {
         type: sequelize_1.DataTypes.STRING,
         allowNull: true,
+    },
+    noOfSubscriptions: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0
     },
     deletedAt: {
         type: sequelize_1.DataTypes.DATE,
