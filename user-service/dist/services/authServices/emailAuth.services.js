@@ -16,6 +16,7 @@ const users_repositories_2 = __importDefault(require("../../repositories/userRep
 const otp_repositories_1 = __importDefault(require("../../repositories/otpRepositories/otp.repositories"));
 const config_1 = __importDefault(require("../../../../config/config"));
 const user_service_types_1 = require("../../../../shared/databaseTypes/user-service-types");
+const leaderboard_entities_1 = __importDefault(require("../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities"));
 const registerUserService = utilities_1.errorUtilities.withServiceErrorHandling(async (registerPayload) => {
     const { firstName, lastName, email, password, role, timeZone } = registerPayload;
     const userExists = await users_repositories_1.default.getOne({ email: email }, [
@@ -36,11 +37,34 @@ const registerUserService = utilities_1.errorUtilities.withServiceErrorHandling(
         isActive: true,
         isBlocked: false,
         timeZone,
+        noOfSubscriptions: 0,
         isFirstTimeLogin: true,
         role: role ?? user_service_types_1.UserRoles.USER,
         registerMethod: user_service_types_1.RegisterMethods.EMAIL,
     };
     const newUser = await users_repositories_1.default.create(createUserPayload);
+    const now = new Date();
+    const dayStart = new Date(now);
+    dayStart.setHours(0, 0, 0, 0);
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+    const createLeaderBoard = await leaderboard_entities_1.default.create({
+        id: (0, uuid_1.v4)(),
+        userId: createUserPayload.id,
+        username: `${createUserPayload.firstName} ${createUserPayload.lastName}`,
+        dailyScore: 0,
+        weeklyScore: 0,
+        allTimeScore: 0,
+        quizzesCompleted: 0,
+        quizzesCorrect: 0,
+        dailyWordsListened: 0,
+        weekStartDate: weekStart,
+        dayStartDate: dayStart,
+        lastUpdated: now,
+        lastUpdatedDate: dayStart,
+        lastUpdatedWeek: weekStart,
+    });
     if (!newUser) {
         throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.PROCESS_UNSSUCCESSFUL, statusCodes_responses_1.StatusCodes.InternalServerError);
     }
