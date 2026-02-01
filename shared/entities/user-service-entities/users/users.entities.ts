@@ -22,7 +22,7 @@ class Users extends Model<UserAttributes> implements UserAttributes {
     public refreshToken?: string;
     public country?: string;
     public phoneNumber?: string;
-    noOfSubscriptions?: number;
+    public noOfSubscriptions?: number;
     public deletedAt?: Date;
     public profilePicture?: string;
     public bio?: string;
