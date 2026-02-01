@@ -66,6 +66,11 @@ Users.init({
         type: sequelize_1.DataTypes.STRING,
         allowNull: true,
     },
+    noOfSubscriptions: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0
+    },
     deletedAt: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: true,

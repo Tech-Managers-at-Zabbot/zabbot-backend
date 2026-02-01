@@ -19,6 +19,7 @@ declare class Users extends Model<UserAttributes> implements UserAttributes {
     refreshToken?: string;
     country?: string;
     phoneNumber?: string;
+    noOfSubscriptions?: number;
     deletedAt?: Date;
     profilePicture?: string;
     bio?: string;
