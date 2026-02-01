@@ -23,8 +23,8 @@ import {
   OtpNotificationType,
   OtpAttributes,
 } from "../../../../shared/databaseTypes/user-service-types";
-import UserLeaderboard from "../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities";
-
+// import UserLeaderboard from "../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities";
+import UserLeaderboard from "../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities"
 const registerUserService = errorUtilities.withServiceErrorHandling(
   async (registerPayload: UserAttributes) => {
     const { firstName, lastName, email, password, role, timeZone } =
