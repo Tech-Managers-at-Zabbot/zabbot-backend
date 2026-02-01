@@ -23,8 +23,8 @@ import {
   OtpNotificationType,
   OtpAttributes,
 } from "../../../../shared/databaseTypes/user-service-types";
-// import UserLeaderboard from "../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities";
-// import UserLeaderboard from "../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities"
+import UserLeaderboard from "../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities"
+
 const registerUserService = errorUtilities.withServiceErrorHandling(
   async (registerPayload: UserAttributes) => {
     const { firstName, lastName, email, password, role, timeZone } =
@@ -71,22 +71,22 @@ const registerUserService = errorUtilities.withServiceErrorHandling(
     weekStart.setDate(now.getDate() - now.getDay());
     weekStart.setHours(0, 0, 0, 0);
 
-    // const createLeaderBoard = await UserLeaderboard.create({
-    //   id: v4(),
-    //   userId: createUserPayload.id,
-    //   username: `${createUserPayload.firstName} ${createUserPayload.lastName}`,
-    //   dailyScore: 0,
-    //   weeklyScore: 0,
-    //   allTimeScore: 0,
-    //   quizzesCompleted: 0,
-    //   quizzesCorrect: 0,
-    //   dailyWordsListened: 0,
-    //   weekStartDate: weekStart,
-    //   dayStartDate: dayStart,
-    //   lastUpdated: now,
-    //   lastUpdatedDate: dayStart,
-    //   lastUpdatedWeek: weekStart,
-    // });
+    const createLeaderBoard = await UserLeaderboard.create({
+      id: v4(),
+      userId: createUserPayload.id,
+      username: `${createUserPayload.firstName} ${createUserPayload.lastName}`,
+      dailyScore: 0,
+      weeklyScore: 0,
+      allTimeScore: 0,
+      quizzesCompleted: 0,
+      quizzesCorrect: 0,
+      dailyWordsListened: 0,
+      weekStartDate: weekStart,
+      dayStartDate: dayStart,
+      lastUpdated: now,
+      lastUpdatedDate: dayStart,
+      lastUpdatedWeek: weekStart,
+    });
 
     if (!newUser) {
       throw errorUtilities.createError(
