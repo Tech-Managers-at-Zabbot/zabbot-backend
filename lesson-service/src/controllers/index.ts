@@ -3,6 +3,7 @@
 import wordForTheDayController from './wordForTheDay.controller'
 import dailyGoalController from './dailyGoal.controller';
 import quizController from './quiz.controller';
+import leaderboardController from './leaderboard.controller';
 
 
 
@@ -11,5 +12,6 @@ export {
     // lessonController,
     wordForTheDayController,
     dailyGoalController,
-    quizController
+    quizController,
+    leaderboardController
 };
