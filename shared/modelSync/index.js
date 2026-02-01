@@ -20,3 +20,5 @@ require("../entities/payment-service-entities/transactions/transactions");
 require("../entities/payment-service-entities/subscriptions/subscriptions");
 require("../entities/payment-service-entities/subscriptions/userSubscriptions");
 require("../entities/user-service-entities/userNotificationSettings/userNotificationSettings.entities");
+// import '../entities/user-service-entities/leaderBoard/leaderboard.entities'
+// import '../entities/user-service-entities/leaderBoard/userLeaderboardHistory.entities'
