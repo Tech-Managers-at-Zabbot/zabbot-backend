@@ -8,7 +8,8 @@
     "buildWatch": "tsc -w",
     "start": "node dist/src/app.js",
     "dev": "nodemon src/app.ts",
-    "compile": "tsc -w"
+    "compile": "tsc -w",
+    "db:init": "cross-env NODE_ENV=production ts-node ../scripts/db-init.ts"
   },
   "keywords": [],
   "author": "",
