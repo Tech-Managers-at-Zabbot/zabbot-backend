@@ -1,5 +1,5 @@
 import Users from "../../../../shared/entities/user-service-entities/users/users.entities";
-import { Transaction } from "sequelize";
+import { Transaction, Op, col, fn, where } from "sequelize";
 import { errorUtilities } from "../../../../shared/utilities";
 
 const userRepositories = {
@@ -66,8 +66,26 @@ const userRepositories = {
 
   getOne: async (filter: Record<string, any>, projection: any = null) => {
     try {
+      const whereFilter: Record<string, any> = { ...filter };
+
+      // Login emails should be matched case-insensitively to avoid false "not found" errors.
+      if (typeof whereFilter.email === "string") {
+        const normalizedEmail = whereFilter.email.trim().toLowerCase();
+        delete whereFilter.email;
+        const existingAndConditions = Array.isArray(whereFilter[Op.and])
+          ? whereFilter[Op.and]
+          : whereFilter[Op.and]
+            ? [whereFilter[Op.and]]
+            : [];
+
+        whereFilter[Op.and] = [
+          ...existingAndConditions,
+          where(fn("lower", col("email")), normalizedEmail),
+        ];
+      }
+
       const user = await Users.findOne({
-        where: filter,
+        where: whereFilter,
         attributes: projection,
         raw: true
       });

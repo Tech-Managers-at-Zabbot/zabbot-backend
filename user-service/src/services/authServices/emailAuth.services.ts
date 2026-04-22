@@ -317,10 +317,14 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
     timeZone: string;
   }) => {
     const { email, password, stayLoggedIn, timeZone } = loginPayload;
+    const normalizedEmail = email?.trim().toLowerCase();
 
-    const user = await usersRepositories.getOne({ email });
+    const user = await usersRepositories.getOne({ email: normalizedEmail });
 
     if (!user) {
+      console.warn(
+        `[LOGIN_LOOKUP_MISS] email=${normalizedEmail} stage=${config.stage} usersDbConfigured=${Boolean(config.USERS_SERVICE_DB)}`
+      );
       throw errorUtilities.createError(
         GeneralResponses.USER_NOT_FOUND,
         StatusCodes.NotFound,

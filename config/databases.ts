@@ -7,6 +7,26 @@ const { FOUNDERS_LIST_DB, USERS_SERVICE_DB, EDEDUN_DB } = config;
 
 const certificatePath = path.join(__dirname, "../ssl/ca-certificate.crt");
 
+const getSafeDbTarget = (connectionUrl?: string) => {
+  if (!connectionUrl) {
+    return "not-configured";
+  }
+
+  try {
+    const parsed = new URL(connectionUrl);
+    const host = parsed.hostname || "unknown-host";
+    const port = parsed.port || "5432";
+    const databaseName = parsed.pathname.replace(/^\//, "") || "unknown-db";
+    return `host=${host} port=${port} db=${databaseName}`;
+  } catch (error) {
+    return "invalid-connection-string";
+  }
+};
+
+console.log(
+  `[DB_TARGET] users-service: ${getSafeDbTarget(USERS_SERVICE_DB)} (stage=${config.stage})`
+);
+
 const founders_list_db = new Sequelize(`${FOUNDERS_LIST_DB}`, {
   dialect: "postgres",
   pool: {
