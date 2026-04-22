@@ -96,6 +96,15 @@ Use `.env.example` as the template. At minimum for login and user auth:
 
 For gateway mode you must also provide other service DB/port variables in `.env.example`.
 
+For the hosted development environment used at:
+
+- `https://zabbot-app-development-4cnub.ondigitalocean.app/login`
+
+set these values explicitly:
+
+- `PRODUCTION_FRONTEND_URL=https://zabbot-app-development-4cnub.ondigitalocean.app`
+- `USERS_SERVICE_PRODUCTION_DB=postgres://USER:PASSWORD@ep-dawn-snowflake-a8t2wnjz-pooler.eastus2.azure.neon.tech:5432/DB_NAME?sslmode=require`
+
 ### 6) Verify login is healthy
 
 After deploy:
