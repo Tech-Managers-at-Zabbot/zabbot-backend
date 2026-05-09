@@ -940,7 +940,7 @@ const sendFrequentNotificationService = errorUtilities.withServiceErrorHandling(
       firstName,
       LOGO_URL:
         "https://res.cloudinary.com/dgotesgcy/image/upload/v1765748764/zabbot-logo-white_yojqzm.png",
-      APP_URL: "https://zabbot-app-development-4cnub.ondigitalocean.app/login",
+      APP_URL: "https://zabbot-app-development-4cnub.ondigitalocean.app/",
     });
 
     let messageDetails = {
