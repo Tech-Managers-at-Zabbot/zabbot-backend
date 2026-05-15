@@ -10,13 +10,16 @@
     "dev": "cross-env NODE_ENV=development nodemon --exec",
     "dev:start": "cross-env NODE_ENV=dev:start node dist/main-server.js",
     "install:all": "ts-node installAll.ts",
-    "flyway:local": "flyway -configFiles=flyway.conf,flyway-local.conf",
-    "flyway:online": "flyway -configFiles=flyway.conf,flyway-online.conf",
-    "migrate:local": "flyway -configFiles=flyway.conf,flyway-local.conf migrate",
-    "migrate:online": "flyway -configFiles=flyway.conf,flyway-online.conf migrate",
-    "migrate:prod": "flyway -configFiles=flyway.conf,flyway-prod.conf migrate",
-    "migrate:local:outOfOrder": "flyway -configFiles=flyway.conf,flyway-local.conf migrate -outOfOrder=true",
-    "migrate:prod:outOfOrder": "flyway -configFiles=flyway.conf,flyway-prod.conf migrate -outOfOrder=true"
+    "migrate:users": "flyway -configFiles=flyway-users.conf migrate",
+    "migrate:founders": "flyway -configFiles=flyway-founders.conf migrate",
+    "migrate:ededun": "flyway -configFiles=flyway-ededun.conf migrate",
+    "migrate:all": "npm run migrate:users && npm run migrate:founders && npm run migrate:ededun",
+    "migrate:info:users": "flyway -configFiles=flyway-users.conf info",
+    "migrate:info:founders": "flyway -configFiles=flyway-founders.conf info",
+    "migrate:info:ededun": "flyway -configFiles=flyway-ededun.conf info",
+    "migrate:validate:users": "flyway -configFiles=flyway-users.conf validate",
+    "migrate:validate:founders": "flyway -configFiles=flyway-founders.conf validate",
+    "migrate:validate:ededun": "flyway -configFiles=flyway-ededun.conf validate"
   },
   "repository": {
     "type": "git",

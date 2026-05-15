@@ -1,0 +1,6 @@
+flyway.url=jdbc:postgresql://<host>/<founders-db-name>?sslmode=require
+flyway.user=<db-user>
+flyway.password=<db-password>
+flyway.locations=filesystem:./migrations/founders-db
+flyway.baselineOnMigrate=true
+flyway.baselineVersion=0
