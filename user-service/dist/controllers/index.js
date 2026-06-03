@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.userNotificationControllers = exports.usersControllers = exports.googleAuthControllers = exports.emailAuthControllers = void 0;
+exports.newsletterSubscriptionControllers = exports.userNotificationControllers = exports.usersControllers = exports.googleAuthControllers = exports.emailAuthControllers = void 0;
 const emailAuth_controllers_1 = __importDefault(require("./authControllers/emailAuth.controllers"));
 exports.emailAuthControllers = emailAuth_controllers_1.default;
 const googleAuth_controllers_1 = __importDefault(require("./authControllers/googleAuth.controllers"));
@@ -12,3 +12,5 @@ const users_controllers_1 = __importDefault(require("./userControllers/users.con
 exports.usersControllers = users_controllers_1.default;
 const userNotifications_controllers_1 = __importDefault(require("./userNotificationControllers/userNotifications.controllers"));
 exports.userNotificationControllers = userNotifications_controllers_1.default;
+const newsletterSubscription_controllers_1 = __importDefault(require("./newsletterSubscriptionControllers/newsletterSubscription.controllers"));
+exports.newsletterSubscriptionControllers = newsletterSubscription_controllers_1.default;

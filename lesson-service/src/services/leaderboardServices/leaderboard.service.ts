@@ -8,7 +8,6 @@ import { v4 } from "uuid";
 import Users from "../../../../shared/entities/user-service-entities/users/users.entities";
 import UserLeaderboard from "../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities";
 import { Op } from "sequelize";
-import sequelize from "sequelize";
 
 interface UpdateLeaderboardParams {
   userId: string;
@@ -32,7 +31,10 @@ function getUTCBoundaries() {
       now.getUTCFullYear(),
       now.getUTCMonth(),
       now.getUTCDate(),
-      0, 0, 0, 0,
+      0,
+      0,
+      0,
+      0,
     ),
   );
 
@@ -44,7 +46,10 @@ function getUTCBoundaries() {
       now.getUTCFullYear(),
       now.getUTCMonth(),
       now.getUTCDate() + mondayOffset,
-      0, 0, 0, 0,
+      0,
+      0,
+      0,
+      0,
     ),
   );
 
@@ -52,103 +57,120 @@ function getUTCBoundaries() {
 }
 
 export const updateUserLeaderBoardScoresService =
-  errorUtilities.withServiceErrorHandling(async (params: UpdateLeaderboardParams) => {
-    const { userId, scoreToAdd, quizCompleted, quizCorrect, dailyWordsListened } = params;
+  errorUtilities.withServiceErrorHandling(
+    async (params: UpdateLeaderboardParams) => {
+      const {
+        userId,
+        scoreToAdd,
+        quizCompleted,
+        quizCorrect,
+        dailyWordsListened,
+      } = params;
 
-    // 1️⃣ Fetch user
-    const user = await Users.findByPk(userId);
-    if (!user) {
-      throw errorUtilities.createError("User not found", StatusCodes.NotFound);
-    }
+      // 1️⃣ Fetch user
+      const user = await Users.findByPk(userId);
+      if (!user) {
+        throw errorUtilities.createError(
+          "User not found",
+          StatusCodes.NotFound,
+        );
+      }
 
-    // 2️⃣ Sanitize input
-    const safeScoreToAdd = Number(scoreToAdd) || 0;
-    const safeDailyWords = Number(dailyWordsListened) || 0;
-    const { now, dayStart, weekStart } = getUTCBoundaries();
+      // 2️⃣ Sanitize input
+      const safeScoreToAdd = Number(scoreToAdd) || 0;
+      const safeDailyWords = Number(dailyWordsListened) || 0;
+      const { now, dayStart, weekStart } = getUTCBoundaries();
 
-    if (!UserLeaderboard.sequelize) {
-      throw errorUtilities.createError(
-        "Database connection not available",
-        StatusCodes.InternalServerError
-      );
-    }
+      if (!UserLeaderboard.sequelize) {
+        throw errorUtilities.createError(
+          "Database connection not available",
+          StatusCodes.InternalServerError,
+        );
+      }
 
-    // 3️⃣ Transaction for atomic update
-    await UserLeaderboard.sequelize.transaction(async (t) => {
-      // Lock row for update to prevent race conditions
-      const leaderboard = await UserLeaderboard.findOne({
-        where: { userId },
-        transaction: t,
-        lock: t.LOCK.UPDATE,
+      // 3️⃣ Transaction for atomic update
+      await UserLeaderboard.sequelize.transaction(async (t) => {
+        // Lock row for update to prevent race conditions
+        const leaderboard = await UserLeaderboard.findOne({
+          where: { userId },
+          transaction: t,
+          lock: t.LOCK.UPDATE,
+        });
+
+        if (!leaderboard) {
+          throw errorUtilities.createError(
+            "Leaderboard record not found",
+            StatusCodes.NotFound,
+          );
+        }
+
+        // 4️⃣ Prepare reset if needed
+        const resetData: Partial<typeof leaderboard> = {};
+
+        const storedDayStart = leaderboard.lastUpdatedDate
+          ? new Date(leaderboard.lastUpdatedDate).getTime()
+          : 0;
+
+        const storedWeekStart = leaderboard.lastUpdatedWeek
+          ? new Date(leaderboard.lastUpdatedWeek).getTime()
+          : 0;
+
+        if (storedDayStart < dayStart.getTime()) {
+          resetData.dailyScore = 0;
+          resetData.dailyWordsListened = 0;
+          resetData.lastUpdatedDate = dayStart;
+        }
+
+        if (storedWeekStart < weekStart.getTime()) {
+          resetData.weeklyScore = 0;
+          resetData.lastUpdatedWeek = weekStart;
+        }
+
+        // Always update lastUpdated for tracking
+        resetData.lastUpdated = now;
+
+        // 5️⃣ Apply reset and increment atomically
+        if (Object.keys(resetData).length > 0) {
+          await leaderboard.update(resetData, { transaction: t });
+        }
+
+        // 6️⃣ Increment scores
+        await leaderboard.increment(
+          {
+            dailyScore: safeScoreToAdd,
+            weeklyScore: safeScoreToAdd,
+            allTimeScore: safeScoreToAdd,
+            quizzesCompleted: quizCompleted ? 1 : 0,
+            quizzesCorrect: quizCorrect ? 1 : 0,
+            dailyWordsListened: safeDailyWords,
+          },
+          { transaction: t },
+        );
+
+        // 7️⃣ Sync username/avatar
+        await leaderboard.update(
+          {
+            username: `${user.firstName} ${user.lastName}`,
+            avatar: user.profilePicture,
+            lastUpdated: now, // refresh lastUpdated
+          },
+          { transaction: t },
+        );
       });
-
-      if (!leaderboard) {
-        throw errorUtilities.createError("Leaderboard record not found", StatusCodes.NotFound);
-      }
-
-      // 4️⃣ Prepare reset if needed
-      const resetData: Partial<typeof leaderboard> = {};
-
-      const storedDayStart = leaderboard.lastUpdatedDate
-        ? new Date(leaderboard.lastUpdatedDate).getTime()
-        : 0;
-
-      const storedWeekStart = leaderboard.lastUpdatedWeek
-        ? new Date(leaderboard.lastUpdatedWeek).getTime()
-        : 0;
-
-      if (storedDayStart < dayStart.getTime()) {
-        resetData.dailyScore = 0;
-        resetData.dailyWordsListened = 0;
-        resetData.lastUpdatedDate = dayStart;
-      }
-
-      if (storedWeekStart < weekStart.getTime()) {
-        resetData.weeklyScore = 0;
-        resetData.lastUpdatedWeek = weekStart;
-      }
-
-      // Always update lastUpdated for tracking
-      resetData.lastUpdated = now;
-
-      // 5️⃣ Apply reset and increment atomically
-      if (Object.keys(resetData).length > 0) {
-        await leaderboard.update(resetData, { transaction: t });
-      }
-
-      // 6️⃣ Increment scores
-      await leaderboard.increment(
-        {
-          dailyScore: safeScoreToAdd,
-          weeklyScore: safeScoreToAdd,
-          allTimeScore: safeScoreToAdd,
-          quizzesCompleted: quizCompleted ? 1 : 0,
-          quizzesCorrect: quizCorrect ? 1 : 0,
-          dailyWordsListened: safeDailyWords,
-        },
-        { transaction: t }
+      return responseUtilities.handleServicesResponse(
+        StatusCodes.OK,
+        CourseResponses.PROCESS_SUCCESSFUL,
       );
-
-      // 7️⃣ Sync username/avatar
-      await leaderboard.update(
-        {
-          username: `${user.firstName} ${user.lastName}`,
-          avatar: user.profilePicture,
-          lastUpdated: now, // refresh lastUpdated
-        },
-        { transaction: t }
-      );
-    });
-        return responseUtilities.handleServicesResponse(
-      StatusCodes.OK,
-      CourseResponses.PROCESS_SUCCESSFUL)
-  });
+    },
+  );
 
 const getUserLeaderboardPositionService =
   errorUtilities.withServiceErrorHandling(async (userId: string) => {
     const { now, dayStart, weekStart } = getUTCBoundaries();
 
-    const userLeaderboard = await UserLeaderboard.findOne({ where: { userId } });
+    const userLeaderboard = await UserLeaderboard.findOne({
+      where: { userId },
+    });
     if (!userLeaderboard) {
       return responseUtilities.handleServicesResponse(
         StatusCodes.NotFound,
@@ -186,7 +208,9 @@ const getUserLeaderboardPositionService =
       await UserLeaderboard.update(updatedData, { where: { userId } });
     }
 
-    const newUserLeaderboard: any = await UserLeaderboard.findOne({ where: { userId } });
+    const newUserLeaderboard: any = await UserLeaderboard.findOne({
+      where: { userId },
+    });
 
     // Calculate ranks
     const dailyRank =
@@ -232,27 +256,40 @@ const getAllLeaderboardDataService = errorUtilities.withServiceErrorHandling(
 
     // Reset stale daily/weekly scores using the same UTC boundaries
     await UserLeaderboard.update(
-      { dailyScore: 0, dailyWordsListened: 0, lastUpdatedDate: dayStart, lastUpdated: now },
-      { where: { lastUpdatedDate: { [Op.lt]: dayStart } } },
+      {
+        dailyScore: 0,
+        dailyWordsListened: 0,
+        lastUpdatedDate: dayStart,
+        lastUpdated: now,
+      },
+      { where: { lastUpdatedDate: { [Op.lt]: dayStart } } as any },
     );
 
     await UserLeaderboard.update(
       { weeklyScore: 0, lastUpdatedWeek: weekStart, lastUpdated: now },
-      { where: { lastUpdatedWeek: { [Op.lt]: weekStart } } },
+      { where: { lastUpdatedWeek: { [Op.lt]: weekStart } } as any },
     );
 
     const scoreField =
       period === "daily"
         ? "dailyScore"
         : period === "weekly"
-        ? "weeklyScore"
-        : "allTimeScore";
+          ? "weeklyScore"
+          : "allTimeScore";
 
     const leaderboard = await UserLeaderboard.findAll({
       order: [[scoreField, "DESC"]],
       limit,
       raw: true,
-      attributes: ["id", "userId", "username", "avatar", "dailyScore", "weeklyScore", "allTimeScore"],
+      attributes: [
+        "id",
+        "userId",
+        "username",
+        "avatar",
+        "dailyScore",
+        "weeklyScore",
+        "allTimeScore",
+      ],
     });
 
     const formattedLeaderboard = leaderboard.map((entry, index) => {
@@ -261,8 +298,8 @@ const getAllLeaderboardDataService = errorUtilities.withServiceErrorHandling(
         period === "daily"
           ? entry.dailyScore
           : period === "weekly"
-          ? entry.weeklyScore
-          : entry.allTimeScore;
+            ? entry.weeklyScore
+            : entry.allTimeScore;
       return {
         id: entry.id,
         rank,
@@ -288,7 +325,6 @@ const getAllLeaderboardDataService = errorUtilities.withServiceErrorHandling(
     );
   },
 );
-
 
 export default {
   updateUserLeaderBoardScoresService,
