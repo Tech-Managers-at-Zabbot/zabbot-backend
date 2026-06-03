@@ -7,6 +7,17 @@ const { FOUNDERS_LIST_DB, USERS_SERVICE_DB, EDEDUN_DB } = config;
 
 const certificatePath = path.join(__dirname, "../ssl/ca-certificate.crt");
 
+const isLocalDatabase = (databaseUrl: string) =>
+  databaseUrl.includes("localhost") || databaseUrl.includes("127.0.0.1");
+
+const sslOptions = (databaseUrl: string) =>
+  isLocalDatabase(databaseUrl)
+    ? false
+    : {
+        require: false,
+        rejectUnauthorized: false,
+      };
+
 const founders_list_db = new Sequelize(`${FOUNDERS_LIST_DB}`, {
   dialect: "postgres",
   pool: {
@@ -16,11 +27,7 @@ const founders_list_db = new Sequelize(`${FOUNDERS_LIST_DB}`, {
     idle: 10000,
   },
   dialectOptions: {
-    ssl: {
-      require: false,
-      rejectUnauthorized: false,
-      // ca: fs.readFileSync(certificatePath).toString(),
-    },
+    ssl: sslOptions(FOUNDERS_LIST_DB),
   },
 });
 
@@ -50,11 +57,7 @@ const users_service_db = new Sequelize(`${USERS_SERVICE_DB}`, {
     idle: 10000,
   },
   dialectOptions: {
-    ssl: {
-      require: false,
-      rejectUnauthorized: false,
-      // ca: fs.readFileSync(certificatePath).toString(),
-    },
+    ssl: sslOptions(USERS_SERVICE_DB),
   },
 });
 

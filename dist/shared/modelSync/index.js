@@ -13,6 +13,7 @@ require("../entities/lesson-service-entities/wordForTheDay/wordForTheDay");
 require("../entities/pronunciation-feedback-service-entities/referencePronunciation/reference-pronunciation");
 require("../entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation");
 require("../entities/user-service-entities/otp/otp.entities");
+require("../entities/user-service-entities/newsletterSubscriptions/newsletterSubscriptions.entities");
 require("../entities/user-service-entities/users/users.entities");
 require("../entities/payment-service-entities/transactions/transactions");
 require("../entities/payment-service-entities/subscriptions/subscriptions");

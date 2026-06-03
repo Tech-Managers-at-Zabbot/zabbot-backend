@@ -9,6 +9,13 @@ const config_1 = __importDefault(require("./config"));
 const path_1 = __importDefault(require("path"));
 const { FOUNDERS_LIST_DB, USERS_SERVICE_DB, EDEDUN_DB } = config_1.default;
 const certificatePath = path_1.default.join(__dirname, "../ssl/ca-certificate.crt");
+const isLocalDatabase = (databaseUrl) => databaseUrl.includes("localhost") || databaseUrl.includes("127.0.0.1");
+const sslOptions = (databaseUrl) => isLocalDatabase(databaseUrl)
+    ? false
+    : {
+        require: false,
+        rejectUnauthorized: false,
+    };
 const founders_list_db = new sequelize_1.Sequelize(`${FOUNDERS_LIST_DB}`, {
     dialect: "postgres",
     pool: {
@@ -18,10 +25,7 @@ const founders_list_db = new sequelize_1.Sequelize(`${FOUNDERS_LIST_DB}`, {
         idle: 10000,
     },
     dialectOptions: {
-        ssl: {
-            require: false,
-            rejectUnauthorized: false,
-        },
+        ssl: sslOptions(FOUNDERS_LIST_DB),
     },
 });
 exports.founders_list_db = founders_list_db;
@@ -44,10 +48,7 @@ const users_service_db = new sequelize_1.Sequelize(`${USERS_SERVICE_DB}`, {
         idle: 10000,
     },
     dialectOptions: {
-        ssl: {
-            require: false,
-            rejectUnauthorized: false,
-        },
+        ssl: sslOptions(USERS_SERVICE_DB),
     },
 });
 exports.users_service_db = users_service_db;

@@ -31,46 +31,31 @@ const userRegisterSchemaViaEmail = joi_1.default.object({
         .email({ tlds: { allow: false } })
         .required()
         .messages({
-        'string.empty': 'Email is required',
-        'string.email': 'Email must be a valid email address',
+        "string.empty": "Email is required",
+        "string.email": "Email must be a valid email address",
     }),
-    password: joi_1.default.string()
-        .trim()
-        .min(8)
-        .required()
-        .messages({
-        'string.empty': 'Password is required',
-        'string.min': 'Password must be at least 8 characters long',
+    password: joi_1.default.string().trim().min(8).required().messages({
+        "string.empty": "Password is required",
+        "string.min": "Password must be at least 8 characters long",
     }),
     confirmPassword: joi_1.default.string()
         .trim()
         .required()
-        .valid(joi_1.default.ref('password'))
+        .valid(joi_1.default.ref("password"))
         .messages({
-        'any.only': 'Passwords do not match',
-        'string.empty': 'Confirm Password is required',
+        "any.only": "Passwords do not match",
+        "string.empty": "Confirm Password is required",
     }),
-    firstName: joi_1.default.string()
-        .trim()
-        .min(2)
-        .required()
-        .messages({
-        'string.empty': 'First Name is required',
-        'string.min': 'First Name must be at least 2 characters long',
+    firstName: joi_1.default.string().trim().min(2).required().messages({
+        "string.empty": "First Name is required",
+        "string.min": "First Name must be at least 2 characters long",
     }),
-    lastName: joi_1.default.string()
-        .trim()
-        .min(2)
-        .required()
-        .messages({
-        'string.empty': 'Last Name is required',
-        'string.min': 'Last Name must be at least 2 characters long',
+    lastName: joi_1.default.string().trim().min(2).required().messages({
+        "string.empty": "Last Name is required",
+        "string.min": "Last Name must be at least 2 characters long",
     }),
-    role: joi_1.default.string()
-        .trim()
-        .min(4)
-        .optional(),
-    timeZone: joi_1.default.string().optional()
+    role: joi_1.default.string().trim().min(4).optional(),
+    timeZone: joi_1.default.string().optional(),
 });
 const loginUserSchema = joi_1.default.object({
     email: joi_1.default.string()
@@ -78,19 +63,15 @@ const loginUserSchema = joi_1.default.object({
         .email({ tlds: { allow: false } })
         .required()
         .messages({
-        'string.empty': 'Email is required',
-        'string.email': 'Email must be a valid email address',
+        "string.empty": "Email is required",
+        "string.email": "Email must be a valid email address",
     }),
-    password: joi_1.default.string()
-        .trim()
-        .min(8)
-        .required()
-        .messages({
-        'string.empty': 'Password is required',
-        'string.min': 'Password must be at least 8 characters long',
+    password: joi_1.default.string().trim().min(8).required().messages({
+        "string.empty": "Password is required",
+        "string.min": "Password must be at least 8 characters long",
     }),
-    stayLoggedIn: joi_1.default.boolean().truthy('true').falsy('false').optional(),
-    timeZone: joi_1.default.string().optional()
+    stayLoggedIn: joi_1.default.boolean().truthy("true").falsy("false").optional(),
+    timeZone: joi_1.default.string().optional(),
 });
 const resendVerificationLinkSchema = joi_1.default.object({
     email: joi_1.default.string()
@@ -98,56 +79,54 @@ const resendVerificationLinkSchema = joi_1.default.object({
         .email({ tlds: { allow: false } })
         .required()
         .messages({
-        'string.empty': 'Email is required',
-        'string.email': 'Email must be a valid email address',
+        "string.empty": "Email is required",
+        "string.email": "Email must be a valid email address",
+    }),
+});
+const newsletterSubscriptionSchema = joi_1.default.object({
+    email: joi_1.default.string()
+        .trim()
+        .email({ tlds: { allow: false } })
+        .required()
+        .messages({
+        "string.empty": "Email is required",
+        "string.email": "Email must be a valid email address",
     }),
 });
 const resetPasswordSchema = joi_1.default.object({
-    newPassword: joi_1.default.string()
-        .trim()
-        .min(8)
-        .required()
-        .messages({
-        'string.empty': 'Password is required',
-        'string.min': 'Password must be at least 8 characters long',
+    newPassword: joi_1.default.string().trim().min(8).required().messages({
+        "string.empty": "Password is required",
+        "string.min": "Password must be at least 8 characters long",
     }),
     confirmNewPassword: joi_1.default.string()
         .trim()
         .required()
-        .valid(joi_1.default.ref('newPassword'))
+        .valid(joi_1.default.ref("newPassword"))
         .messages({
-        'any.only': 'Passwords do not match',
-        'string.empty': 'Confirm Password is required',
+        "any.only": "Passwords do not match",
+        "string.empty": "Confirm Password is required",
     }),
     token: joi_1.default.string().trim().required().messages({
-        'string.empty': 'Please click the link in your email again, if error persists, please request a new password reset link',
-        'string.base': 'Please click the link in your email again, if error persists, please request a new password reset link',
+        "string.empty": "Please click the link in your email again, if error persists, please request a new password reset link",
+        "string.base": "Please click the link in your email again, if error persists, please request a new password reset link",
     }),
 });
 const changePasswordSchema = joi_1.default.object({
-    currentPassword: joi_1.default.string()
-        .trim()
-        .min(8)
-        .required()
-        .messages({
-        'string.empty': 'Current Password is required',
-        'string.min': 'Current Password must be at least 8 characters long',
+    currentPassword: joi_1.default.string().trim().min(8).required().messages({
+        "string.empty": "Current Password is required",
+        "string.min": "Current Password must be at least 8 characters long",
     }),
-    newPassword: joi_1.default.string()
-        .trim()
-        .min(8)
-        .required()
-        .messages({
-        'string.empty': 'Password is required',
-        'string.min': 'Password must be at least 8 characters long',
+    newPassword: joi_1.default.string().trim().min(8).required().messages({
+        "string.empty": "Password is required",
+        "string.min": "Password must be at least 8 characters long",
     }),
     confirmNewPassword: joi_1.default.string()
         .trim()
         .required()
-        .valid(joi_1.default.ref('newPassword'))
+        .valid(joi_1.default.ref("newPassword"))
         .messages({
-        'any.only': 'Passwords do not match',
-        'string.empty': 'Confirm Password is required',
+        "any.only": "Passwords do not match",
+        "string.empty": "Confirm Password is required",
     }),
 });
 const updateUserNameSchema = joi_1.default.object({
@@ -173,6 +152,7 @@ exports.default = {
     changePasswordSchema,
     inputValidator,
     resendVerificationLinkSchema,
+    newsletterSubscriptionSchema,
     resetPasswordSchema,
-    updateUserNameSchema
+    updateUserNameSchema,
 };
