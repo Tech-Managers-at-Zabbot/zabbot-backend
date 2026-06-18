@@ -21,3 +21,4 @@ dist
 !.env.example
 flyway*.conf
 .DS_Store
+shared/tsconfig.tsbuildinfo
