@@ -11,7 +11,7 @@ const userPronunciationRepositories = {
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error Fetching pronunciation: ${error.message}`,
-        500
+        500,
       );
     }
   },
@@ -23,14 +23,14 @@ const userPronunciationRepositories = {
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error Fetching pronunciations: ${error.message}`,
-        500
+        500,
       );
     }
   },
 
   addPronunciation: async (
     pronunciationData: any,
-    transaction?: Transaction
+    transaction?: Transaction,
   ) => {
     try {
       // check if pronunciation already exists
@@ -48,7 +48,7 @@ const userPronunciationRepositories = {
         // Create a new pronunciation
         const newPronunciation = await UserPronunciation.create(
           pronunciationData,
-          { transaction }
+          { transaction },
         );
 
         return newPronunciation;
@@ -56,14 +56,14 @@ const userPronunciationRepositories = {
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error Adding pronunciation: ${error.message}`,
-        500
+        500,
       );
     }
   },
 
   updatePronunciation: async (
     pronunciationData: any,
-    transaction?: Transaction
+    transaction?: Transaction,
   ) => {
     try {
       await pronunciationData.update(pronunciationData, { transaction });
@@ -72,7 +72,7 @@ const userPronunciationRepositories = {
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error Updating pronunciation: ${error.message}`,
-        500
+        500,
       );
     }
   },
@@ -88,7 +88,7 @@ const userPronunciationRepositories = {
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error Deleting pronunciation: ${error.message}`,
-        500
+        500,
       );
     }
   },
