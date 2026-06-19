@@ -117,12 +117,13 @@ export const generalAuthFunction = async (
         }
 
         const tokenPayload = {
-          id: refreshVerifiedUser.id,
+          userId: refreshVerifiedUser.userId,
           email: refreshVerifiedUser.email,
           role: refreshVerifiedUser.role
         };
 
-        const newAccessToken = helpersUtilities.generateToken(tokenPayload, '2h')
+        const accessTokenExpiry = refreshVerifiedUser.stayLoggedIn ? '30d' : '2h';
+        const newAccessToken = helpersUtilities.generateToken(tokenPayload, accessTokenExpiry)
 
         const newRefreshToken = helpersUtilities.generateToken(tokenPayload, '30d')
 

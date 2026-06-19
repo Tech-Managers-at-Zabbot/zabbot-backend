@@ -11,13 +11,14 @@ const inputValidator = (schema: Joi.Schema): any => {
     next: NextFunction,
   ): Promise<any> => {
     try {
-      const { error } = schema.validate(request.body);
+      const { error, value } = schema.validate(request.body);
       if (error) {
         return response.status(400).json({
           status: "error",
           message: `${error.details[0].message.replace(/["\\]/g, "")}`,
         });
       }
+      request.body = value;
       return next();
     } catch (err) {
       return response.status(500).json({

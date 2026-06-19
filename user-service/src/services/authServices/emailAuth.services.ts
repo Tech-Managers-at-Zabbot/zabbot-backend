@@ -422,6 +422,7 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
         userId: user.id,
         email: user.email,
         role: user.role,
+        stayLoggedIn: Boolean(stayLoggedIn),
       },
       expires: "60d",
     };
