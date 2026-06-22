@@ -3,7 +3,7 @@ import {
   generalAuthFunction,
   rolePermit,
 } from "../../../shared/middleware/authorization.middleware";
-import multer from 'multer';
+import multer from "multer";
 
 import {
   getCoursesController,
@@ -32,53 +32,53 @@ router.post(
   "/",
   generalAuthFunction,
   rolePermit(["admin"]),
-  addCourseController
+  addCourseController,
 );
 router.put(
   "/:id",
   generalAuthFunction,
   rolePermit(["admin"]),
-  updateCourseController
+  updateCourseController,
 );
 
 router.get("/users", generalAuthFunction, getUserCoursesController);
 router.get(
   "/user-course/:languageId/:courseId",
   generalAuthFunction,
-  getUserCourseController
+  getUserCourseController,
 );
 router.post(
   "/add-user-course/:languageId/:courseId",
   generalAuthFunction,
-  addUserCourseController
+  addUserCourseController,
 );
 router.put(
   "/update-user-course/:courseId",
   generalAuthFunction,
-  updateUserCourseController
+  updateUserCourseController,
 );
 router.delete("/users/:id", generalAuthFunction, removeUserCourseController);
 router.get(
   "/user-completed-courses/:languageId",
   generalAuthFunction,
-  getUserCompletedCoursesController
+  getUserCompletedCoursesController,
 );
 router.post(
   "/course-with-lesson/:languageId",
-  createCourseWithLessonsController
+  createCourseWithLessonsController,
 );
 router.get(
   "/get-course-with-lesson/:languageId",
   generalAuthFunction,
-  getCourseWithLessonsController
+  getCourseWithLessonsController,
 );
 
 router.put(
   "/change-course-image/:courseId",
-  upload.array('files', 50),
+  upload.array("files", 50),
   generalAuthFunction,
   rolePermit(["admin"]),
-  updateCourseImageController
+  updateCourseImageController,
 );
 
 export default router;

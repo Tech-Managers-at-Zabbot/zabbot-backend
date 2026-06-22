@@ -22,5 +22,5 @@ router.delete("/users/:id", authorization_middleware_1.generalAuthFunction, cour
 router.get("/user-completed-courses/:languageId", authorization_middleware_1.generalAuthFunction, course_controller_1.getUserCompletedCoursesController);
 router.post("/course-with-lesson/:languageId", course_controller_1.createCourseWithLessonsController);
 router.get("/get-course-with-lesson/:languageId", authorization_middleware_1.generalAuthFunction, course_controller_1.getCourseWithLessonsController);
-router.put("/change-course-image/:courseId", upload.array('files', 50), authorization_middleware_1.generalAuthFunction, (0, authorization_middleware_1.rolePermit)(["admin"]), course_controller_1.updateCourseImageController);
+router.put("/change-course-image/:courseId", upload.array("files", 50), authorization_middleware_1.generalAuthFunction, (0, authorization_middleware_1.rolePermit)(["admin"]), course_controller_1.updateCourseImageController);
 exports.default = router;
