@@ -12,15 +12,15 @@ export const getCoursesController = errorUtilities.withControllerErrorHandling(
 
     const courses = await courseService.getCoursesForLanguage(
       languageId,
-      isActive
+      isActive,
     );
     return responseUtilities.responseHandler(
       res,
       courses.message,
       courses.statusCode,
-      courses.data
+      courses.data,
     );
-  }
+  },
 );
 
 // Controller to get a single course
@@ -37,9 +37,9 @@ export const getCourseController = errorUtilities.withControllerErrorHandling(
       res,
       course.message,
       course.statusCode,
-      course.data
+      course.data,
     );
-  }
+  },
 );
 
 // Controller to get a course by title
@@ -52,9 +52,9 @@ export const getCourseByTitleController =
         res,
         course.message,
         course.statusCode,
-        course.data
+        course.data,
       );
-    }
+    },
   );
 
 // Controller to create a new course
@@ -66,9 +66,9 @@ export const addCourseController = errorUtilities.withControllerErrorHandling(
       res,
       course.message,
       course.statusCode,
-      course.data
+      course.data,
     );
-  }
+  },
 );
 
 // Controller to update an existing course
@@ -82,9 +82,9 @@ export const updateCourseController =
         res,
         course.message,
         course.statusCode,
-        course.data
+        course.data,
       );
-    }
+    },
   );
 
 // Controller to delete a course
@@ -97,9 +97,9 @@ export const deleteCourseController =
         res,
         course.message,
         course.statusCode,
-        course.data
+        course.data,
       );
-    }
+    },
   );
 
 // Controller to get all user courses
@@ -111,9 +111,9 @@ export const getUserCoursesController =
         res,
         userCourses.message,
         userCourses.statusCode,
-        userCourses.data
+        userCourses.data,
       );
-    }
+    },
   );
 
 // Controller to get user course
@@ -127,15 +127,15 @@ export const getUserCourseController =
         languageId,
         userId,
         courseId,
-        lastLessonId
+        lastLessonId,
       );
       return responseUtilities.responseHandler(
         response,
         userCourse.message,
         userCourse.statusCode,
-        userCourse.data
+        userCourse.data,
       );
-    }
+    },
   );
 
 // Controller to add user to course
@@ -153,17 +153,16 @@ export const addUserCourseController =
         isCompleted: false,
         isActive: true,
       };
-      const addUserCourse = await userCourseService.addUserCourse(
-        userCourseData
-      );
+      const addUserCourse =
+        await userCourseService.addUserCourse(userCourseData);
 
       return responseUtilities.responseHandler(
         response,
         addUserCourse.message,
         addUserCourse.statusCode,
-        addUserCourse.data
+        addUserCourse.data,
       );
-    }
+    },
   );
 
 // Controller to update user course
@@ -177,15 +176,15 @@ export const updateUserCourseController =
         courseId,
         userId,
         request.body,
-        lessonId
+        lessonId,
       );
       return responseUtilities.responseHandler(
         response,
         updateUserCourse.message,
         updateUserCourse.statusCode,
-        updateUserCourse.data
+        updateUserCourse.data,
       );
-    }
+    },
   );
 
 export const getUserCompletedCoursesController =
@@ -199,32 +198,34 @@ export const getUserCompletedCoursesController =
         await userCourseService.getUserCompletedCoursesService(
           userId,
           languageId,
-          countOnly
+          countOnly,
         );
 
       return responseUtilities.responseHandler(
         response,
         userCompletedCourses.message,
         userCompletedCourses.statusCode,
-        userCompletedCourses.data
+        userCompletedCourses.data,
       );
-    }
+    },
   );
 
 export const getCourseWithLessonsController =
   errorUtilities.withControllerErrorHandling(
     async (req: JwtPayload, res: Response) => {
-      const { languageId } = req.params;
+      const { courseId } = req.params;
+      const { languageId } = req.query;
       const courseWithLessons = await courseService.getCourseWithLessonsService(
-        languageId
+        courseId,
+        languageId,
       );
       return responseUtilities.responseHandler(
         res,
         courseWithLessons.message,
         courseWithLessons.statusCode,
-        courseWithLessons.data
+        courseWithLessons.data,
       );
-    }
+    },
   );
 
 export const removeUserCourseController =
@@ -237,9 +238,9 @@ export const removeUserCourseController =
         res,
         removeUserFromCourse.message,
         removeUserFromCourse.statusCode,
-        removeUserFromCourse.data
+        removeUserFromCourse.data,
       );
-    }
+    },
   );
 
 export const createCourseWithLessonsController =
@@ -250,15 +251,15 @@ export const createCourseWithLessonsController =
       const course = await courseService.createCourseWithLessons(
         courseData,
         lessons,
-        languageId
+        languageId,
       );
       return responseUtilities.responseHandler(
         res,
         course.message,
         course.statusCode,
-        course.data
+        course.data,
       );
-    }
+    },
   );
 
 export const updateCourseImageController =
@@ -272,21 +273,21 @@ export const updateCourseImageController =
         return responseUtilities.responseHandler(
           response,
           "No file uploaded",
-          401
+          401,
         );
       }
 
       const uploadStatus = await courseService.updateCourseImageService(
         courseId,
         mediaType,
-        files
+        files,
       );
 
       return responseUtilities.responseHandler(
         response,
         uploadStatus.message,
         uploadStatus.statusCode,
-        uploadStatus.data
+        uploadStatus.data,
       );
-    }
+    },
   );

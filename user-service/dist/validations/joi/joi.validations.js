@@ -8,13 +8,14 @@ const joi_1 = __importDefault(require("joi"));
 const inputValidator = (schema) => {
     return async (request, response, next) => {
         try {
-            const { error } = schema.validate(request.body);
+            const { error, value } = schema.validate(request.body);
             if (error) {
                 return response.status(400).json({
                     status: "error",
                     message: `${error.details[0].message.replace(/["\\]/g, "")}`,
                 });
             }
+            request.body = value;
             return next();
         }
         catch (err) {

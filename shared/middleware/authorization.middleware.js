@@ -98,11 +98,12 @@ const generalAuthFunction = async (request, response, next) => {
                     });
                 }
                 const tokenPayload = {
-                    id: refreshVerifiedUser.id,
+                    userId: refreshVerifiedUser.userId,
                     email: refreshVerifiedUser.email,
                     role: refreshVerifiedUser.role
                 };
-                const newAccessToken = utilities_1.helpersUtilities.generateToken(tokenPayload, '2h');
+                const accessTokenExpiry = refreshVerifiedUser.stayLoggedIn ? '30d' : '2h';
+                const newAccessToken = utilities_1.helpersUtilities.generateToken(tokenPayload, accessTokenExpiry);
                 const newRefreshToken = utilities_1.helpersUtilities.generateToken(tokenPayload, '30d');
                 response.setHeader('x-access-token', newAccessToken);
                 await users_entities_1.default.update({
