@@ -101,13 +101,8 @@ const deleteCourse = errorUtilities.withServiceErrorHandling(
 );
 
 const getCourseWithLessonsService = errorUtilities.withServiceErrorHandling(
-  async (courseId: string, languageId: string) => {
-    let query: any = { courseId, languageId };
-    if (!languageId) {
-      const language = await languageRepositories.getLanguageByCode("YO");
-      query.languageId = language?.id;
-    }
-    const course = await courseRepositories.getCourse(courseId);
+  async (languageId: string) => {
+    const course = await courseRepositories.getCourseWithLanguageId(languageId);
     console.log("course", course);
     if (!course) {
       throw errorUtilities.createError(
