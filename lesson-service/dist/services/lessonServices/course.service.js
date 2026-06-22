@@ -11,7 +11,6 @@ const content_repository_1 = __importDefault(require("../../repositories/content
 const lesson_repository_1 = __importDefault(require("../../repositories/lesson.repository"));
 const responses_1 = require("../../responses/responses");
 const api_1 = require("../../../../shared/cloudinary/api");
-const language_repository_1 = __importDefault(require("../../repositories/language.repository"));
 const getCoursesForLanguage = utilities_1.errorUtilities.withServiceErrorHandling(async (languageId, isActive) => {
     // const payload = { isActive, languageId };
     const courses = await course_repository_1.default.getCourses(isActive, languageId);
@@ -56,13 +55,8 @@ const deleteCourse = utilities_1.errorUtilities.withServiceErrorHandling(async (
     await course_repository_1.default.deleteCourse(id);
     return { message: "Course deleted successfully" };
 });
-const getCourseWithLessonsService = utilities_1.errorUtilities.withServiceErrorHandling(async (courseId, languageId) => {
-    let query = { courseId, languageId };
-    if (!languageId) {
-        const language = await language_repository_1.default.getLanguageByCode("YO");
-        query.languageId = language?.id;
-    }
-    const course = await course_repository_1.default.getCourse(courseId);
+const getCourseWithLessonsService = utilities_1.errorUtilities.withServiceErrorHandling(async (languageId) => {
+    const course = await course_repository_1.default.getCourseWithLanguageId(languageId);
     console.log("course", course);
     if (!course) {
         throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.COURSE_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);

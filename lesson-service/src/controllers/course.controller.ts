@@ -213,12 +213,9 @@ export const getUserCompletedCoursesController =
 export const getCourseWithLessonsController =
   errorUtilities.withControllerErrorHandling(
     async (req: JwtPayload, res: Response) => {
-      const { courseId } = req.params;
-      const { languageId } = req.query;
-      const courseWithLessons = await courseService.getCourseWithLessonsService(
-        courseId,
-        languageId,
-      );
+      const { languageId } = req.params;
+      const courseWithLessons =
+        await courseService.getCourseWithLessonsService(languageId);
       return responseUtilities.responseHandler(
         res,
         courseWithLessons.message,

@@ -95,9 +95,8 @@ exports.getUserCompletedCoursesController = utilities_1.errorUtilities.withContr
     return utilities_1.responseUtilities.responseHandler(response, userCompletedCourses.message, userCompletedCourses.statusCode, userCompletedCourses.data);
 });
 exports.getCourseWithLessonsController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
-    const { courseId } = req.params;
-    const { languageId } = req.query;
-    const courseWithLessons = await course_service_1.default.getCourseWithLessonsService(courseId, languageId);
+    const { languageId } = req.params;
+    const courseWithLessons = await course_service_1.default.getCourseWithLessonsService(languageId);
     return utilities_1.responseUtilities.responseHandler(res, courseWithLessons.message, courseWithLessons.statusCode, courseWithLessons.data);
 });
 exports.removeUserCourseController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
