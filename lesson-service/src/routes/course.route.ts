@@ -68,7 +68,7 @@ router.post(
   createCourseWithLessonsController,
 );
 router.get(
-  "/get-course-with-lesson/:languageId",
+  "/get-course-with-lesson/:courseId",
   generalAuthFunction,
   getCourseWithLessonsController,
 );
