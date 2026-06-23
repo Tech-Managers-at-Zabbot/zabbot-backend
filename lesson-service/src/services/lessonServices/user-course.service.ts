@@ -15,29 +15,34 @@ const getUserCourses = errorUtilities.withServiceErrorHandling(
     const payload = { languageId, userId, courseId };
     const userCourses = await userCourseRepositories.getUserCourses(payload);
     return userCourses;
-  }
+  },
 );
 
 const getUserCourse = errorUtilities.withServiceErrorHandling(
-  async (languageId: string, userId: string, courseId: string, lastLessonId:string) => {
+  async (
+    languageId: string,
+    userId: string,
+    courseId: string,
+    lastLessonId: string,
+  ) => {
     const userCourse = await userCourseRepositories.getUserCourse({
       languageId,
       userId,
       courseId,
-      lastLessonId
+      lastLessonId,
     });
     if (!userCourse) {
       throw errorUtilities.createError(
         CourseResponses.USER_COURSE_NOT_FOUND,
-        StatusCodes.NotFound
+        StatusCodes.NotFound,
       );
     }
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       CourseResponses.PROCESS_SUCCESSFUL,
-      userCourse
+      userCourse,
     );
-  }
+  },
 );
 
 // const getUserCourseAndLessons = errorUtilities.withServiceErrorHandling (
@@ -64,12 +69,12 @@ const addUserCourse = errorUtilities.withServiceErrorHandling(
       lastLessonId: userCourseData.lastLessonId,
     });
 
-    if (existingUserCourse) {
-      throw errorUtilities.createError(
-        CourseResponses.USER_ENROLLED_FOR_COURSE,
-        StatusCodes.BadRequest
-      );
-    }
+    // if (existingUserCourse) {
+    //   throw errorUtilities.createError(
+    //     CourseResponses.USER_ENROLLED_FOR_COURSE,
+    //     StatusCodes.BadRequest
+    //   );
+    // }
 
     const newUserCourse = await userCourseRepositories.addUserCourse({
       id: v4(),
@@ -78,9 +83,9 @@ const addUserCourse = errorUtilities.withServiceErrorHandling(
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       CourseResponses.PROCESS_SUCCESSFUL,
-      newUserCourse
+      newUserCourse,
     );
-  }
+  },
 );
 
 const getUserCompletedCoursesService = errorUtilities.withServiceErrorHandling(
@@ -89,47 +94,52 @@ const getUserCompletedCoursesService = errorUtilities.withServiceErrorHandling(
       await userCourseRepositories.getCompletedCourses(
         userId,
         languageId,
-        countOnly
+        countOnly,
       );
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       CourseResponses.PROCESS_SUCCESSFUL,
-      userCompletedCourses
+      userCompletedCourses,
     );
-  }
+  },
 );
 
 const updateUserCourse = errorUtilities.withServiceErrorHandling(
-  async (courseId: string | any, userId: string, userCourseData: any, lessonId: string) => {
-
+  async (
+    courseId: string | any,
+    userId: string,
+    userCourseData: any,
+    lessonId: string,
+  ) => {
     const userCourse = await userCourseRepositories.getUserCourse({
       userId: userId,
       courseId: courseId,
-      lastLessonId: lessonId
+      lastLessonId: lessonId,
     });
 
     if (!userCourse) {
       throw errorUtilities.createError(
         CourseResponses.USER_COURSE_NOT_FOUND,
-        StatusCodes.NotFound
+        StatusCodes.NotFound,
       );
     }
 
-    const lessonExists = await lessonRepositories.getLesson(lessonId)
+    const lessonExists = await lessonRepositories.getLesson(lessonId);
 
     if (!lessonExists) {
       throw errorUtilities.createError(
         CourseResponses.LESSON_NOT_FOUND,
-        StatusCodes.NotFound
+        StatusCodes.NotFound,
       );
     }
 
-    if (userCourse.isCompleted //&& userCourse.progress === 100
-      ) {
+    if (
+      userCourse.isCompleted //&& userCourse.progress === 100
+    ) {
       return responseUtilities.handleServicesResponse(
         StatusCodes.OK,
         CourseResponses.PROCESS_SUCCESSFUL,
-        userCourse
+        userCourse,
       );
     }
 
@@ -137,15 +147,15 @@ const updateUserCourse = errorUtilities.withServiceErrorHandling(
     const updatedUserCourse = await userCourseRepositories.updateUserCourse(
       userCourse,
       userCourse.id,
-      lessonId
+      lessonId,
     );
 
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       CourseResponses.PROCESS_SUCCESSFUL,
-      updatedUserCourse
+      updatedUserCourse,
     );
-  }
+  },
 );
 
 const deleteUserCourse = errorUtilities.withServiceErrorHandling(
@@ -153,7 +163,7 @@ const deleteUserCourse = errorUtilities.withServiceErrorHandling(
     await userCourseRepositories.deleteUserCourse(id);
 
     return { message: "User course deleted successfully" };
-  }
+  },
 );
 
 export default {
