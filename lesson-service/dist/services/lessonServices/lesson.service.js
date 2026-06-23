@@ -11,6 +11,7 @@ const content_repository_1 = __importDefault(require("../../repositories/content
 const responses_1 = require("../../responses/responses");
 const quiz_repository_1 = __importDefault(require("../../repositories/quiz.repository"));
 const api_1 = require("../../../../shared/cloudinary/api");
+const course_repository_1 = __importDefault(require("../../repositories/course.repository"));
 // import languageRepositories from "src/repositories/language.repository";
 const getLessons = utilities_1.errorUtilities.withServiceErrorHandling(async () => {
     const lessons = await lesson_repository_1.default.getLessons();
@@ -32,12 +33,14 @@ const getLessonsForLanguage = utilities_1.errorUtilities.withServiceErrorHandlin
 });
 const getLessonsForCourse = utilities_1.errorUtilities.withServiceErrorHandling(async (courseId) => {
     const getCourseLessons = await lesson_repository_1.default.getLessons({ courseId });
+    const course = await course_repository_1.default.getCourse(courseId);
     if (!getCourseLessons) {
         throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.LESSONS_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
     }
     const getLessonsContents = await Promise.all(getCourseLessons.map(async (lesson) => {
         const contents = await content_repository_1.default.getLessonContents(lesson?.id);
         return {
+            course: course || null,
             ...lesson,
             contents: contents || [],
         };

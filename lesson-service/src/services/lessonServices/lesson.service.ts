@@ -9,6 +9,7 @@ import contentRepositories from "../../repositories/content.repository";
 import { CourseResponses } from "../../responses/responses";
 import quizRepositories from "../../repositories/quiz.repository";
 import { uploadFile } from "../../../../shared/cloudinary/api";
+import courseRepositories from "../../repositories/course.repository";
 // import languageRepositories from "src/repositories/language.repository";
 
 const getLessons = errorUtilities.withServiceErrorHandling(async () => {
@@ -24,55 +25,56 @@ const getLesson = errorUtilities.withServiceErrorHandling(
     }
 
     return responseUtilities.handleServicesResponse(StatusCodes.OK, "", lesson);
-  }
+  },
 );
 
 const getLessonsForLanguage = errorUtilities.withServiceErrorHandling(
   async (languageId: string) => {
-    const getLanguageLessons = await lessonRepositories.getLanguageLessons(
-      languageId
-    );
+    const getLanguageLessons =
+      await lessonRepositories.getLanguageLessons(languageId);
     if (!getLanguageLessons) {
       throw errorUtilities.createError(
         CourseResponses.LESSONS_NOT_FOUND,
-        StatusCodes.NotFound
+        StatusCodes.NotFound,
       );
     }
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       CourseResponses.PROCESS_SUCCESSFUL,
-      getLanguageLessons
+      getLanguageLessons,
     );
-  }
+  },
 );
 
 const getLessonsForCourse = errorUtilities.withServiceErrorHandling(
   async (courseId: string) => {
     const getCourseLessons = await lessonRepositories.getLessons({ courseId });
+    const course = await courseRepositories.getCourse(courseId);
     if (!getCourseLessons) {
       throw errorUtilities.createError(
         CourseResponses.LESSONS_NOT_FOUND,
-        StatusCodes.NotFound
+        StatusCodes.NotFound,
       );
     }
 
     const getLessonsContents = await Promise.all(
       getCourseLessons.map(async (lesson: Record<string, any>) => {
         const contents = await contentRepositories.getLessonContents(
-          lesson?.id
+          lesson?.id,
         );
         return {
+          course: course || null,
           ...lesson,
           contents: contents || [],
         };
-      })
+      }),
     );
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       CourseResponses.PROCESS_SUCCESSFUL,
-      getLessonsContents
+      getLessonsContents,
     );
-  }
+  },
 );
 
 const getLessonWithContents = errorUtilities.withServiceErrorHandling(
@@ -87,13 +89,13 @@ const getLessonWithContents = errorUtilities.withServiceErrorHandling(
     const contents = await Promise.all(
       contentsData.map(async (content: Record<string, any>) => {
         const contentFiles = await contentRepositories.getContentFiles(
-          content.id
+          content.id,
         );
         return {
           ...content,
           files: contentFiles,
         };
-      })
+      }),
     );
 
     const lessonQuizzes = await quizRepositories.getQuizzes({ lessonId });
@@ -101,9 +103,9 @@ const getLessonWithContents = errorUtilities.withServiceErrorHandling(
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       "Successful",
-      { lesson, contents, lessonQuizzes }
+      { lesson, contents, lessonQuizzes },
     );
-  }
+  },
 );
 
 const createLesson = errorUtilities.withServiceErrorHandling(
@@ -120,9 +122,9 @@ const createLesson = errorUtilities.withServiceErrorHandling(
     return responseUtilities.handleServicesResponse(
       StatusCodes.Created,
       "Lesson created successfully",
-      newLesson
+      newLesson,
     );
-  }
+  },
 );
 
 const updateLesson = errorUtilities.withServiceErrorHandling(
@@ -137,7 +139,7 @@ const updateLesson = errorUtilities.withServiceErrorHandling(
     const updatedLesson = await lessonRepositories.updateLesson(lesson);
 
     return updatedLesson;
-  }
+  },
 );
 
 const updateLessonImageService = errorUtilities.withServiceErrorHandling(
@@ -151,12 +153,12 @@ const updateLessonImageService = errorUtilities.withServiceErrorHandling(
     if (uploadCourseImage.status === "invalid") {
       throw errorUtilities.createError(
         uploadCourseImage.message,
-        StatusCodes.BadRequest
+        StatusCodes.BadRequest,
       );
     } else if (uploadCourseImage.status === "error") {
       throw errorUtilities.createError(
         uploadCourseImage.message,
-        StatusCodes.InternalServerError
+        StatusCodes.InternalServerError,
       );
     }
     const successfulUploads = uploadCourseImage.data.successful;
@@ -166,21 +168,21 @@ const updateLessonImageService = errorUtilities.withServiceErrorHandling(
     };
     const update = await lessonRepositories.newUpdateLesson(
       lessonId,
-      updateData
+      updateData,
     );
 
     if (!update) {
       throw errorUtilities.createError(
         "Unable to update Lesson Image",
-        StatusCodes.BadRequest
+        StatusCodes.BadRequest,
       );
     }
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       "Lesson image updated successfully",
-      update
+      update,
     );
-  }
+  },
 );
 
 //Logic for deleting a lesson is not ready yet
