@@ -20,7 +20,7 @@ const getUserCourse = utilities_1.errorUtilities.withServiceErrorHandling(async 
         languageId,
         userId,
         courseId,
-        lastLessonId
+        lastLessonId,
     });
     if (!userCourse) {
         throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.USER_COURSE_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
@@ -48,9 +48,12 @@ const addUserCourse = utilities_1.errorUtilities.withServiceErrorHandling(async 
         languageId: userCourseData.languageId,
         lastLessonId: userCourseData.lastLessonId,
     });
-    if (existingUserCourse) {
-        throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.USER_ENROLLED_FOR_COURSE, statusCodes_responses_1.StatusCodes.BadRequest);
-    }
+    // if (existingUserCourse) {
+    //   throw errorUtilities.createError(
+    //     CourseResponses.USER_ENROLLED_FOR_COURSE,
+    //     StatusCodes.BadRequest
+    //   );
+    // }
     const newUserCourse = await user_course_repository_1.default.addUserCourse({
         id: (0, uuid_1.v4)(),
         ...userCourseData,
@@ -65,7 +68,7 @@ const updateUserCourse = utilities_1.errorUtilities.withServiceErrorHandling(asy
     const userCourse = await user_course_repository_1.default.getUserCourse({
         userId: userId,
         courseId: courseId,
-        lastLessonId: lessonId
+        lastLessonId: lessonId,
     });
     if (!userCourse) {
         throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.USER_COURSE_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
