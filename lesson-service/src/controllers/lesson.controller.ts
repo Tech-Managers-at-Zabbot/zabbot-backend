@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import lessonService from "../services/lessonServices/lesson.service";
 import { errorUtilities, responseUtilities } from "../../../shared/utilities";
+import courseService from "../services/lessonServices/course.service";
 
 // Controller to get all lessons
 export const getLessonsController = errorUtilities.withControllerErrorHandling(
@@ -11,9 +12,9 @@ export const getLessonsController = errorUtilities.withControllerErrorHandling(
       res,
       lessons.message,
       lessons.statusCode,
-      lessons.data
+      lessons.data,
     );
-  }
+  },
 );
 
 // Controller to get a single lesson
@@ -25,9 +26,9 @@ export const getLessonController = errorUtilities.withControllerErrorHandling(
       res,
       lesson.message,
       lesson.statusCode,
-      lesson.data
+      lesson.data,
     );
-  }
+  },
 );
 
 export const getLanguageLessonsController =
@@ -39,9 +40,9 @@ export const getLanguageLessonsController =
         res,
         lesson.message,
         lesson.statusCode,
-        lesson.data
+        lesson.data,
       );
-    }
+    },
   );
 
 export const getCourseLessonsController =
@@ -55,9 +56,9 @@ export const getCourseLessonsController =
         res,
         lessons.message,
         lessons.statusCode,
-        lessons.data
+        lessons.data,
       );
-    }
+    },
   );
 
 // Controller to create a new lesson
@@ -70,9 +71,9 @@ export const createLessonController =
         res,
         lesson.message,
         lesson.statusCode,
-        lesson.data
+        lesson.data,
       );
-    }
+    },
   );
 
 // Controller to update an existing lesson
@@ -86,9 +87,9 @@ export const updateLessonController =
         res,
         lesson.message,
         lesson.statusCode,
-        lesson.data
+        lesson.data,
       );
-    }
+    },
   );
 
 export const getLessonWithContentsController =
@@ -100,9 +101,9 @@ export const getLessonWithContentsController =
         res,
         lesson.message,
         lesson.statusCode,
-        lesson.data
+        lesson.data,
       );
-    }
+    },
   );
 
 export const updateLessonImageController =
@@ -116,20 +117,20 @@ export const updateLessonImageController =
         return responseUtilities.responseHandler(
           response,
           "No file uploaded",
-          401
+          401,
         );
       }
 
       const uploadStatus = await lessonService.updateLessonImageService(
         lessonId,
         mediaType,
-        files
+        files,
       );
       return responseUtilities.responseHandler(
         response,
         uploadStatus.message,
         uploadStatus.statusCode,
-        uploadStatus.data
+        uploadStatus.data,
       );
-    }
+    },
   );
