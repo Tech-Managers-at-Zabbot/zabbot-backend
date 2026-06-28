@@ -22,61 +22,17 @@ import { JwtPayload } from "jsonwebtoken";
 const userRegistrationController = errorUtilities.withControllerErrorHandling(
   async (request: Request, response: Response) => {
     const payloadDetails = request.body;
-    const { email } = payloadDetails;
 
-    try {
-      const isBetaTester = await axios.get(
-        `${config.LOCAL_FOUNDERS_LIST_URL}/beta-tester-check?email=${email}`,
-        {
-          timeout: 10000,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (isBetaTester.status !== StatusCodes.OK) {
-        const errorMessage =
-          isBetaTester.status === StatusCodes.Forbidden
-            ? GeneralResponses.UNAUTHORIZED_FOR_TESTING
-            : isBetaTester.data.message || GeneralResponses.FAILED_TESTER_CHECK;
-        throw errorUtilities.createError(errorMessage, isBetaTester.status);
-      }
-    } catch (error: any) {
-      console.log("📊 Error details:", {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        code: error.code,
-      });
-      if (error.response?.status === StatusCodes.NotFound) {
-        throw errorUtilities.createError(
-          GeneralResponses.SIGNUP_AS_TESTER,
-          StatusCodes.NotFound
-        );
-      } else if (error.response?.status === 403) {
-        throw errorUtilities.createError(
-          GeneralResponses.UNAUTHORIZED_FOR_TESTING,
-          StatusCodes.Forbidden
-        );
-      } else {
-        throw errorUtilities.createError(
-          GeneralResponses.FAILED_TESTER_CHECK,
-          StatusCodes.InternalServerError
-        );
-      }
-    }
-    const registerUser = await emailAuthServices.registerUserService(
-      payloadDetails
-    );
+    const registerUser =
+      await emailAuthServices.registerUserService(payloadDetails);
 
     return responseUtilities.responseHandler(
       response,
       registerUser.message,
       registerUser.statusCode,
-      registerUser.data
+      registerUser.data,
     );
-  }
+  },
 );
 
 const verifyUserAccountController = errorUtilities.withControllerErrorHandling(
@@ -85,36 +41,35 @@ const verifyUserAccountController = errorUtilities.withControllerErrorHandling(
     if (!otp) {
       throw errorUtilities.createError(
         OtpResponses.ENTER_OTP,
-        StatusCodes.BadRequest
+        StatusCodes.BadRequest,
       );
     }
     const verifiedUser = await emailAuthServices.verifyUserAccountService(
       email,
-      otp
+      otp,
     );
     return responseUtilities.responseHandler(
       response,
       verifiedUser.message,
       verifiedUser.statusCode,
-      verifiedUser.data
+      verifiedUser.data,
     );
-  }
+  },
 );
 
 const resendVerificationOtpController =
   errorUtilities.withControllerErrorHandling(
     async (request: Request, response: Response) => {
       const { email } = request.body;
-      const resendLink = await emailAuthServices.resendVerificationOtpService(
-        email
-      );
+      const resendLink =
+        await emailAuthServices.resendVerificationOtpService(email);
       return responseUtilities.responseHandler(
         response,
         resendLink.message,
         resendLink.statusCode,
-        resendLink.data
+        resendLink.data,
       );
-    }
+    },
   );
 
 const userLoginController = errorUtilities.withControllerErrorHandling(
@@ -125,9 +80,9 @@ const userLoginController = errorUtilities.withControllerErrorHandling(
       response,
       userLogin.message,
       userLogin.statusCode,
-      userLogin.data
+      userLogin.data,
     );
-  }
+  },
 );
 
 const userPasswordResetRequestController =
@@ -140,9 +95,9 @@ const userPasswordResetRequestController =
         response,
         requestPasswordReset.message,
         requestPasswordReset.statusCode,
-        requestPasswordReset.data
+        requestPasswordReset.data,
       );
-    }
+    },
   );
 
 const userResetPasswordController = errorUtilities.withControllerErrorHandling(
@@ -157,9 +112,9 @@ const userResetPasswordController = errorUtilities.withControllerErrorHandling(
       response,
       resetPassword.message,
       resetPassword.statusCode,
-      resetPassword.data
+      resetPassword.data,
     );
-  }
+  },
 );
 
 const changeUserPasswordController = errorUtilities.withControllerErrorHandling(
@@ -170,15 +125,15 @@ const changeUserPasswordController = errorUtilities.withControllerErrorHandling(
       userId,
       currentPassword,
       newPassword,
-      confirmNewPassword
+      confirmNewPassword,
     );
     return responseUtilities.responseHandler(
       response,
       changePassword.message,
       changePassword.statusCode,
-      changePassword.data
+      changePassword.data,
     );
-  }
+  },
 );
 
 const updateUserNamesController = errorUtilities.withControllerErrorHandling(
@@ -186,15 +141,15 @@ const updateUserNamesController = errorUtilities.withControllerErrorHandling(
     const { userId } = request.user;
     const updatedData = await emailAuthServices.editUserNamesService(
       request.body,
-      userId
+      userId,
     );
     return responseUtilities.responseHandler(
       response,
       updatedData.message,
       updatedData.statusCode,
-      updatedData.data
+      updatedData.data,
     );
-  }
+  },
 );
 
 const getSingleUserDetailsController =
@@ -208,9 +163,9 @@ const getSingleUserDetailsController =
         response,
         singleUserDetails.message,
         singleUserDetails.statusCode,
-        singleUserDetails.data
+        singleUserDetails.data,
       );
-    }
+    },
   );
 
 export default {
