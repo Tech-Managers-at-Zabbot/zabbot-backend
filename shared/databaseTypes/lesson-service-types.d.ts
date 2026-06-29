@@ -147,6 +147,21 @@ export interface UserCourseAttributes {
     languageId: string;
     isActive: boolean;
 }
+export interface UserLessonAttributes {
+    id: string;
+    userId: string;
+    courseId: string;
+    lessonId: string;
+    languageId: string;
+    percentageCompletion: number;
+    isCompleted: boolean;
+    score?: number;
+    startedAt?: Date;
+    completedAt?: Date;
+    lastAccessed?: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
+}
 export interface UserQuizAnswerAttributes {
     id: string;
     userId: string;
