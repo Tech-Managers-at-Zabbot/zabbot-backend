@@ -5,8 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const users_repositories_1 = __importDefault(require("../../repositories/userRepositories/users.repositories"));
 const uuid_1 = require("uuid");
-const axios_1 = __importDefault(require("axios"));
-const statusCodes_responses_1 = require("../../../../shared/statusCodes/statusCodes.responses");
 const index_1 = require("../../utilities/index");
 const config_1 = __importDefault(require("../../../../config/config"));
 const users_repositories_2 = __importDefault(require("../../repositories/userRepositories/users.repositories"));
@@ -16,39 +14,6 @@ const googleOAuthRegister = async (request, accessToken, refreshToken, profile, 
         let user = await users_repositories_1.default.getOne({ email: profile.emails?.[0].value }, ["id", "email"]);
         if (user) {
             return done(new Error("user_already_exists"));
-        }
-        try {
-            const isBetaTester = await axios_1.default.get(`${config_1.default.LOCAL_FOUNDERS_LIST_URL}/beta-tester-check?email=${profile.emails?.[0].value}`, {
-                timeout: 10000,
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
-            if (isBetaTester.status !== statusCodes_responses_1.StatusCodes.OK) {
-                const errorMessage = isBetaTester.status === statusCodes_responses_1.StatusCodes.Forbidden
-                    ? "unauthorized_for_testing"
-                    : "failed_tester_check";
-                return done(new Error(errorMessage));
-            }
-        }
-        catch (err) {
-            console.log("📊 Registration Error details:", {
-                status: err.response?.status,
-                statusText: err.response?.statusText,
-                data: err.response?.data,
-                code: err.code,
-            });
-            let customError = "authentication_failed";
-            if (err.response?.status === statusCodes_responses_1.StatusCodes.NotFound) {
-                customError = "signup_as_tester";
-            }
-            else if (err.response?.status === 403) {
-                customError = "unauthorized_for_testing";
-            }
-            else {
-                customError = "failed_tester_check";
-            }
-            return done(new Error(customError));
         }
         // Create new user
         const createUserPayload = {

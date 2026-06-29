@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.QuizResponses = exports.CourseResponses = exports.DailyGoalResponses = exports.LanguageResponses = exports.DailyWordResponses = void 0;
+exports.QuizResponses = exports.UserLessonResponses = exports.CourseResponses = exports.DailyGoalResponses = exports.LanguageResponses = exports.DailyWordResponses = void 0;
 var DailyWordResponses;
 (function (DailyWordResponses) {
     DailyWordResponses["NOT_FOUND"] = "This word does not exist, please check and try again";
@@ -40,6 +40,17 @@ var CourseResponses;
     CourseResponses["PROCESS_UNSUCCESSFUL"] = "Process unsuccessful, please try again";
     CourseResponses["PROCESS_COMPLETED"] = "Process completed";
 })(CourseResponses || (exports.CourseResponses = CourseResponses = {}));
+var UserLessonResponses;
+(function (UserLessonResponses) {
+    UserLessonResponses["PROCESS_SUCCESSFUL"] = "Process Successful";
+    UserLessonResponses["USER_LESSON_CREATED"] = "User lesson created successfully";
+    UserLessonResponses["USER_LESSON_UPDATED"] = "User lesson updated successfully";
+    UserLessonResponses["USER_LESSON_NOT_FOUND"] = "User lesson not found";
+    UserLessonResponses["FIRST_ATTEMPT_ALREADY_TRACKED"] = "This lesson has already been tracked for the user";
+    UserLessonResponses["REQUIRED_FIELDS"] = "courseId, lessonId and languageId are required";
+    UserLessonResponses["LESSON_NOT_IN_COURSE"] = "Lesson does not belong to this course";
+    UserLessonResponses["LESSON_NOT_IN_LANGUAGE"] = "Lesson does not belong to this language";
+})(UserLessonResponses || (exports.UserLessonResponses = UserLessonResponses = {}));
 var QuizResponses;
 (function (QuizResponses) {
     QuizResponses["QUIZ_NOT_FOUND"] = "Quiz not found, please try again";

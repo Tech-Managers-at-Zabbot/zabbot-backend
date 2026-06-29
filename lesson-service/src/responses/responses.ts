@@ -39,6 +39,17 @@ export enum CourseResponses {
     PROCESS_COMPLETED = "Process completed",
 }
 
+export enum UserLessonResponses {
+    PROCESS_SUCCESSFUL = "Process Successful",
+    USER_LESSON_CREATED = "User lesson created successfully",
+    USER_LESSON_UPDATED = "User lesson updated successfully",
+    USER_LESSON_NOT_FOUND = "User lesson not found",
+    FIRST_ATTEMPT_ALREADY_TRACKED = "This lesson has already been tracked for the user",
+    REQUIRED_FIELDS = "courseId, lessonId and languageId are required",
+    LESSON_NOT_IN_COURSE = "Lesson does not belong to this course",
+    LESSON_NOT_IN_LANGUAGE = "Lesson does not belong to this language",
+}
+
 export enum QuizResponses {
     QUIZ_NOT_FOUND = "Quiz not found, please try again",
     QUIZZES_NOT_FOUND = "Quizzes not found for this course",
