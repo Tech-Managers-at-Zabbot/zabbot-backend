@@ -45,6 +45,7 @@ var UserLessonResponses;
     UserLessonResponses["PROCESS_SUCCESSFUL"] = "Process Successful";
     UserLessonResponses["USER_LESSON_CREATED"] = "User lesson created successfully";
     UserLessonResponses["USER_LESSON_UPDATED"] = "User lesson updated successfully";
+    UserLessonResponses["USER_LESSON_DELETED"] = "User lesson deleted successfully";
     UserLessonResponses["USER_LESSON_NOT_FOUND"] = "User lesson not found";
     UserLessonResponses["FIRST_ATTEMPT_ALREADY_TRACKED"] = "This lesson has already been tracked for the user";
     UserLessonResponses["REQUIRED_FIELDS"] = "courseId, lessonId and languageId are required";
