@@ -111,6 +111,28 @@ const userLessonRepositories = {
       );
     }
   },
+
+  deleteUserLesson: async (userId: string, lessonId: string) => {
+    try {
+      const rowsDeleted = await UserLessons.destroy({
+        where: {
+          userId,
+          lessonId,
+        },
+      });
+
+      if (rowsDeleted === 0) {
+        throw errorUtilities.createError("No user lesson deleted", 400);
+      }
+
+      return rowsDeleted;
+    } catch (error: any) {
+      throw errorUtilities.createError(
+        `Error deleting user lesson: ${error.message}`,
+        500,
+      );
+    }
+  },
 };
 
 export default userLessonRepositories;

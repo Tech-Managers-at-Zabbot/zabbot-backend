@@ -77,3 +77,22 @@ export const updateUserLessonController =
       );
     },
   );
+
+export const deleteUserLessonController =
+  errorUtilities.withControllerErrorHandling(
+    async (request: JwtPayload, response: Response) => {
+      const { userId } = request.user;
+      const { lessonId } = request.params;
+      const userLesson = await userLessonService.deleteUserLesson(
+        userId,
+        lessonId,
+      );
+
+      return responseUtilities.responseHandler(
+        response,
+        userLesson.message,
+        userLesson.statusCode,
+        userLesson.data,
+      );
+    },
+  );

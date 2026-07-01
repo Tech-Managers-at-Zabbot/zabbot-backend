@@ -2,6 +2,7 @@ import express from "express";
 import { generalAuthFunction } from "../../../shared/middleware/authorization.middleware";
 import {
   addUserLessonController,
+  deleteUserLessonController,
   getUserLessonController,
   getUserLessonsController,
   updateUserLessonController,
@@ -14,5 +15,6 @@ router.get("/:lessonId", generalAuthFunction, getUserLessonController);
 router.post("/", generalAuthFunction, addUserLessonController);
 router.put("/:lessonId", generalAuthFunction, updateUserLessonController);
 router.patch("/:lessonId", generalAuthFunction, updateUserLessonController);
+router.delete("/:lessonId", generalAuthFunction, deleteUserLessonController);
 
 export default router;

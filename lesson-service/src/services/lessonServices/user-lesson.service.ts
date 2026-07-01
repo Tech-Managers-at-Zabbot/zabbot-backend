@@ -5,7 +5,10 @@ import {
   responseUtilities,
 } from "../../../../shared/utilities";
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
-import { CourseResponses, UserLessonResponses } from "../../responses/responses";
+import {
+  CourseResponses,
+  UserLessonResponses,
+} from "../../responses/responses";
 import courseRepositories from "../../repositories/course.repository";
 import lessonRepositories from "../../repositories/lesson.repository";
 import userLessonRepositories from "../../repositories/user-lesson.repository";
@@ -127,12 +130,13 @@ const addUserLesson = errorUtilities.withServiceErrorHandling(
     }
 
     const isCompleted = Boolean(payload.isCompleted);
-    const percentageCompletion =
-      typeof payload.percentageCompletion === "number"
-        ? payload.percentageCompletion
-        : isCompleted
-          ? 100
-          : 0;
+    let percentageCompletion = 0;
+
+    if (typeof payload.percentageCompletion === "number") {
+      percentageCompletion = payload.percentageCompletion;
+    } else if (isCompleted) {
+      percentageCompletion = 100;
+    }
 
     const newUserLesson = await userLessonRepositories.addUserLesson({
       id: v4(),
@@ -220,9 +224,34 @@ const updateUserLesson = errorUtilities.withServiceErrorHandling(
   },
 );
 
+const deleteUserLesson = errorUtilities.withServiceErrorHandling(
+  async (userId: string, lessonId: string) => {
+    const existingUserLesson = await userLessonRepositories.getUserLesson({
+      userId,
+      lessonId,
+    });
+
+    if (!existingUserLesson) {
+      throw errorUtilities.createError(
+        UserLessonResponses.USER_LESSON_NOT_FOUND,
+        StatusCodes.NotFound,
+      );
+    }
+
+    await userLessonRepositories.deleteUserLesson(userId, lessonId);
+
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.NoContent,
+      UserLessonResponses.USER_LESSON_DELETED,
+      null,
+    );
+  },
+);
+
 export default {
   getUserLessons,
   getUserLesson,
   addUserLesson,
   updateUserLesson,
+  deleteUserLesson,
 };
