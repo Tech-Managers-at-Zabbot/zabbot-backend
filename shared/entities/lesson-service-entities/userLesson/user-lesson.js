@@ -69,7 +69,6 @@ UserLessons.init({
         allowNull: true,
         validate: {
             min: 0,
-            max: 100,
         },
     },
     startedAt: {

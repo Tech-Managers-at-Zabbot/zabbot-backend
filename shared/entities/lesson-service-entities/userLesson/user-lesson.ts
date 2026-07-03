@@ -2,7 +2,10 @@ import { DataTypes, Model } from "sequelize";
 import { users_service_db } from "../../../../config/databases";
 import { UserLessonAttributes } from "../../../databaseTypes/lesson-service-types";
 
-class UserLessons extends Model<UserLessonAttributes> implements UserLessonAttributes {
+class UserLessons
+  extends Model<UserLessonAttributes>
+  implements UserLessonAttributes
+{
   public id!: string;
   public userId!: string;
   public courseId!: string;
@@ -84,7 +87,6 @@ UserLessons.init(
       allowNull: true,
       validate: {
         min: 0,
-        max: 100,
       },
     },
     startedAt: {
@@ -125,7 +127,7 @@ UserLessons.init(
         name: "user_lessons_courseId_lessonId_idx",
       },
     ],
-  }
+  },
 );
 
 export default UserLessons;
