@@ -120,6 +120,20 @@ Users.init({
         type: sequelize_1.DataTypes.JSON,
         allowNull: true,
     },
+    currentStreak: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+    },
+    longestStreak: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+    },
+    lastStreakDate: {
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true,
+    },
     registerMethod: {
         type: sequelize_1.DataTypes.ENUM(...Object.values(user_service_types_1.RegisterMethods)),
         allowNull: false,

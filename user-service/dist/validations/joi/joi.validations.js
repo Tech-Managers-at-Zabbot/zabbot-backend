@@ -146,6 +146,15 @@ const updateUserNameSchema = joi_1.default.object({
 //     "string.base": "The Yoruba Phrase is required",
 //   }),
 // });
+const updateNotificationSettingsSchema = joi_1.default.object({
+    frequency: joi_1.default.string()
+        .valid("daily", "weekly", "biweekly", "never")
+        .optional(),
+    dailyReminders: joi_1.default.boolean().optional(),
+    weeklyReminders: joi_1.default.boolean().optional(),
+    biWeeklyReminders: joi_1.default.boolean().optional(),
+    noNotificationsAndReminders: joi_1.default.boolean().optional(),
+}).min(1);
 exports.default = {
     userRegisterSchemaViaEmail,
     loginUserSchema,
@@ -156,4 +165,5 @@ exports.default = {
     newsletterSubscriptionSchema,
     resetPasswordSchema,
     updateUserNameSchema,
+    updateNotificationSettingsSchema,
 };

@@ -15,6 +15,10 @@ export interface NotificationSettingAttributes {
   lastNotificationDate: Date;
   nextNotificationDate: Date;
   sentTemplates: string[];
+  dailyReminders?: boolean;
+  weeklyReminders?: boolean;
+  biWeeklyReminders?: boolean;
+  noNotificationsAndReminders?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -29,6 +33,10 @@ class NotificationSetting
   public lastNotificationDate!: Date;
   public nextNotificationDate!: Date;
   public sentTemplates!: string[];
+  public dailyReminders!: boolean;
+  public weeklyReminders!: boolean;
+  public biWeeklyReminders!: boolean;
+  public noNotificationsAndReminders!: boolean;
   public createdAt?: Date;
   public updatedAt?: Date;
 }
@@ -74,6 +82,26 @@ NotificationSetting.init(
         now.setDate(now.getDate() + 7);
         return now;
       },
+    },
+    dailyReminders: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    weeklyReminders: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+    },
+    biWeeklyReminders: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
+    noNotificationsAndReminders: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
     },
   },
   {

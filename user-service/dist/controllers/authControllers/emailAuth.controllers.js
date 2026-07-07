@@ -62,7 +62,6 @@ const updateUserNamesController = utilities_1.errorUtilities.withControllerError
 const getSingleUserDetailsController = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {
     const { userId } = request.user;
     const singleUserDetails = await services_1.emailAuthServices.getSingleUserDetailsService(userId);
-    console.log("sing user details", singleUserDetails);
     return utilities_1.responseUtilities.responseHandler(response, singleUserDetails.message, singleUserDetails.statusCode, singleUserDetails.data);
 });
 exports.default = {

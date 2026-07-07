@@ -19,6 +19,7 @@ const user_service_types_1 = require("../../../../shared/databaseTypes/user-serv
 // import UserLeaderboard from "../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities";
 const leaderboard_entities_1 = __importDefault(require("../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities"));
 const user_lesson_1 = __importDefault(require("../../../../shared/entities/lesson-service-entities/userLesson/user-lesson"));
+const lesson_1 = __importDefault(require("../../../../shared/entities/lesson-service-entities/lesson/lesson"));
 const registerUserService = utilities_1.errorUtilities.withServiceErrorHandling(async (registerPayload) => {
     const { firstName, lastName, email, password, role, timeZone } = registerPayload;
     const userExists = await users_repositories_1.default.getOne({ email: email }, [
@@ -451,17 +452,16 @@ const editUserNamesService = utilities_1.errorUtilities.withServiceErrorHandling
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, general_responses_1.GeneralResponses.PROCESS_SUCCESSFUL);
 });
 const getSingleUserDetailsService = utilities_1.errorUtilities.withServiceErrorHandling(async (userId) => {
-    const [getUser, lessonsCount] = await Promise.all([
+    const [getUser, completedLessonsCount, totalLessonsCount] = await Promise.all([
         users_repositories_2.default.getOne({ id: userId }),
         user_lesson_1.default.count({ where: { userId, isCompleted: true } }),
+        lesson_1.default.count(),
     ]);
-    const x = await user_lesson_1.default.findAll({ where: { userId } });
-    console.log("counter", x, userId);
     if (!getUser) {
         throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.USER_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
     }
     const newUser = await users_repositories_2.default.extractUserDetails(getUser);
-    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, general_responses_1.GeneralResponses.PROCESS_SUCCESSFUL, { ...newUser, lessonsCount });
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, general_responses_1.GeneralResponses.PROCESS_SUCCESSFUL, { ...newUser, completedLessonsCount, totalLessonsCount });
 });
 exports.default = {
     registerUserService,
