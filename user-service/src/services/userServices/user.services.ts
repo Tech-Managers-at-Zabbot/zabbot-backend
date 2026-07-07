@@ -12,22 +12,28 @@ import {
   BulkUploadResponse,
 } from "../../../../shared/cloudinary/types";
 import { CloudinaryService } from "../../../../shared/cloudinary/server";
+import UserLessons from "../../../../shared/entities/lesson-service-entities/userLesson/user-lesson";
+import Lessons from "../../../../shared/entities/lesson-service-entities/lesson/lesson";
 
 const getSingleUserService = errorUtilities.withServiceErrorHandling(
   async (userId: string, projection?: string[]) => {
-    const user = await usersRepositories.getOne({ id: userId }, projection);
+    const [user, completedLessonsCount, totalLessonsCount] = await Promise.all([
+      usersRepositories.getOne({ id: userId }, projection),
+      UserLessons.count({ where: { userId, isCompleted: true } }),
+      Lessons.count(),
+    ]);
     if (!user) {
       throw errorUtilities.createError(
         GeneralResponses.USER_NOT_FOUND,
-        StatusCodes.NotFound
+        StatusCodes.NotFound,
       );
     }
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       GeneralResponses.PROCESS_SUCCESSFUL,
-      user
+      { ...user, completedLessonsCount, totalLessonsCount },
     );
-  }
+  },
 );
 
 const getAllUserCountService = errorUtilities.withServiceErrorHandling(
@@ -36,9 +42,9 @@ const getAllUserCountService = errorUtilities.withServiceErrorHandling(
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       GeneralResponses.PROCESS_SUCCESSFUL,
-      userCount
+      userCount,
     );
-  }
+  },
 );
 
 const updateSingleUserService = errorUtilities.withServiceErrorHandling(
@@ -47,14 +53,14 @@ const updateSingleUserService = errorUtilities.withServiceErrorHandling(
       {
         id: userId,
       },
-      updateData
+      updateData,
     );
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       GeneralResponses.PROCESS_SUCCESSFUL,
-      userUpdate
+      userUpdate,
     );
-  }
+  },
 );
 
 //WRITE A MIGRATION TO STORE PROFILE IMAGE PUBLIC IDs IN DATABASE FOR EASY DELETION
@@ -66,17 +72,17 @@ const changeProfilePicture = errorUtilities.withServiceErrorHandling(
     const uploadProfilePicture: any = await uploadFile(
       category,
       mediaType,
-      files
+      files,
     );
     if (uploadProfilePicture.status === "invalid") {
       throw errorUtilities.createError(
         uploadProfilePicture.message,
-        StatusCodes.BadRequest
+        StatusCodes.BadRequest,
       );
-    }else if (uploadProfilePicture.status === "error") {
+    } else if (uploadProfilePicture.status === "error") {
       throw errorUtilities.createError(
         uploadProfilePicture.message,
-        StatusCodes.InternalServerError
+        StatusCodes.InternalServerError,
       );
     }
 
@@ -87,15 +93,15 @@ const changeProfilePicture = errorUtilities.withServiceErrorHandling(
       {
         profilePicture: successfulUploads[0].secure_url,
         profilePicturePublicId: successfulUploads[0].public_id,
-      }
+      },
     );
 
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       GeneralResponses.PROCESS_SUCCESSFUL,
-      uploadProfilePicture.data.successful
+      uploadProfilePicture.data.successful,
     );
-  }
+  },
 );
 
 export default {
