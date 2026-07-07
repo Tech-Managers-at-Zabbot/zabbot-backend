@@ -56,5 +56,6 @@ declare class Users extends Model<UserAttributes> implements UserAttributes {
     currentStreak?: number;
     longestStreak?: number;
     lastStreakDate?: Date;
+    badges?: number;
 }
 export default Users;

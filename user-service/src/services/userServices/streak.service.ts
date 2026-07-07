@@ -3,8 +3,13 @@ import { errorUtilities, responseUtilities } from "../../../../shared/utilities"
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
 import { GeneralResponses } from "../../responses/generalResponses/general.responses";
 
+const STREAK_MILESTONES = [1, 7, 14, 30];
+
 const toDateString = (date: Date, timeZone: string) =>
   new Intl.DateTimeFormat("en-CA", { timeZone }).format(date);
+
+const computeBadges = (longestStreak: number) =>
+  STREAK_MILESTONES.filter((m) => longestStreak >= m).length;
 
 export const logStreak = async (userId: string): Promise<void> => {
   const user = await usersRepositories.getOne({ id: userId }, [
@@ -32,9 +37,20 @@ export const logStreak = async (userId: string): Promise<void> => {
     const newStreak = lastStr === yesterdayStr ? (user as any).currentStreak + 1 : 1;
     const longestStreak = Math.max((user as any).longestStreak ?? 0, newStreak);
 
-    await usersRepositories.updateOne({ id: userId }, { currentStreak: newStreak, longestStreak, lastStreakDate: now });
+    await usersRepositories.updateOne({ id: userId }, {
+      currentStreak: newStreak,
+      longestStreak,
+      lastStreakDate: now,
+      badges: computeBadges(longestStreak),
+    });
   } else {
-    await usersRepositories.updateOne({ id: userId }, { currentStreak: 1, longestStreak: Math.max((user as any).longestStreak ?? 0, 1), lastStreakDate: now });
+    const longestStreak = Math.max((user as any).longestStreak ?? 0, 1);
+    await usersRepositories.updateOne({ id: userId }, {
+      currentStreak: 1,
+      longestStreak,
+      lastStreakDate: now,
+      badges: computeBadges(longestStreak),
+    });
   }
 };
 
@@ -46,6 +62,7 @@ const logStreakService = errorUtilities.withServiceErrorHandling(
       "currentStreak",
       "longestStreak",
       "lastStreakDate",
+      "badges",
     ]);
 
     return responseUtilities.handleServicesResponse(

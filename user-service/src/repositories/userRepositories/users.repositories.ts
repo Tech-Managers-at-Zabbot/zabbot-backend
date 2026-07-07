@@ -134,6 +134,7 @@ const userRepositories = {
         currentStreak: userData.currentStreak,
         longestStreak: userData.longestStreak,
         lastStreakDate: userData.lastStreakDate,
+        badges: userData.badges,
       };
     } catch (error: any) {
       throw new Error(`Error fetching User(s): ${error.message}`);

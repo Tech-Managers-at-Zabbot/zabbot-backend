@@ -59,6 +59,7 @@ class Users extends Model<UserAttributes> implements UserAttributes {
     public currentStreak?: number;
     public longestStreak?: number;
     public lastStreakDate?: Date;
+    public badges?: number;
 }
 
 Users.init(
@@ -190,6 +191,11 @@ Users.init(
         lastStreakDate: {
             type: DataTypes.DATE,
             allowNull: true,
+        },
+        badges: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
         },
         registerMethod: {
             type: DataTypes.ENUM(...Object.values(RegisterMethods)),
