@@ -51,6 +51,26 @@ NotificationSetting.init({
             return now;
         },
     },
+    dailyReminders: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+    },
+    weeklyReminders: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: true,
+    },
+    biWeeklyReminders: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+    },
+    noNotificationsAndReminders: {
+        type: sequelize_1.DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+    },
 }, {
     sequelize: databases_1.users_service_db,
     modelName: "NotificationSetting",

@@ -12,6 +12,10 @@ export interface NotificationSettingAttributes {
     lastNotificationDate: Date;
     nextNotificationDate: Date;
     sentTemplates: string[];
+    dailyReminders?: boolean;
+    weeklyReminders?: boolean;
+    biWeeklyReminders?: boolean;
+    noNotificationsAndReminders?: boolean;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -22,6 +26,10 @@ declare class NotificationSetting extends Model<NotificationSettingAttributes> i
     lastNotificationDate: Date;
     nextNotificationDate: Date;
     sentTemplates: string[];
+    dailyReminders: boolean;
+    weeklyReminders: boolean;
+    biWeeklyReminders: boolean;
+    noNotificationsAndReminders: boolean;
     createdAt?: Date;
     updatedAt?: Date;
 }

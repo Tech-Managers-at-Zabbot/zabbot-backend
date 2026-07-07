@@ -53,5 +53,8 @@ declare class Users extends Model<UserAttributes> implements UserAttributes {
         question: string;
         answer: string;
     }[];
+    currentStreak?: number;
+    longestStreak?: number;
+    lastStreakDate?: Date;
 }
 export default Users;

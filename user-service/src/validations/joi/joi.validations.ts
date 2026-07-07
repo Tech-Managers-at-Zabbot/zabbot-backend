@@ -172,6 +172,16 @@ const updateUserNameSchema = Joi.object({
 
 // });
 
+const updateNotificationSettingsSchema = Joi.object({
+  frequency: Joi.string()
+    .valid("daily", "weekly", "biweekly", "never")
+    .optional(),
+  dailyReminders: Joi.boolean().optional(),
+  weeklyReminders: Joi.boolean().optional(),
+  biWeeklyReminders: Joi.boolean().optional(),
+  noNotificationsAndReminders: Joi.boolean().optional(),
+}).min(1);
+
 export default {
   userRegisterSchemaViaEmail,
   loginUserSchema,
@@ -182,4 +192,5 @@ export default {
   newsletterSubscriptionSchema,
   resetPasswordSchema,
   updateUserNameSchema,
+  updateNotificationSettingsSchema,
 };

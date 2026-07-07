@@ -45,8 +45,16 @@ export const calculateNextNotificationDate = (frequency: NotificationFrequency):
   return nextDate;
 };
 
+export interface NotificationToggles {
+  frequency?: string;
+  dailyReminders?: boolean;
+  weeklyReminders?: boolean;
+  biWeeklyReminders?: boolean;
+  noNotificationsAndReminders?: boolean;
+}
+
 const upsertUserNotificationService = errorUtilities.withServiceErrorHandling(
-  async (userId: string, frequency?: string) => {
+  async (userId: string, toggles: NotificationToggles) => {
     const user = await userRepositories.getOne({ id: userId });
 
     if (!user) {
@@ -55,12 +63,18 @@ const upsertUserNotificationService = errorUtilities.withServiceErrorHandling(
         StatusCodes.NotFound
       );
     }
+
     const existing = await userNotificationsRepositories.getOne({ userId });
+    const now = new Date();
+
+    const toggleUpdates: Record<string, any> = {};
+    if (toggles.dailyReminders !== undefined) toggleUpdates.dailyReminders = toggles.dailyReminders;
+    if (toggles.weeklyReminders !== undefined) toggleUpdates.weeklyReminders = toggles.weeklyReminders;
+    if (toggles.biWeeklyReminders !== undefined) toggleUpdates.biWeeklyReminders = toggles.biWeeklyReminders;
+    if (toggles.noNotificationsAndReminders !== undefined) toggleUpdates.noNotificationsAndReminders = toggles.noNotificationsAndReminders;
 
     if (existing) {
-      const updatedFrequency = (frequency ||
-        existing.frequency) as NotificationFrequency;
-      const now = new Date();
+      const updatedFrequency = (toggles.frequency || existing.frequency) as NotificationFrequency;
 
       const updated = await userNotificationsRepositories.updateOne(
         { userId },
@@ -68,6 +82,7 @@ const upsertUserNotificationService = errorUtilities.withServiceErrorHandling(
           frequency: updatedFrequency,
           lastNotificationDate: now,
           nextNotificationDate: calculateNextNotificationDate(updatedFrequency),
+          ...toggleUpdates,
         }
       );
 
@@ -89,6 +104,7 @@ const upsertUserNotificationService = errorUtilities.withServiceErrorHandling(
             error.message
           );
         });
+
       return responseUtilities.handleServicesResponse(
         StatusCodes.OK,
         GeneralResponses.PROCESS_SUCCESSFUL,
@@ -96,9 +112,7 @@ const upsertUserNotificationService = errorUtilities.withServiceErrorHandling(
       );
     }
 
-    const newFrequency = (frequency ||
-      NotificationFrequency.WEEKLY) as NotificationFrequency;
-    const now = new Date();
+    const newFrequency = (toggles.frequency || NotificationFrequency.WEEKLY) as NotificationFrequency;
 
     const newRecord = await userNotificationsRepositories.create({
       id: v4(),
@@ -106,6 +120,10 @@ const upsertUserNotificationService = errorUtilities.withServiceErrorHandling(
       frequency: newFrequency,
       lastNotificationDate: now,
       nextNotificationDate: calculateNextNotificationDate(newFrequency),
+      dailyReminders: toggles.dailyReminders ?? false,
+      weeklyReminders: toggles.weeklyReminders ?? true,
+      biWeeklyReminders: toggles.biWeeklyReminders ?? false,
+      noNotificationsAndReminders: toggles.noNotificationsAndReminders ?? false,
     });
 
     if (!newRecord) {

@@ -11,13 +11,22 @@ const upsertUserNotificationController =
   errorUtilities.withControllerErrorHandling(
     async (request: JwtPayload, response: Response) => {
       const { userId } = request.user;
-      const { frequency } = request.body;
+      const {
+        frequency,
+        dailyReminders,
+        weeklyReminders,
+        biWeeklyReminders,
+        noNotificationsAndReminders,
+      } = request.body;
 
       const newUserNotification =
-        await userNotificationServices.upsertUserNotificationService(
-          userId,
-          frequency
-        );
+        await userNotificationServices.upsertUserNotificationService(userId, {
+          frequency,
+          dailyReminders,
+          weeklyReminders,
+          biWeeklyReminders,
+          noNotificationsAndReminders,
+        });
 
       return responseUtilities.responseHandler(
         response,

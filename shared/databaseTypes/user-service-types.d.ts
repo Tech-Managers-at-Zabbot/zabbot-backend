@@ -59,6 +59,9 @@ export interface UserAttributes {
         question: string;
         answer: string;
     }[];
+    currentStreak?: number;
+    longestStreak?: number;
+    lastStreakDate?: Date;
 }
 export declare enum OtpNotificationType {
     EMAIL = "email",
