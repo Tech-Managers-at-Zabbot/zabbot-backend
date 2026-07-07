@@ -131,6 +131,9 @@ const userRepositories = {
         lastPasswordChangeAt: userData.lastPasswordChangeAt,
         twoFactorEnabled: userData.twoFactorEnabled,
         securityQuestions: userData.securityQuestions,
+        currentStreak: userData.currentStreak,
+        longestStreak: userData.longestStreak,
+        lastStreakDate: userData.lastStreakDate,
       };
     } catch (error: any) {
       throw new Error(`Error fetching User(s): ${error.message}`);

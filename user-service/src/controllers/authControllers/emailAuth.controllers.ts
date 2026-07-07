@@ -156,7 +156,6 @@ const getSingleUserDetailsController =
   errorUtilities.withControllerErrorHandling(
     async (request: JwtPayload, response: Response) => {
       const { userId } = request.user;
-      console.log("11", userId);
       const singleUserDetails =
         await emailAuthServices.getSingleUserDetailsService(userId);
       return responseUtilities.responseHandler(

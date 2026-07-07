@@ -8,12 +8,17 @@ const utilities_1 = require("../../../../shared/utilities");
 const api_1 = require("../../../../shared/cloudinary/api");
 const statusCodes_responses_1 = require("../../../../shared/statusCodes/statusCodes.responses");
 const general_responses_1 = require("../../responses/generalResponses/general.responses");
+const user_lesson_1 = __importDefault(require("../../../../shared/entities/lesson-service-entities/userLesson/user-lesson"));
 const getSingleUserService = utilities_1.errorUtilities.withServiceErrorHandling(async (userId, projection) => {
-    const user = await users_repositories_1.default.getOne({ id: userId }, projection);
+    const [user, completedLessonsCount] = await Promise.all([
+        users_repositories_1.default.getOne({ id: userId }, projection),
+        user_lesson_1.default.count({ where: { userId, isCompleted: true } }),
+    ]);
     if (!user) {
         throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.USER_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
     }
-    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, general_responses_1.GeneralResponses.PROCESS_SUCCESSFUL, user);
+    console.log("completedLessonsCount", completedLessonsCount);
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, general_responses_1.GeneralResponses.PROCESS_SUCCESSFUL, { ...user, completedLessonsCount });
 });
 const getAllUserCountService = utilities_1.errorUtilities.withServiceErrorHandling(async () => {
     const userCount = await users_repositories_1.default.getAllCount();

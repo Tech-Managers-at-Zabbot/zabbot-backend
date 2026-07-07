@@ -1,26 +1,26 @@
-import { usersControllers } from '../../controllers';
-import express from 'express';
-import { CloudinaryService } from '../../../../shared/cloudinary/server';
-import { MediaType, BulkUploadResponse } from '../../../../shared/cloudinary/types';
-import { Router, Request, Response } from 'express';
-import multer from 'multer';
-import { generalAuthFunction } from '../../../../shared/middleware/authorization.middleware';
+import express from "express";
+import multer from "multer";
+import { usersControllers } from "../../controllers";
+import { generalAuthFunction } from "../../../../shared/middleware/authorization.middleware";
+import streakController from "../../controllers/userControllers/streak.controller";
 
+const router = express.Router();
 
-const router = express.Router()
-
-router.get('/single-user/:userId', usersControllers.getSingleUser)
-router.get('/all-user-count', usersControllers.getAllUsersCount)
-
-
+router.get("/single-user/:userId", usersControllers.getSingleUser);
+router.get("/all-user-count", usersControllers.getAllUsersCount);
+router.post(
+  "/log-streak",
+  generalAuthFunction,
+  streakController.logStreakController,
+);
 
 const upload = multer({ storage: multer.memoryStorage() });
 
 router.post(
-  '/change-profile-picture',
-  upload.array('files', 50),
+  "/change-profile-picture",
+  upload.array("files", 50),
   generalAuthFunction,
-  usersControllers.changeUserProfilePicture
+  usersControllers.changeUserProfilePicture,
 );
 
 /**
@@ -70,4 +70,4 @@ router.post(
 //   }
 // });
 
-export default router
+export default router;

@@ -56,6 +56,9 @@ class Users extends Model<UserAttributes> implements UserAttributes {
         question: string;
         answer: string;
     }[];
+    public currentStreak?: number;
+    public longestStreak?: number;
+    public lastStreakDate?: Date;
 }
 
 Users.init(
@@ -172,6 +175,20 @@ Users.init(
         },
         securityQuestions: {
             type: DataTypes.JSON,
+            allowNull: true,
+        },
+        currentStreak: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
+        },
+        longestStreak: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
+        },
+        lastStreakDate: {
+            type: DataTypes.DATE,
             allowNull: true,
         },
         registerMethod: {

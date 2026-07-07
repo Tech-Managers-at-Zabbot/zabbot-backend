@@ -60,6 +60,9 @@ export interface UserAttributes {
     question: string;
     answer: string;
   }[];
+  currentStreak?: number;
+  longestStreak?: number;
+  lastStreakDate?: Date;
 }
 
 

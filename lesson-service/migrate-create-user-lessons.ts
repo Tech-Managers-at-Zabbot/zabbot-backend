@@ -54,7 +54,7 @@ async function runMigration() {
           CONSTRAINT "user_lessons_percentageCompletion_check"
             CHECK ("percentageCompletion" >= 0 AND "percentageCompletion" <= 100),
           CONSTRAINT "user_lessons_score_check"
-            CHECK ("score" IS NULL OR ("score" >= 0 AND "score" <= 100))
+            CHECK ("score" IS NULL OR "score" >= 0)
         );
 
         CREATE UNIQUE INDEX IF NOT EXISTS "user_lessons_userId_lessonId_unique_idx"

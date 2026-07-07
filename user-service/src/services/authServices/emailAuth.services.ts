@@ -24,7 +24,9 @@ import {
   OtpAttributes,
 } from "../../../../shared/databaseTypes/user-service-types";
 // import UserLeaderboard from "../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities";
-import UserLeaderboard from "../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities"
+import UserLeaderboard from "../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities";
+import UserLessons from "../../../../shared/entities/lesson-service-entities/userLesson/user-lesson";
+import Lessons from "../../../../shared/entities/lesson-service-entities/lesson/lesson";
 const registerUserService = errorUtilities.withServiceErrorHandling(
   async (registerPayload: UserAttributes) => {
     const { firstName, lastName, email, password, role, timeZone } =
@@ -761,7 +763,12 @@ const editUserNamesService = errorUtilities.withServiceErrorHandling(
 
 const getSingleUserDetailsService = errorUtilities.withServiceErrorHandling(
   async (userId: string) => {
-    const getUser = await userRepositories.getOne({ id: userId });
+    const [getUser, completedLessonsCount, totalLessonsCount] = await Promise.all([
+      userRepositories.getOne({ id: userId }),
+      UserLessons.count({ where: { userId, isCompleted: true } }),
+      Lessons.count(),
+    ]);
+
     if (!getUser) {
       throw errorUtilities.createError(
         GeneralResponses.USER_NOT_FOUND,
@@ -773,7 +780,7 @@ const getSingleUserDetailsService = errorUtilities.withServiceErrorHandling(
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       GeneralResponses.PROCESS_SUCCESSFUL,
-      newUser,
+      { ...newUser, completedLessonsCount, totalLessonsCount },
     );
   },
 );
