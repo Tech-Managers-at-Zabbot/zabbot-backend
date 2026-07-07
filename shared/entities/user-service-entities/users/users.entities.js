@@ -134,6 +134,11 @@ Users.init({
         type: sequelize_1.DataTypes.DATE,
         allowNull: true,
     },
+    badges: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+    },
     registerMethod: {
         type: sequelize_1.DataTypes.ENUM(...Object.values(user_service_types_1.RegisterMethods)),
         allowNull: false,

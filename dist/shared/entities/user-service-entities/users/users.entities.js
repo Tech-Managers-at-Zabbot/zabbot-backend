@@ -38,6 +38,7 @@ class Users extends sequelize_1.Model {
     currentStreak;
     longestStreak;
     lastStreakDate;
+    badges;
 }
 Users.init({
     id: {
@@ -167,6 +168,11 @@ Users.init({
     lastStreakDate: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: true,
+    },
+    badges: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
     },
     registerMethod: {
         type: sequelize_1.DataTypes.ENUM(...Object.values(user_service_types_1.RegisterMethods)),

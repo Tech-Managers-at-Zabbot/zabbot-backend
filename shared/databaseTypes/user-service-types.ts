@@ -63,6 +63,7 @@ export interface UserAttributes {
   currentStreak?: number;
   longestStreak?: number;
   lastStreakDate?: Date;
+  badges?: number;
 }
 
 
