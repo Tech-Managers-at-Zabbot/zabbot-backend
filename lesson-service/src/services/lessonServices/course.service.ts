@@ -82,21 +82,35 @@ const updateCourse = errorUtilities.withServiceErrorHandling(
   async (id: string, courseData: any) => {
     const course = await courseRepositories.getCourse(id);
     if (!course) {
-      throw errorUtilities.createError(`Course not found`, 404);
+      throw errorUtilities.createError(
+        CourseResponses.COURSE_NOT_FOUND,
+        StatusCodes.NotFound,
+      );
     }
-
-    // Update the course with new data
-    Object.assign(course, courseData);
-    const updatedCourse = await courseRepositories.updateCourse(id, course);
-    return updatedCourse;
+    const updatedCourse = await courseRepositories.updateCourse(id, courseData);
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.OK,
+      CourseResponses.PROCESS_SUCCESSFUL,
+      updatedCourse,
+    );
   },
 );
 
 const deleteCourse = errorUtilities.withServiceErrorHandling(
   async (id: string) => {
+    const course = await courseRepositories.getCourse(id);
+    if (!course) {
+      throw errorUtilities.createError(
+        CourseResponses.COURSE_NOT_FOUND,
+        StatusCodes.NotFound,
+      );
+    }
     await courseRepositories.deleteCourse(id);
-
-    return { message: "Course deleted successfully" };
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.OK,
+      CourseResponses.PROCESS_SUCCESSFUL,
+      null,
+    );
   },
 );
 

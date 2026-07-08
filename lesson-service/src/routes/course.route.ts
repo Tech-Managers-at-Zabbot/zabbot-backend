@@ -11,6 +11,7 @@ import {
   getCourseByTitleController,
   addCourseController,
   updateCourseController,
+  deleteCourseController,
   getUserCoursesController,
   getUserCourseController,
   addUserCourseController,
@@ -39,6 +40,12 @@ router.put(
   generalAuthFunction,
   rolePermit(["admin"]),
   updateCourseController,
+);
+router.delete(
+  "/:id",
+  generalAuthFunction,
+  rolePermit(["admin"]),
+  deleteCourseController,
 );
 
 router.get("/users", generalAuthFunction, getUserCoursesController);
