@@ -27,6 +27,8 @@ import {
 import UserLeaderboard from "../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities";
 import UserLessons from "../../../../shared/entities/lesson-service-entities/userLesson/user-lesson";
 import Lessons from "../../../../shared/entities/lesson-service-entities/lesson/lesson";
+import userNotificationsRepositories from "../../../../shared/repositories/userNotification.repositories";
+import { NotificationFrequency } from "../../../../shared/entities/user-service-entities/userNotificationSettings/userNotificationSettings.entities";
 const registerUserService = errorUtilities.withServiceErrorHandling(
   async (registerPayload: UserAttributes) => {
     const { firstName, lastName, email, password, role, timeZone } =
@@ -96,6 +98,20 @@ const registerUserService = errorUtilities.withServiceErrorHandling(
         StatusCodes.InternalServerError,
       );
     }
+
+    await userNotificationsRepositories.create({
+      id: v4(),
+      userId: createUserPayload.id,
+      frequency: NotificationFrequency.NEVER,
+      lastNotificationDate: now,
+      nextNotificationDate: null,
+      sentTemplates: [],
+      dailyReminders: false,
+      weeklyReminders: false,
+      biWeeklyReminders: false,
+      noNotificationsAndReminders: false,
+    });
+
     if (createUserPayload.role === UserRoles.USER) {
       const otp = helperFunctions.generateOtp();
 
