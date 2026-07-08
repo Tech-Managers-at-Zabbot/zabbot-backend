@@ -14,6 +14,7 @@ router.get("/single-course/:courseId", course_controller_1.getCourseController);
 router.get("/title/:title", course_controller_1.getCourseByTitleController);
 router.post("/", authorization_middleware_1.generalAuthFunction, (0, authorization_middleware_1.rolePermit)(["admin"]), course_controller_1.addCourseController);
 router.put("/:id", authorization_middleware_1.generalAuthFunction, (0, authorization_middleware_1.rolePermit)(["admin"]), course_controller_1.updateCourseController);
+router.delete("/:id", authorization_middleware_1.generalAuthFunction, (0, authorization_middleware_1.rolePermit)(["admin"]), course_controller_1.deleteCourseController);
 router.get("/users", authorization_middleware_1.generalAuthFunction, course_controller_1.getUserCoursesController);
 router.get("/user-course/:languageId/:courseId", authorization_middleware_1.generalAuthFunction, course_controller_1.getUserCourseController);
 router.post("/add-user-course/:languageId/:courseId", authorization_middleware_1.generalAuthFunction, course_controller_1.addUserCourseController);

@@ -44,16 +44,18 @@ const addCourse = utilities_1.errorUtilities.withServiceErrorHandling(async (cou
 const updateCourse = utilities_1.errorUtilities.withServiceErrorHandling(async (id, courseData) => {
     const course = await course_repository_1.default.getCourse(id);
     if (!course) {
-        throw utilities_1.errorUtilities.createError(`Course not found`, 404);
+        throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.COURSE_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
     }
-    // Update the course with new data
-    Object.assign(course, courseData);
-    const updatedCourse = await course_repository_1.default.updateCourse(id, course);
-    return updatedCourse;
+    const updatedCourse = await course_repository_1.default.updateCourse(id, courseData);
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.CourseResponses.PROCESS_SUCCESSFUL, updatedCourse);
 });
 const deleteCourse = utilities_1.errorUtilities.withServiceErrorHandling(async (id) => {
+    const course = await course_repository_1.default.getCourse(id);
+    if (!course) {
+        throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.COURSE_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
+    }
     await course_repository_1.default.deleteCourse(id);
-    return { message: "Course deleted successfully" };
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.CourseResponses.PROCESS_SUCCESSFUL, null);
 });
 const getCourseWithLessonsService = utilities_1.errorUtilities.withServiceErrorHandling(async (languageId) => {
     const course = await course_repository_1.default.getCourseWithLanguageId(languageId);
