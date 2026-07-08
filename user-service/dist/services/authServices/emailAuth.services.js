@@ -20,6 +20,8 @@ const user_service_types_1 = require("../../../../shared/databaseTypes/user-serv
 const leaderboard_entities_1 = __importDefault(require("../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities"));
 const user_lesson_1 = __importDefault(require("../../../../shared/entities/lesson-service-entities/userLesson/user-lesson"));
 const lesson_1 = __importDefault(require("../../../../shared/entities/lesson-service-entities/lesson/lesson"));
+const userNotification_repositories_1 = __importDefault(require("../../../../shared/repositories/userNotification.repositories"));
+const userNotificationSettings_entities_1 = require("../../../../shared/entities/user-service-entities/userNotificationSettings/userNotificationSettings.entities");
 const registerUserService = utilities_1.errorUtilities.withServiceErrorHandling(async (registerPayload) => {
     const { firstName, lastName, email, password, role, timeZone } = registerPayload;
     const userExists = await users_repositories_1.default.getOne({ email: email }, [
@@ -71,6 +73,18 @@ const registerUserService = utilities_1.errorUtilities.withServiceErrorHandling(
     if (!newUser) {
         throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.PROCESS_UNSSUCCESSFUL, statusCodes_responses_1.StatusCodes.InternalServerError);
     }
+    await userNotification_repositories_1.default.create({
+        id: (0, uuid_1.v4)(),
+        userId: createUserPayload.id,
+        frequency: userNotificationSettings_entities_1.NotificationFrequency.NEVER,
+        lastNotificationDate: now,
+        nextNotificationDate: null,
+        sentTemplates: [],
+        dailyReminders: false,
+        weeklyReminders: false,
+        biWeeklyReminders: false,
+        noNotificationsAndReminders: false,
+    });
     if (createUserPayload.role === user_service_types_1.UserRoles.USER) {
         const otp = index_1.helperFunctions.generateOtp();
         const hashedOtp = await index_1.helperFunctions.hashPassword(otp);
