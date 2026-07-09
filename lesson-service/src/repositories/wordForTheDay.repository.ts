@@ -3,14 +3,18 @@ import { errorUtilities } from "../../../shared/utilities";
 import WordForTheDay from "../../../shared/entities/lesson-service-entities/wordForTheDay/wordForTheDay";
 
 const wordForTheDayRepositories = {
-
   create: async (data: any, transaction?: Transaction) => {
     try {
-      const newWordForTheDay = await WordForTheDay.create(data, { transaction });
+      const newWordForTheDay = await WordForTheDay.create(data, {
+        transaction,
+      });
       return newWordForTheDay;
     } catch (error: any) {
-      console.log(`Create Daily Word Error: ${error.message}`)
-      throw errorUtilities.createError(`Error creating daily word, please try again`, 500);
+      console.log(`Create Daily Word Error: ${error.message}`);
+      throw errorUtilities.createError(
+        `Error creating daily word, please try again`,
+        500,
+      );
     }
   },
 
@@ -20,7 +24,10 @@ const wordForTheDayRepositories = {
       await dailyWOrd.update(update, { transaction });
       return dailyWOrd;
     } catch (error: any) {
-      throw errorUtilities.createError(`Error updating Daily Word: ${error.message}`, 400);
+      throw errorUtilities.createError(
+        `Error updating Daily Word: ${error.message}`,
+        400,
+      );
     }
   },
 
@@ -37,39 +44,47 @@ const wordForTheDayRepositories = {
 
   getOne: async (filter: Record<string, any>, projection: any = null) => {
     try {
-
       const dailyWord = await WordForTheDay.findOne({
         where: filter,
         attributes: projection,
-        raw: true
+        raw: true,
       });
       return dailyWord;
     } catch (error: any) {
-      console.log(`Fetch Daily Word Error: ${error.message}`)
-      throw errorUtilities.createError(`Error fetching daily word, please try again`, 500);
+      console.log(`Fetch Daily Word Error: ${error.message}`);
+      throw errorUtilities.createError(
+        `Error fetching daily word, please try again`,
+        500,
+      );
     }
   },
 
-  getOneOldWord: async (filter: Record<string, any>, projection: any = null) => {
+  getOneOldWord: async (
+    filter: Record<string, any>,
+    projection: any = null,
+  ) => {
     try {
       let orderBy: [string, string][];
 
       if (filter.dateUsed === null) {
-        orderBy = [['createdAt', 'ASC']];
+        orderBy = [["createdAt", "ASC"]];
       } else {
-        orderBy = [['dateUsed', 'ASC']];
+        orderBy = [["dateUsed", "ASC"]];
       }
 
       const oldWord = await WordForTheDay.findOne({
         where: filter,
         attributes: projection,
         order: orderBy,
-        raw: true
+        raw: true,
       });
       return oldWord;
     } catch (error: any) {
-      console.log(`Fetch Old Daily Word Error: ${error.message}`)
-      throw errorUtilities.createError(`Error fetching old daily word, please try again`, 500);
+      console.log(`Fetch Old Daily Word Error: ${error.message}`);
+      throw errorUtilities.createError(
+        `Error fetching old daily word, please try again`,
+        500,
+      );
     }
   },
 };

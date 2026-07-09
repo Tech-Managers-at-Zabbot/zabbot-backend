@@ -1,5 +1,4 @@
 import cron from "node-cron";
-import { userNotificationServices } from "../user-service/src/services";
 import { Op } from "sequelize";
 import userNotificationsRepositories from "../shared/repositories/userNotification.repositories";
 import userRepositories from "../user-service/src/repositories/userRepositories/users.repositories";
@@ -26,7 +25,8 @@ const processDueNotifications = async () => {
     const tomorrowUTC = new Date(todayUTC);
     tomorrowUTC.setUTCDate(tomorrowUTC.getUTCDate() + 1);
 
-    // Get all due notifications
+    // Get all due notifications for users who have at least one reminder type
+    // enabled and have not opted out of all notifications
     const dueNotifications = await userNotificationsRepositories.getMany({
       nextNotificationDate: {
         [Op.lt]: tomorrowUTC,
@@ -34,6 +34,12 @@ const processDueNotifications = async () => {
       frequency: {
         [Op.ne]: "never",
       },
+      noNotificationsAndReminders: false,
+      [Op.or]: [
+        { dailyReminders: true },
+        { weeklyReminders: true },
+        { biWeeklyReminders: true },
+      ],
     });
 
     if (!dueNotifications || dueNotifications.length === 0) {

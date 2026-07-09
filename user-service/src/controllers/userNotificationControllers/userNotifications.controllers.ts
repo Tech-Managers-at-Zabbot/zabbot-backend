@@ -1,10 +1,6 @@
-import { userNotificationServices, userServices } from "../../services";
-import {
-  errorUtilities,
-  responseUtilities,
-} from "../../../../shared/utilities";
-import { Request, Response } from "express";
-import { helpersUtilities } from "../../../../shared/utilities";
+import { userNotificationServices } from "../../services";
+import { errorUtilities, responseUtilities } from "../../../../shared/utilities";
+import { Response } from "express";
 import { JwtPayload } from "jsonwebtoken";
 
 const upsertUserNotificationController =
@@ -12,7 +8,6 @@ const upsertUserNotificationController =
     async (request: JwtPayload, response: Response) => {
       const { userId } = request.user;
       const {
-        frequency,
         dailyReminders,
         weeklyReminders,
         biWeeklyReminders,
@@ -21,7 +16,6 @@ const upsertUserNotificationController =
 
       const newUserNotification =
         await userNotificationServices.upsertUserNotificationService(userId, {
-          frequency,
           dailyReminders,
           weeklyReminders,
           biWeeklyReminders,

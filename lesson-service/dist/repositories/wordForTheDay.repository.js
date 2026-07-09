@@ -8,7 +8,9 @@ const wordForTheDay_1 = __importDefault(require("../../../shared/entities/lesson
 const wordForTheDayRepositories = {
     create: async (data, transaction) => {
         try {
-            const newWordForTheDay = await wordForTheDay_1.default.create(data, { transaction });
+            const newWordForTheDay = await wordForTheDay_1.default.create(data, {
+                transaction,
+            });
             return newWordForTheDay;
         }
         catch (error) {
@@ -43,7 +45,7 @@ const wordForTheDayRepositories = {
             const dailyWord = await wordForTheDay_1.default.findOne({
                 where: filter,
                 attributes: projection,
-                raw: true
+                raw: true,
             });
             return dailyWord;
         }
@@ -56,16 +58,16 @@ const wordForTheDayRepositories = {
         try {
             let orderBy;
             if (filter.dateUsed === null) {
-                orderBy = [['createdAt', 'ASC']];
+                orderBy = [["createdAt", "ASC"]];
             }
             else {
-                orderBy = [['dateUsed', 'ASC']];
+                orderBy = [["dateUsed", "ASC"]];
             }
             const oldWord = await wordForTheDay_1.default.findOne({
                 where: filter,
                 attributes: projection,
                 order: orderBy,
-                raw: true
+                raw: true,
             });
             return oldWord;
         }
