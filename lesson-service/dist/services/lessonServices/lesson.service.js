@@ -12,6 +12,7 @@ const responses_1 = require("../../responses/responses");
 const quiz_repository_1 = __importDefault(require("../../repositories/quiz.repository"));
 const api_1 = require("../../../../shared/cloudinary/api");
 const course_repository_1 = __importDefault(require("../../repositories/course.repository"));
+const databases_1 = require("../../../../config/databases");
 // import languageRepositories from "src/repositories/language.repository";
 const getLessons = utilities_1.errorUtilities.withServiceErrorHandling(async () => {
     const lessons = await lesson_repository_1.default.getLessons();
@@ -108,21 +109,24 @@ const updateLessonImageService = utilities_1.errorUtilities.withServiceErrorHand
     }
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, "Lesson image updated successfully", update);
 });
-//Logic for deleting a lesson is not ready yet
-// const deleteLesson = errorUtilities.withServiceErrorHandling(
-//   async (id: string) => {
-//     const deletedLesson = await lessonRepositories.deleteLesson(id);
-//     if (!deletedLesson) {
-//       throw errorUtilities.createError(`Lesson not found`, 404);
-//     }
-//     return deletedLesson;
-//   }
-// );
+const deleteLesson = utilities_1.errorUtilities.withServiceErrorHandling(async (id) => {
+    const lesson = await lesson_repository_1.default.getLesson(id);
+    if (!lesson) {
+        throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.LESSON_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
+    }
+    await databases_1.users_service_db.transaction(async (transaction) => {
+        await content_repository_1.default.deleteContentsByLessonIds([id], transaction);
+        await quiz_repository_1.default.deleteQuizzesByLessonId(id, transaction);
+        await lesson_repository_1.default.deleteLesson(id, transaction);
+    });
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.CourseResponses.PROCESS_SUCCESSFUL, null);
+});
 exports.default = {
     getLessons,
     getLesson,
     createLesson,
     updateLesson,
+    deleteLesson,
     getLessonWithContents,
     getLessonsForLanguage,
     getLessonsForCourse,

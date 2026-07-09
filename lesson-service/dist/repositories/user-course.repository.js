@@ -123,5 +123,13 @@ const userCourseRepositories = {
             throw utilities_1.errorUtilities.createError(`Error Deleting user course: ${error.message}`, 500);
         }
     },
+    deleteUserCoursesByCourseId: async (courseId, transaction) => {
+        try {
+            await user_course_1.default.destroy({ where: { courseId }, transaction });
+        }
+        catch (error) {
+            throw utilities_1.errorUtilities.createError(`Error Deleting user courses: ${error.message}`, 500);
+        }
+    },
 };
 exports.default = userCourseRepositories;

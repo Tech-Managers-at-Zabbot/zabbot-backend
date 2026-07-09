@@ -7,9 +7,12 @@ import { v4 } from "uuid";
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
 import contentRepositories from "../../repositories/content.repository";
 import lessonRepositories from "../../repositories/lesson.repository";
+import quizRepositories from "../../repositories/quiz.repository";
+import userCourseRepositories from "../../repositories/user-course.repository";
 import { CourseResponses } from "../../responses/responses";
 import { uploadFile } from "../../../../shared/cloudinary/api";
 import languageRepositories from "../../repositories/language.repository";
+import { users_service_db } from "../../../../config/databases";
 
 const getCoursesForLanguage = errorUtilities.withServiceErrorHandling(
   async (languageId: string, isActive?: boolean) => {
@@ -105,7 +108,21 @@ const deleteCourse = errorUtilities.withServiceErrorHandling(
         StatusCodes.NotFound,
       );
     }
-    await courseRepositories.deleteCourse(id);
+
+    await users_service_db.transaction(async (transaction) => {
+      const lessons = await lessonRepositories.getLessonsOnly(id, transaction);
+      const lessonIds = lessons.map((lesson: any) => lesson.id);
+
+      if (lessonIds.length > 0) {
+        await contentRepositories.deleteContentsByLessonIds(lessonIds, transaction);
+      }
+
+      await quizRepositories.deleteQuizzesByCourseId(id, transaction);
+      await userCourseRepositories.deleteUserCoursesByCourseId(id, transaction);
+      await lessonRepositories.deleteLessonsByCourseId(id, transaction);
+      await courseRepositories.deleteCourse(id, transaction);
+    });
+
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       CourseResponses.PROCESS_SUCCESSFUL,

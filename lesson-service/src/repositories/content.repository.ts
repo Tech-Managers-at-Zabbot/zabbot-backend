@@ -1,7 +1,7 @@
 import Contents from "../../../shared/entities/lesson-service-entities/content/content";
 import { errorUtilities } from "../../../shared/utilities";
 import ContentFiles from "../../../shared/entities/lesson-service-entities/contentFile/content-file";
-import { Sequelize, Transaction } from "sequelize";
+import { Op, Sequelize, Transaction } from "sequelize";
 
 const contentRepositories = {
 
@@ -114,6 +114,33 @@ getLessonContents: async (lessonId: string) => {
 
     } catch (error: any) {
       throw errorUtilities.createError(`Error deleting content: ${error.message}`, 500);
+    }
+  },
+  deleteContentsByLessonIds: async (lessonIds: string[], transaction?: Transaction) => {
+    try {
+      const lessonIdsWhere: any = { lessonId: { [Op.in]: lessonIds } };
+      const contents = await Contents.findAll({
+        where: lessonIdsWhere,
+        attributes: ["id"],
+        raw: true,
+        transaction,
+      });
+      const contentIds = contents.map((content: any) => content.id);
+
+      if (contentIds.length > 0) {
+        const contentIdsWhere: any = { contentId: { [Op.in]: contentIds } };
+        await ContentFiles.destroy({
+          where: contentIdsWhere,
+          transaction,
+        });
+      }
+
+      await Contents.destroy({
+        where: lessonIdsWhere,
+        transaction,
+      });
+    } catch (error: any) {
+      throw errorUtilities.createError(`Error deleting contents for lessons: ${error.message}`, 500);
     }
   },
   // CRUD CONTENTS SESSION END

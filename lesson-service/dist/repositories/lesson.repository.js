@@ -23,17 +23,34 @@ const lessonRepositories = {
             throw utilities_1.errorUtilities.createError(`Error Fetching lessons: ${error.message}`, 500);
         }
     },
-    getLessonsOnly: async (courseId) => {
+    getLessonsOnly: async (courseId, transaction) => {
         try {
             const lessons = await lesson_1.default.findAll({
                 where: { courseId },
                 order: [["orderNumber", "ASC"]],
                 raw: true,
+                transaction,
             });
             return lessons;
         }
         catch (error) {
             throw utilities_1.errorUtilities.createError(`Error Fetching lessons: ${error.message}`, 500);
+        }
+    },
+    deleteLessonsByCourseId: async (courseId, transaction) => {
+        try {
+            await lesson_1.default.destroy({ where: { courseId }, transaction });
+        }
+        catch (error) {
+            throw utilities_1.errorUtilities.createError(`Error deleting lessons: ${error.message}`, 500);
+        }
+    },
+    deleteLesson: async (id, transaction) => {
+        try {
+            await lesson_1.default.destroy({ where: { id }, transaction });
+        }
+        catch (error) {
+            throw utilities_1.errorUtilities.createError(`Error deleting lesson: ${error.message}`, 500);
         }
     },
     getLanguageLessons: async (languageId) => {

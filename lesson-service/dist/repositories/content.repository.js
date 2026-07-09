@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const content_1 = __importDefault(require("../../../shared/entities/lesson-service-entities/content/content"));
 const utilities_1 = require("../../../shared/utilities");
 const content_file_1 = __importDefault(require("../../../shared/entities/lesson-service-entities/contentFile/content-file"));
+const sequelize_1 = require("sequelize");
 const contentRepositories = {
     // CRUD CONTENTS SESSION START
     getContents: async () => {
@@ -102,6 +103,32 @@ const contentRepositories = {
         }
         catch (error) {
             throw utilities_1.errorUtilities.createError(`Error deleting content: ${error.message}`, 500);
+        }
+    },
+    deleteContentsByLessonIds: async (lessonIds, transaction) => {
+        try {
+            const lessonIdsWhere = { lessonId: { [sequelize_1.Op.in]: lessonIds } };
+            const contents = await content_1.default.findAll({
+                where: lessonIdsWhere,
+                attributes: ["id"],
+                raw: true,
+                transaction,
+            });
+            const contentIds = contents.map((content) => content.id);
+            if (contentIds.length > 0) {
+                const contentIdsWhere = { contentId: { [sequelize_1.Op.in]: contentIds } };
+                await content_file_1.default.destroy({
+                    where: contentIdsWhere,
+                    transaction,
+                });
+            }
+            await content_1.default.destroy({
+                where: lessonIdsWhere,
+                transaction,
+            });
+        }
+        catch (error) {
+            throw utilities_1.errorUtilities.createError(`Error deleting contents for lessons: ${error.message}`, 500);
         }
     },
     // CRUD CONTENTS SESSION END

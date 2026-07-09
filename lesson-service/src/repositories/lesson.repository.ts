@@ -26,18 +26,41 @@ const lessonRepositories = {
     }
   },
 
-  getLessonsOnly: async (courseId: string) => {
+  getLessonsOnly: async (courseId: string, transaction?: Transaction) => {
     try {
       const lessons = await Lessons.findAll({
         where: { courseId },
         order: [["orderNumber", "ASC"]],
         raw: true,
+        transaction,
       });
 
       return lessons;
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error Fetching lessons: ${error.message}`,
+        500
+      );
+    }
+  },
+
+  deleteLessonsByCourseId: async (courseId: string, transaction?: Transaction) => {
+    try {
+      await Lessons.destroy({ where: { courseId }, transaction });
+    } catch (error: any) {
+      throw errorUtilities.createError(
+        `Error deleting lessons: ${error.message}`,
+        500
+      );
+    }
+  },
+
+  deleteLesson: async (id: string, transaction?: Transaction) => {
+    try {
+      await Lessons.destroy({ where: { id }, transaction });
+    } catch (error: any) {
+      throw errorUtilities.createError(
+        `Error deleting lesson: ${error.message}`,
         500
       );
     }

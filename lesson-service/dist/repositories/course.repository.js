@@ -86,9 +86,9 @@ const courseRepositories = {
             throw utilities_1.errorUtilities.createError(`Error Updating course: ${error.message}`, 500);
         }
     },
-    deleteCourse: async (id) => {
+    deleteCourse: async (id, transaction) => {
         try {
-            await course_1.default.destroy({ where: { id } });
+            await course_1.default.destroy({ where: { id }, transaction });
             return { message: "Course deleted successfully" };
         }
         catch (error) {

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateLessonImageController = exports.getLessonWithContentsController = exports.updateLessonController = exports.createLessonController = exports.getCourseLessonsController = exports.getLanguageLessonsController = exports.getLessonController = exports.getLessonsController = void 0;
+exports.updateLessonImageController = exports.deleteLessonController = exports.getLessonWithContentsController = exports.updateLessonController = exports.createLessonController = exports.getCourseLessonsController = exports.getLanguageLessonsController = exports.getLessonController = exports.getLessonsController = void 0;
 const lesson_service_1 = __importDefault(require("../services/lessonServices/lesson.service"));
 const utilities_1 = require("../../../shared/utilities");
 // Controller to get all lessons
@@ -45,6 +45,12 @@ exports.updateLessonController = utilities_1.errorUtilities.withControllerErrorH
 exports.getLessonWithContentsController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
     const { lessonId } = req.params;
     const lesson = await lesson_service_1.default.getLessonWithContents(lessonId);
+    return utilities_1.responseUtilities.responseHandler(res, lesson.message, lesson.statusCode, lesson.data);
+});
+// Controller to delete a lesson
+exports.deleteLessonController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
+    const { id } = req.params;
+    const lesson = await lesson_service_1.default.deleteLesson(id);
     return utilities_1.responseUtilities.responseHandler(res, lesson.message, lesson.statusCode, lesson.data);
 });
 exports.updateLessonImageController = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {

@@ -55,6 +55,22 @@ const quizRepositories = {
         catch (error) {
             throw utilities_1.errorUtilities.createError(`Error deleting quiz: ${error.message}`, 500);
         }
+    },
+    deleteQuizzesByCourseId: async (courseId, transaction) => {
+        try {
+            await quiz_1.default.destroy({ where: { courseId }, transaction });
+        }
+        catch (error) {
+            throw utilities_1.errorUtilities.createError(`Error deleting quizzes: ${error.message}`, 500);
+        }
+    },
+    deleteQuizzesByLessonId: async (lessonId, transaction) => {
+        try {
+            await quiz_1.default.destroy({ where: { lessonId }, transaction });
+        }
+        catch (error) {
+            throw utilities_1.errorUtilities.createError(`Error deleting quizzes: ${error.message}`, 500);
+        }
     }
 };
 exports.default = quizRepositories;

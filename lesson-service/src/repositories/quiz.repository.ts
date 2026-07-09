@@ -62,6 +62,22 @@ const quizRepositories = {
 		} catch (error: any) {
 			throw errorUtilities.createError(`Error deleting quiz: ${error.message}`, 500);
 		}
+	},
+
+	deleteQuizzesByCourseId: async (courseId: string, transaction?: Transaction) => {
+		try {
+			await Quiz.destroy({ where: { courseId }, transaction });
+		} catch (error: any) {
+			throw errorUtilities.createError(`Error deleting quizzes: ${error.message}`, 500);
+		}
+	},
+
+	deleteQuizzesByLessonId: async (lessonId: string, transaction?: Transaction) => {
+		try {
+			await Quiz.destroy({ where: { lessonId }, transaction });
+		} catch (error: any) {
+			throw errorUtilities.createError(`Error deleting quizzes: ${error.message}`, 500);
+		}
 	}
 }
 

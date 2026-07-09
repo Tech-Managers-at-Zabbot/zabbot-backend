@@ -106,6 +106,21 @@ export const getLessonWithContentsController =
     },
   );
 
+// Controller to delete a lesson
+export const deleteLessonController =
+  errorUtilities.withControllerErrorHandling(
+    async (req: Request, res: Response) => {
+      const { id } = req.params;
+      const lesson = await lessonService.deleteLesson(id);
+      return responseUtilities.responseHandler(
+        res,
+        lesson.message,
+        lesson.statusCode,
+        lesson.data,
+      );
+    },
+  );
+
 export const updateLessonImageController =
   errorUtilities.withControllerErrorHandling(
     async (request: Request, response: Response) => {
