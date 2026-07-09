@@ -46,7 +46,6 @@ export const calculateNextNotificationDate = (frequency: NotificationFrequency):
 };
 
 export interface NotificationToggles {
-  frequency?: string;
   dailyReminders?: boolean;
   weeklyReminders?: boolean;
   biWeeklyReminders?: boolean;
@@ -73,8 +72,30 @@ const upsertUserNotificationService = errorUtilities.withServiceErrorHandling(
     if (toggles.biWeeklyReminders !== undefined) toggleUpdates.biWeeklyReminders = toggles.biWeeklyReminders;
     if (toggles.noNotificationsAndReminders !== undefined) toggleUpdates.noNotificationsAndReminders = toggles.noNotificationsAndReminders;
 
+    // Derive the effective frequency from the merged toggle state so the cron
+    // always advances nextNotificationDate at the right interval. Daily takes
+    // priority over weekly, weekly over biweekly.
+    const deriveFrequency = (merged: {
+      dailyReminders: boolean;
+      weeklyReminders: boolean;
+      biWeeklyReminders: boolean;
+      noNotificationsAndReminders: boolean;
+    }): NotificationFrequency => {
+      if (merged.noNotificationsAndReminders) return NotificationFrequency.NEVER;
+      if (merged.dailyReminders) return NotificationFrequency.DAILY;
+      if (merged.weeklyReminders) return NotificationFrequency.WEEKLY;
+      if (merged.biWeeklyReminders) return NotificationFrequency.BIWEEKLY;
+      return NotificationFrequency.NEVER;
+    };
+
     if (existing) {
-      const updatedFrequency = (toggles.frequency || existing.frequency) as NotificationFrequency;
+      const mergedToggles = {
+        dailyReminders: toggleUpdates.dailyReminders ?? existing.dailyReminders ?? false,
+        weeklyReminders: toggleUpdates.weeklyReminders ?? existing.weeklyReminders ?? false,
+        biWeeklyReminders: toggleUpdates.biWeeklyReminders ?? existing.biWeeklyReminders ?? false,
+        noNotificationsAndReminders: toggleUpdates.noNotificationsAndReminders ?? existing.noNotificationsAndReminders ?? false,
+      };
+      const updatedFrequency = deriveFrequency(mergedToggles);
 
       const updated = await userNotificationsRepositories.updateOne(
         { userId },
@@ -112,7 +133,12 @@ const upsertUserNotificationService = errorUtilities.withServiceErrorHandling(
       );
     }
 
-    const newFrequency = (toggles.frequency || NotificationFrequency.WEEKLY) as NotificationFrequency;
+    const newFrequency = deriveFrequency({
+      dailyReminders: toggles.dailyReminders ?? false,
+      weeklyReminders: toggles.weeklyReminders ?? false,
+      biWeeklyReminders: toggles.biWeeklyReminders ?? false,
+      noNotificationsAndReminders: toggles.noNotificationsAndReminders ?? false,
+    });
 
     const newRecord = await userNotificationsRepositories.create({
       id: v4(),

@@ -130,7 +130,7 @@ const getTodayWordService = utilities_1.errorUtilities.withServiceErrorHandling(
             const oldWordFilter = {
                 languageId,
                 dateUsed: {
-                    [sequelize_1.Op.lt]: thirtyDaysAgo
+                    [sequelize_1.Op.lte]: thirtyDaysAgo
                 }
             };
             availableWord = await wordForTheDay_repository_1.default.getOneOldWord(oldWordFilter);
