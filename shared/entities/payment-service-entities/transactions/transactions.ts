@@ -4,6 +4,7 @@ import { users_service_db } from "../../../../config/databases";
 export enum TransactionStatus {
   PENDING = "pending",
   PROCESSING = "processing",
+  TRIALING = "trialing",
   SUCCESS = "success",
   FAILED = "failed",
   REFUNDED = "refunded",
@@ -51,6 +52,9 @@ export interface TransactionAttributes {
   // Payment Details
   paymentMethod?: string; // card, bank_transfer, etc.
   last4?: string; // last 4 digits of card
+  paymentMethodId?: string; // Stripe payment_method id saved for a later off-session charge (lifetime trial)
+  scheduledChargeAt?: Date; // when the delayed lifetime trial charge should be attempted
+  chargeAttempts?: number; // number of delayed-charge attempts made so far
   
   // Status Timestamps
   paidAt?: Date;
@@ -96,6 +100,9 @@ class Transactions
   
   public paymentMethod?: string;
   public last4?: string;
+  public paymentMethodId?: string;
+  public scheduledChargeAt?: Date;
+  public chargeAttempts?: number;
   
   public paidAt?: Date;
   public failedAt?: Date;
@@ -181,6 +188,21 @@ Transactions.init(
       type: DataTypes.STRING(4),
       allowNull: true,
     },
+    paymentMethodId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      comment: 'Stripe payment_method id saved for a later off-session charge (lifetime trial)',
+    },
+    scheduledChargeAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: 'when the delayed lifetime trial charge should be attempted',
+    },
+    chargeAttempts: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
     paidAt: {
       type: DataTypes.DATE,
       allowNull: true,
@@ -234,6 +256,9 @@ Transactions.init(
       },
       {
         fields: ['createdAt'],
+      },
+      {
+        fields: ['status', 'scheduledChargeAt'],
       },
     ],
   }

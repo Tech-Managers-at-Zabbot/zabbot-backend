@@ -23,6 +23,7 @@ class Users extends Model<UserAttributes> implements UserAttributes {
     public country?: string;
     public phoneNumber?: string;
     public noOfSubscriptions?: number;
+    public stripeCustomerId?: string;
     public deletedAt?: Date;
     public profilePicture?: string;
     public bio?: string;
@@ -128,6 +129,10 @@ Users.init(
             type: DataTypes.INTEGER,
             allowNull: true,
             defaultValue: 0
+        },
+        stripeCustomerId: {
+            type: DataTypes.STRING,
+            allowNull: true,
         },
         deletedAt: {
             type: DataTypes.DATE,

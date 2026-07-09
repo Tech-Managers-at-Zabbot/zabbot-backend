@@ -16,6 +16,7 @@ export interface UserSubscriptionAttributes {
     startDate: Date;
     endDate?: Date;
     renewalDate?: Date;
+    trialEndsAt?: Date;
     cancelledAt?: Date;
     cancellationReason?: string;
     createdAt?: Date;
@@ -32,6 +33,7 @@ declare class UserSubscription extends Model<UserSubscriptionAttributes, UserSub
     startDate: Date;
     endDate?: Date;
     renewalDate?: Date;
+    trialEndsAt?: Date;
     cancelledAt?: Date;
     cancellationReason?: string;
     createdAt?: Date;

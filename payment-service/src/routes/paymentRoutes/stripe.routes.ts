@@ -15,4 +15,16 @@ router.post(
 router.post("/webhook", express.raw({ type: "application/json" }), stripeControllers.stripeWebhookController)
 // localhost:3010/api/v1/payments/payment-services/stripe/webhook
 
+router.post(
+  "/cancel-subscription/:subscriptionId",
+  generalAuthFunction,
+  stripeControllers.cancelSubscriptionController
+);
+
+router.post(
+  "/reactivate-subscription/:subscriptionId",
+  generalAuthFunction,
+  stripeControllers.reactivateSubscriptionController
+);
+
 export default router;

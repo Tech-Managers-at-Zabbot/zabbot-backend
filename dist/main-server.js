@@ -12,6 +12,7 @@ dotenv_flow_1.default.config({
 });
 require("./cronJob-services/lessonServiceJobs");
 const sendNotificationsJobs_1 = __importDefault(require("./cronJob-services/sendNotificationsJobs"));
+const lifetimeTrialChargeJobs_1 = __importDefault(require("./cronJob-services/lifetimeTrialChargeJobs"));
 const express_1 = __importDefault(require("express"));
 const http_proxy_middleware_1 = require("http-proxy-middleware");
 const child_process_1 = require("child_process");
@@ -231,6 +232,7 @@ async function init() {
     await startServices();
     await (0, syncDb_1.syncDatabases)();
     sendNotificationsJobs_1.default.startNotificationCron();
+    lifetimeTrialChargeJobs_1.default.startLifetimeTrialChargeCron();
 }
 init();
 app.use((req, res, next) => {

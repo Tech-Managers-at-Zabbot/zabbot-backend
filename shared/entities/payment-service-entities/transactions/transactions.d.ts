@@ -2,6 +2,7 @@ import { Model, Optional } from "sequelize";
 export declare enum TransactionStatus {
     PENDING = "pending",
     PROCESSING = "processing",
+    TRIALING = "trialing",
     SUCCESS = "success",
     FAILED = "failed",
     REFUNDED = "refunded",
@@ -37,6 +38,9 @@ export interface TransactionAttributes {
     planId?: string;
     paymentMethod?: string;
     last4?: string;
+    paymentMethodId?: string;
+    scheduledChargeAt?: Date;
+    chargeAttempts?: number;
     paidAt?: Date;
     failedAt?: Date;
     refundedAt?: Date;
@@ -65,6 +69,9 @@ declare class Transactions extends Model<TransactionAttributes, TransactionCreat
     planId?: string;
     paymentMethod?: string;
     last4?: string;
+    paymentMethodId?: string;
+    scheduledChargeAt?: Date;
+    chargeAttempts?: number;
     paidAt?: Date;
     failedAt?: Date;
     refundedAt?: Date;

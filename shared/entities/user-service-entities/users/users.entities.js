@@ -71,6 +71,10 @@ Users.init({
         allowNull: true,
         defaultValue: 0
     },
+    stripeCustomerId: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: true,
+    },
     deletedAt: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: true,

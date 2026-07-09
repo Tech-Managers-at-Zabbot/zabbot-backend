@@ -60,6 +60,11 @@ UserSubscription.init({
         allowNull: true,
         comment: 'next billing/renewal date for recurring plans',
     },
+    trialEndsAt: {
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true,
+        comment: 'when the 7-day free trial ends; null once converted to a paid period',
+    },
     cancelledAt: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: true,

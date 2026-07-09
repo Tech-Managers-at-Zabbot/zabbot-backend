@@ -23,6 +23,7 @@ class Users extends sequelize_1.Model {
     country;
     phoneNumber;
     noOfSubscriptions;
+    stripeCustomerId;
     deletedAt;
     profilePicture;
     bio;
@@ -105,6 +106,10 @@ Users.init({
         type: sequelize_1.DataTypes.INTEGER,
         allowNull: true,
         defaultValue: 0
+    },
+    stripeCustomerId: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: true,
     },
     deletedAt: {
         type: sequelize_1.DataTypes.DATE,
