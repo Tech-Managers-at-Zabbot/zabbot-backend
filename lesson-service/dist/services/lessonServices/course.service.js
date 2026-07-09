@@ -9,8 +9,11 @@ const uuid_1 = require("uuid");
 const statusCodes_responses_1 = require("../../../../shared/statusCodes/statusCodes.responses");
 const content_repository_1 = __importDefault(require("../../repositories/content.repository"));
 const lesson_repository_1 = __importDefault(require("../../repositories/lesson.repository"));
+const quiz_repository_1 = __importDefault(require("../../repositories/quiz.repository"));
+const user_course_repository_1 = __importDefault(require("../../repositories/user-course.repository"));
 const responses_1 = require("../../responses/responses");
 const api_1 = require("../../../../shared/cloudinary/api");
+const databases_1 = require("../../../../config/databases");
 const getCoursesForLanguage = utilities_1.errorUtilities.withServiceErrorHandling(async (languageId, isActive) => {
     // const payload = { isActive, languageId };
     const courses = await course_repository_1.default.getCourses(isActive, languageId);
@@ -54,7 +57,17 @@ const deleteCourse = utilities_1.errorUtilities.withServiceErrorHandling(async (
     if (!course) {
         throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.COURSE_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
     }
-    await course_repository_1.default.deleteCourse(id);
+    await databases_1.users_service_db.transaction(async (transaction) => {
+        const lessons = await lesson_repository_1.default.getLessonsOnly(id, transaction);
+        const lessonIds = lessons.map((lesson) => lesson.id);
+        if (lessonIds.length > 0) {
+            await content_repository_1.default.deleteContentsByLessonIds(lessonIds, transaction);
+        }
+        await quiz_repository_1.default.deleteQuizzesByCourseId(id, transaction);
+        await user_course_repository_1.default.deleteUserCoursesByCourseId(id, transaction);
+        await lesson_repository_1.default.deleteLessonsByCourseId(id, transaction);
+        await course_repository_1.default.deleteCourse(id, transaction);
+    });
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.CourseResponses.PROCESS_SUCCESSFUL, null);
 });
 const getCourseWithLessonsService = utilities_1.errorUtilities.withServiceErrorHandling(async (languageId) => {

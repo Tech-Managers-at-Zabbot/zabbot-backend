@@ -108,9 +108,9 @@ const courseRepositories = {
     }
   },
 
-  deleteCourse: async (id: string) => {
+  deleteCourse: async (id: string, transaction?: Transaction) => {
     try {
-      await Courses.destroy({ where: { id } });
+      await Courses.destroy({ where: { id }, transaction });
 
       return { message: "Course deleted successfully" };
     } catch (error: any) {

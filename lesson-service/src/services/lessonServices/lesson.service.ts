@@ -10,6 +10,7 @@ import { CourseResponses } from "../../responses/responses";
 import quizRepositories from "../../repositories/quiz.repository";
 import { uploadFile } from "../../../../shared/cloudinary/api";
 import courseRepositories from "../../repositories/course.repository";
+import { users_service_db } from "../../../../config/databases";
 // import languageRepositories from "src/repositories/language.repository";
 
 const getLessons = errorUtilities.withServiceErrorHandling(async () => {
@@ -185,22 +186,36 @@ const updateLessonImageService = errorUtilities.withServiceErrorHandling(
   },
 );
 
-//Logic for deleting a lesson is not ready yet
-// const deleteLesson = errorUtilities.withServiceErrorHandling(
-//   async (id: string) => {
-//     const deletedLesson = await lessonRepositories.deleteLesson(id);
-//     if (!deletedLesson) {
-//       throw errorUtilities.createError(`Lesson not found`, 404);
-//     }
-//     return deletedLesson;
-//   }
-// );
+const deleteLesson = errorUtilities.withServiceErrorHandling(
+  async (id: string) => {
+    const lesson = await lessonRepositories.getLesson(id);
+    if (!lesson) {
+      throw errorUtilities.createError(
+        CourseResponses.LESSON_NOT_FOUND,
+        StatusCodes.NotFound,
+      );
+    }
+
+    await users_service_db.transaction(async (transaction) => {
+      await contentRepositories.deleteContentsByLessonIds([id], transaction);
+      await quizRepositories.deleteQuizzesByLessonId(id, transaction);
+      await lessonRepositories.deleteLesson(id, transaction);
+    });
+
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.OK,
+      CourseResponses.PROCESS_SUCCESSFUL,
+      null,
+    );
+  },
+);
 
 export default {
   getLessons,
   getLesson,
   createLesson,
   updateLesson,
+  deleteLesson,
   getLessonWithContents,
   getLessonsForLanguage,
   getLessonsForCourse,
