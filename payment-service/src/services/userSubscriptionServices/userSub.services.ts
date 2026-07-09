@@ -12,8 +12,22 @@ import { PaymentOptions } from "../../types/payment.types";
 import { TransactionType } from "../../../../shared/entities/payment-service-entities/transactions/transactions";
 import Users from "../../../../shared/entities/user-service-entities/users/users.entities";
 
+interface CreateOrUpdateSubscriptionOptions {
+  // Grant access immediately without a completed payment (lifetime trial: card is
+  // saved via SetupIntent, charge happens later via the delayed-charge cron job).
+  grantTrialOnly?: boolean;
+  // Real dates from Stripe (subscription trial_end / current_period_end), preferred
+  // over the hand-rolled JS date math below whenever a Stripe subscription exists.
+  stripeDates?: {
+    trialEndsAt?: Date | null;
+    periodEnd?: Date | null;
+  };
+}
+
 const createOrUpdateUserSubscription = errorUtilities.withServiceErrorHandling(
-  async (transaction: any) => {
+  async (transaction: any, options: CreateOrUpdateSubscriptionOptions = {}) => {
+    const { grantTrialOnly = false, stripeDates } = options;
+
     if (!transaction.planId) {
       console.warn(
         "No planId found in transaction, skipping subscription creation"
@@ -48,9 +62,6 @@ const createOrUpdateUserSubscription = errorUtilities.withServiceErrorHandling(
     const isDifferentPlan =
       anyActiveSubscription &&
       anyActiveSubscription.planId !== transaction.planId;
-
-    // Check if this is a first-time subscriber (no subscriptions ever)
-    const isFirstTimeSubscriber = Number(user.noOfSubscriptions) === 0;
 
     // Variable to track when the new plan should start
     let newPlanStartDate: Date = new Date();
@@ -94,6 +105,7 @@ const createOrUpdateUserSubscription = errorUtilities.withServiceErrorHandling(
     let startDate: Date;
     let endDate: Date | null = null;
     let renewalDate: Date | null = null;
+    const trialEndsAt: Date | null = stripeDates?.trialEndsAt ?? null;
 
     // For renewals, start from existing end date if it's in the future
     if (
@@ -112,32 +124,27 @@ const createOrUpdateUserSubscription = errorUtilities.withServiceErrorHandling(
       startDate = new Date();
     }
 
-    // Calculate end and renewal dates based on plan type
+    // Calculate end and renewal dates based on plan type (lifetime has neither)
     if (plan.planType !== PlanType.LIFETIME) {
-      renewalDate = new Date(startDate);
+      if (stripeDates?.periodEnd) {
+        // Trust Stripe's actual billing dates (trial_end / current_period_end)
+        // over hand-rolled month math - avoids drift from Stripe's real cycle.
+        renewalDate = new Date(stripeDates.periodEnd);
+        endDate = new Date(stripeDates.periodEnd);
+      } else {
+        renewalDate = new Date(startDate);
 
-      if (plan.planType === PlanType.MONTHLY) {
-        const months = plan.billingCycleMonths || 1;
-        renewalDate.setMonth(renewalDate.getMonth() + months);
-      } else if (plan.planType === PlanType.ANNUAL) {
-        const years = plan.billingCycleMonths
-          ? plan.billingCycleMonths / 12
-          : 1;
-        renewalDate.setFullYear(renewalDate.getFullYear() + years);
-      }
-
-      endDate = new Date(renewalDate);
-
-      // Add 7-day free trial for first-time subscribers
-      // Only apply if the subscription starts now or in the past (not scheduled for future)
-      if (isFirstTimeSubscriber && startDate <= new Date()) {
-        endDate.setDate(endDate.getDate() + 7);
-        if (renewalDate) {
-          renewalDate.setDate(renewalDate.getDate() + 7);
+        if (plan.planType === PlanType.MONTHLY) {
+          const months = plan.billingCycleMonths || 1;
+          renewalDate.setMonth(renewalDate.getMonth() + months);
+        } else if (plan.planType === PlanType.ANNUAL) {
+          const years = plan.billingCycleMonths
+            ? plan.billingCycleMonths / 12
+            : 1;
+          renewalDate.setFullYear(renewalDate.getFullYear() + years);
         }
-        console.log(
-          `Applied 7-day free trial for first-time subscriber: ${userId}`
-        );
+
+        endDate = new Date(renewalDate);
       }
     }
 
@@ -155,6 +162,7 @@ const createOrUpdateUserSubscription = errorUtilities.withServiceErrorHandling(
           startDate,
           renewalDate,
           endDate,
+          trialEndsAt,
         }
       );
 
@@ -168,6 +176,7 @@ const createOrUpdateUserSubscription = errorUtilities.withServiceErrorHandling(
         startDate,
         endDate,
         renewalDate,
+        trialEndsAt,
         gatewaySubscriptionId: transaction.gatewaySubscriptionId,
       });
 
@@ -180,7 +189,7 @@ const createOrUpdateUserSubscription = errorUtilities.withServiceErrorHandling(
       );
 
       console.log(
-        `Created new subscription for user: ${transaction.userId}. ` +
+        `Created ${grantTrialOnly ? "trial-granted " : ""}subscription for user: ${transaction.userId}. ` +
           `Start: ${startDate.toISOString()}, End: ${
             endDate?.toISOString() || "Lifetime"
           }`

@@ -21,6 +21,7 @@ dotenvFlow.config({
 
 import "./cronJob-services/lessonServiceJobs";
 import notificationCron from "./cronJob-services/sendNotificationsJobs";
+import lifetimeTrialChargeCron from "./cronJob-services/lifetimeTrialChargeJobs";
 import express from "express";
 import { createProxyMiddleware, Options } from "http-proxy-middleware";
 import { spawn, ChildProcess } from "child_process";
@@ -318,6 +319,7 @@ async function init() {
   await startServices();
   await syncDatabases();
   notificationCron.startNotificationCron()
+  lifetimeTrialChargeCron.startLifetimeTrialChargeCron()
 }
 
 init();

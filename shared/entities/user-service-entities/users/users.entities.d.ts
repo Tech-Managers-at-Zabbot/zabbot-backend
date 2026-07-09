@@ -20,6 +20,7 @@ declare class Users extends Model<UserAttributes> implements UserAttributes {
     country?: string;
     phoneNumber?: string;
     noOfSubscriptions?: number;
+    stripeCustomerId?: string;
     deletedAt?: Date;
     profilePicture?: string;
     bio?: string;

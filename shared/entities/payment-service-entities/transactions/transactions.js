@@ -7,6 +7,7 @@ var TransactionStatus;
 (function (TransactionStatus) {
     TransactionStatus["PENDING"] = "pending";
     TransactionStatus["PROCESSING"] = "processing";
+    TransactionStatus["TRIALING"] = "trialing";
     TransactionStatus["SUCCESS"] = "success";
     TransactionStatus["FAILED"] = "failed";
     TransactionStatus["REFUNDED"] = "refunded";
@@ -101,6 +102,21 @@ Transactions.init({
         type: sequelize_1.DataTypes.STRING(4),
         allowNull: true,
     },
+    paymentMethodId: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: true,
+        comment: 'Stripe payment_method id saved for a later off-session charge (lifetime trial)',
+    },
+    scheduledChargeAt: {
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true,
+        comment: 'when the delayed lifetime trial charge should be attempted',
+    },
+    chargeAttempts: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+    },
     paidAt: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: true,
@@ -153,6 +169,9 @@ Transactions.init({
         },
         {
             fields: ['createdAt'],
+        },
+        {
+            fields: ['status', 'scheduledChargeAt'],
         },
     ],
 });

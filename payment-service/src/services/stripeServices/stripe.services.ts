@@ -22,11 +22,10 @@ import { userSubscriptionService } from "../index";
 import userSubscriptionRepositories from "../../repositories/userSubscirptionRepositories/userSubscription.repositories";
 import subscriptionPlanRepositories from "../../repositories/subscriptionRepositories/subscription.repositories";
 
+const TRIAL_PERIOD_DAYS = 7;
+
 const createCheckoutSession = errorUtilities.withServiceErrorHandling(
   async (subscriptionType: string, userId: string) => {
-    let priceId: string;
-    let paymentMode: string = "subscription";
-
     const plan = await subscriptionPlanRepositories.getOne({
       planType: subscriptionType,
     });
@@ -34,83 +33,118 @@ const createCheckoutSession = errorUtilities.withServiceErrorHandling(
     if (!plan) {
       throw errorUtilities.createError(
         "Subscription plan not found",
-        StatusCodes.NotFound
+        StatusCodes.NotFound,
       );
     }
 
-    switch (subscriptionType) {
-      case PaymentOptions.MONTHLY_SUBSCRIPTION:
-        priceId = process.env.MONTHLY_SUBSCRIPTION_PRICE_ID || "";
-        break;
-      case PaymentOptions.ANNUAL_SUBSCRIPTION:
-        priceId = process.env.ANNUAL_SUBSCRIPTION_PRICE_ID || "";
-        break;
-      case PaymentOptions.LIFETIME_SUBSCRIPTION:
-        priceId = process.env.LIFTIME_SUBSCRIPTION_PRICE_ID || "";
-        paymentMode = "payment";
-        break;
-      default:
-        throw errorUtilities.createError(
-          StripeResponses.INVALID_SUBSCRIPTION_TYPE,
-          StatusCodes.BadRequest
-        );
+    const user = await usersRepositories.getOne({ id: userId });
+
+    if (!user) {
+      throw errorUtilities.createError("User not found", StatusCodes.NotFound);
     }
 
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
-      mode: paymentMode as "subscription" | "payment",
+    const isFirstTimeSubscriber = Number(user.noOfSubscriptions || 0) === 0;
+    const existingCustomerId = user.stripeCustomerId || undefined;
+
+    let priceId: string;
+    let paymentMode: "subscription" | "payment" | "setup" = "subscription";
+    let initialTransactionStatus = TransactionStatus.PENDING;
+
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
       success_url: `${config.STRIPE_SUCCESS_URL}?type=${subscriptionType}`,
       cancel_url: `${config.STRIPE_FAILURE_URL}?type=${subscriptionType}`,
       metadata: {
         userId,
+        planId: plan.id,
+        planType: plan.planType,
       },
-    });
-    // Get the payment intent ID from the session
-    const paymentIntentId = session.payment_intent as string;
-
-    const transactionData = {
-      id: v4(),
-      userId,
-      paymentGateway: PaymentGateway.STRIPE,
-      gatewayTransactionId: session.id,
-      gatewayCustomerId: (session.customer as string) || null,
-      transactionType: TransactionType.SUBSCRIPTION,
-      amount: plan.price,
-      currency: plan.currency,
-      status: TransactionStatus.PENDING,
-      planType: plan.planType,
-      planId: plan.id,
-      description: `${plan.planType} subscription payment`,
-      metadata: {
-        checkoutSessionId: session.id,
-        planName: plan.planType,
-      },
+      ...(existingCustomerId ? { customer: existingCustomerId } : {}),
     };
 
-    const transaction = await transactionsRepositories.create(transactionData);
+    switch (subscriptionType) {
+      case PaymentOptions.MONTHLY_SUBSCRIPTION:
+        priceId = process.env.MONTHLY_SUBSCRIPTION_PRICE_ID || "";
+        paymentMode = "subscription";
+        break;
+      case PaymentOptions.ANNUAL_SUBSCRIPTION:
+        priceId = process.env.ANNUAL_SUBSCRIPTION_PRICE_ID || "";
+        paymentMode = "subscription";
+        break;
+      case PaymentOptions.LIFETIME_SUBSCRIPTION:
+        priceId = process.env.LIFTIME_SUBSCRIPTION_PRICE_ID || "";
+        // First-time subscribers: save the card now (no charge), the delayed-charge
+        // cron job triggers the actual one-time payment after the 7-day trial.
+        // Repeat purchasers: charge immediately, as before.
+        paymentMode = isFirstTimeSubscriber ? "setup" : "payment";
+        break;
+      default:
+        throw errorUtilities.createError(
+          StripeResponses.INVALID_SUBSCRIPTION_TYPE,
+          StatusCodes.BadRequest,
+        );
+    }
 
-    // console.log('trans', transaction)
+    if (paymentMode === "setup") {
+      // Setup mode only collects/saves a payment method - no line items, no charge.
+      initialTransactionStatus = TransactionStatus.TRIALING;
+    } else {
+      sessionParams.payment_method_types = ["card"];
+      sessionParams.line_items = [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ];
 
-    // console.log(
-    //   `Created pending transaction: ${transaction.id} for payment intent: ${paymentIntentId}`
-    // );
-
-    return responseUtilities.handleServicesResponse(
-      StatusCodes.OK,
-      StripeResponses.PROCESS_SUCCESSFUL,
-      {
-        sessionId: session.id,
-        sessionUrl: session.url,
-        transactionId: transaction.id,
+      if (paymentMode === "subscription" && isFirstTimeSubscriber) {
+        sessionParams.subscription_data = {
+          trial_period_days: TRIAL_PERIOD_DAYS,
+        };
       }
-    );
-  }
+    }
+
+    sessionParams.mode = paymentMode;
+
+    try {
+      const session = await stripe.checkout.sessions.create(sessionParams);
+      const transactionData = {
+        id: v4(),
+        userId,
+        paymentGateway: PaymentGateway.STRIPE,
+        gatewayTransactionId: session.id,
+        gatewayCustomerId: (session.customer as string) || null,
+        transactionType: TransactionType.SUBSCRIPTION,
+        amount: plan.price,
+        currency: plan.currency,
+        status: initialTransactionStatus,
+        planType: plan.planType,
+        planId: plan.id,
+        description: `${plan.planType} subscription payment`,
+        metadata: {
+          checkoutSessionId: session.id,
+          planName: plan.planType,
+        },
+      };
+
+      const transaction =
+        await transactionsRepositories.create(transactionData);
+      return responseUtilities.handleServicesResponse(
+        StatusCodes.OK,
+        StripeResponses.PROCESS_SUCCESSFUL,
+        {
+          sessionId: session.id,
+          sessionUrl: session.url,
+          transactionId: transaction.id,
+        },
+      );
+    } catch (error: any) {
+      console.error("Error creating Stripe checkout session:", error);
+      throw errorUtilities.createError(
+        `${StripeResponses.UNSUCCESSFUL_PROCESS}: ${error.message}`,
+        StatusCodes.InternalServerError,
+      );
+    }
+  },
 );
 
 // Handle payment_intent.succeeded
@@ -147,7 +181,7 @@ const handlePaymentIntentSucceeded = errorUtilities.withServiceErrorHandling(
           stripePaymentIntentId: session.payment_intent,
           stripeSubscriptionId: session.subscription,
         },
-      }
+      },
     );
     if (
       transaction.transactionType === TransactionType.SUBSCRIPTION ||
@@ -157,19 +191,19 @@ const handlePaymentIntentSucceeded = errorUtilities.withServiceErrorHandling(
     }
 
     console.log(
-      `Payment succeeded for transaction: ${transaction.id}, ${transactionUpdate}`
+      `Payment succeeded for transaction: ${transaction.id}, ${transactionUpdate}`,
     );
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       StripeResponses.PROCESS_SUCCESSFUL,
-      transactionUpdate
+      transactionUpdate,
     );
-  }
+  },
 );
 
 // Handle payment_intent.payment_failed
 const handlePaymentIntentFailed = errorUtilities.withServiceErrorHandling(
-  async (session:any) => {
+  async (session: any) => {
     console.log("Processing payment_intent.payment_failed:", session.id);
 
     const transaction = await transactionsRepositories.getOne({
@@ -178,9 +212,7 @@ const handlePaymentIntentFailed = errorUtilities.withServiceErrorHandling(
     });
 
     if (!transaction) {
-      console.warn(
-        `Transaction not found for payment intent: ${session.id}`
-      );
+      console.warn(`Transaction not found for payment intent: ${session.id}`);
       return;
     }
 
@@ -190,25 +222,25 @@ const handlePaymentIntentFailed = errorUtilities.withServiceErrorHandling(
         paymentGateway: PaymentGateway.STRIPE,
       },
       {
-      status: TransactionStatus.FAILED,
-      failedAt: new Date(),
-      failureReason:
-        session.last_payment_error?.message || "Payment failed",
-      failureCode: session.last_payment_error?.code || "unknown",
-      paymentMethod: "card",
-      metadata: {
-        ...transaction.metadata,
-        stripeError: session.last_payment_error,
+        status: TransactionStatus.FAILED,
+        failedAt: new Date(),
+        failureReason: session.last_payment_error?.message || "Payment failed",
+        failureCode: session.last_payment_error?.code || "unknown",
+        paymentMethod: "card",
+        metadata: {
+          ...transaction.metadata,
+          stripeError: session.last_payment_error,
+        },
       },
-    });
+    );
 
     console.log(`Payment failed for transaction: ${transaction.id}`);
     return responseUtilities.handleServicesResponse(
       StatusCodes.NotImplemented,
       StripeResponses.UNSUCCESSFUL_PROCESS,
-      transactionUpdate
+      transactionUpdate,
     );
-  }
+  },
 );
 
 // Handle customer.subscription.deleted
@@ -235,7 +267,7 @@ const handleSubscriptionDeleted = errorUtilities.withServiceErrorHandling(
           metadata: {
             finalizedAt: new Date(),
           },
-        }
+        },
       );
     }
 
@@ -244,9 +276,9 @@ const handleSubscriptionDeleted = errorUtilities.withServiceErrorHandling(
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       "Subscription deletion processed",
-      userSubscription
+      userSubscription,
     );
-  }
+  },
 );
 
 const handleInvoicePaymentSucceeded = errorUtilities.withServiceErrorHandling(
@@ -256,7 +288,7 @@ const handleInvoicePaymentSucceeded = errorUtilities.withServiceErrorHandling(
     // Skip if this is the first invoice (already handled by checkout.session.completed)
     if (invoice.billing_reason === "subscription_create") {
       console.log(
-        "Skipping first invoice - already handled by checkout.session.completed"
+        "Skipping first invoice - already handled by checkout.session.completed",
       );
       return;
     }
@@ -273,7 +305,7 @@ const handleInvoicePaymentSucceeded = errorUtilities.withServiceErrorHandling(
 
     if (!userSubscription) {
       console.warn(
-        `Active subscription not found for Stripe subscription: ${subscriptionId}`
+        `Active subscription not found for Stripe subscription: ${subscriptionId}`,
       );
       return;
     }
@@ -309,18 +341,25 @@ const handleInvoicePaymentSucceeded = errorUtilities.withServiceErrorHandling(
 
     const transaction = await transactionsRepositories.create(transactionData);
 
-    await userSubscriptionService.createOrUpdateUserSubscription(transaction);
+    // Trial (if any) has now converted to a real paid period - trialEndsAt
+    // isn't passed here, so createOrUpdateUserSubscription clears it.
+    const periodEnd = invoice.lines?.data?.[0]?.period?.end
+      ? new Date(invoice.lines.data[0].period.end * 1000)
+      : null;
+
+    await userSubscriptionService.createOrUpdateUserSubscription(transaction, {
+      stripeDates: { periodEnd },
+    });
 
     console.log(`Renewal payment succeeded for transaction: ${transaction.id}`);
 
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       StripeResponses.PROCESS_SUCCESSFUL,
-      transaction
+      transaction,
     );
-  }
+  },
 );
-
 
 const handleCheckoutSessionCompleted = errorUtilities.withServiceErrorHandling(
   async (session: any) => {
@@ -336,27 +375,148 @@ const handleCheckoutSessionCompleted = errorUtilities.withServiceErrorHandling(
       return;
     }
 
-    // Store the Stripe subscription ID
+    if (session.mode === "setup") {
+      // Lifetime plan trial grant: no charge yet, just save the card and give
+      // access now. The delayed-charge cron job bills the saved card in 7 days.
+      const setupIntent = await stripe.setupIntents.retrieve(
+        session.setup_intent as string,
+      );
+      const paymentMethodId = setupIntent.payment_method as string;
+      const customerId = session.customer as string;
+      const trialEndsAt = new Date(
+        Date.now() + TRIAL_PERIOD_DAYS * 24 * 60 * 60 * 1000,
+      );
+
+      if (customerId) {
+        const user = await usersRepositories.getOne({ id: transaction.userId });
+        if (user && !user.stripeCustomerId) {
+          await usersRepositories.updateOne(
+            { id: transaction.userId },
+            { stripeCustomerId: customerId },
+          );
+        }
+      }
+
+      const transactionUpdate = await transactionsRepositories.updateOne(
+        {
+          gatewayTransactionId: session.id,
+          paymentGateway: PaymentGateway.STRIPE,
+        },
+        {
+          status: TransactionStatus.TRIALING,
+          gatewayCustomerId: customerId,
+          paymentMethodId,
+          scheduledChargeAt: trialEndsAt,
+          metadata: {
+            ...transaction.metadata,
+            stripeSessionId: session.id,
+            stripeSetupIntentId: session.setup_intent,
+          },
+        },
+      );
+
+      await userSubscriptionService.createOrUpdateUserSubscription(
+        transaction,
+        { grantTrialOnly: true, stripeDates: { trialEndsAt } },
+      );
+
+      console.log(`Lifetime trial granted for transaction: ${transaction.id}`);
+      return responseUtilities.handleServicesResponse(
+        StatusCodes.OK,
+        StripeResponses.PROCESS_SUCCESSFUL,
+        transactionUpdate,
+      );
+    }
+
+    if (session.mode === "subscription") {
+      const stripeSubscription = await stripe.subscriptions.retrieve(
+        session.subscription as string,
+      );
+      const isTrialing = stripeSubscription.status === "trialing";
+      // Stripe moved current_period_end/start to the subscription item level.
+      const currentPeriodEnd =
+        stripeSubscription.items.data[0]?.current_period_end;
+      const periodEnd = currentPeriodEnd
+        ? new Date(currentPeriodEnd * 1000)
+        : null;
+      const trialEndsAt = stripeSubscription.trial_end
+        ? new Date(stripeSubscription.trial_end * 1000)
+        : null;
+
+      const transactionUpdate = await transactionsRepositories.updateOne(
+        {
+          gatewayTransactionId: session.id,
+          paymentGateway: PaymentGateway.STRIPE,
+        },
+        isTrialing
+          ? {
+              // No charge yet - Stripe won't bill until the trial ends.
+              status: TransactionStatus.TRIALING,
+              gatewayCustomerId: session.customer as string,
+              gatewaySubscriptionId: session.subscription as string,
+              metadata: {
+                ...transaction.metadata,
+                stripeSessionId: session.id,
+                stripeSubscriptionId: session.subscription,
+              },
+            }
+          : {
+              status: TransactionStatus.SUCCESS,
+              paidAt: new Date(),
+              amount: session.amount_total / 100,
+              currency: session.currency.toUpperCase(),
+              paymentMethod: "card",
+              gatewayCustomerId: session.customer as string,
+              gatewaySubscriptionId: session.subscription as string,
+              metadata: {
+                ...transaction.metadata,
+                stripeSessionId: session.id,
+                stripePaymentIntentId: session.payment_intent,
+                stripeSubscriptionId: session.subscription,
+              },
+            },
+      );
+
+      if (
+        transaction.transactionType === TransactionType.SUBSCRIPTION ||
+        transaction.transactionType === TransactionType.RENEWAL
+      ) {
+        await userSubscriptionService.createOrUpdateUserSubscription(
+          transaction,
+          { stripeDates: { trialEndsAt, periodEnd } },
+        );
+      }
+
+      console.log(
+        `Subscription checkout completed for transaction: ${transaction.id}`,
+      );
+      return responseUtilities.handleServicesResponse(
+        StatusCodes.OK,
+        StripeResponses.PROCESS_SUCCESSFUL,
+        transactionUpdate,
+      );
+    }
+
+    // mode === "payment": lifetime plan, repeat purchaser - unchanged immediate charge.
     const transactionUpdate = await transactionsRepositories.updateOne(
       {
         gatewayTransactionId: session.id,
         paymentGateway: PaymentGateway.STRIPE,
       },
       {
-      status: TransactionStatus.SUCCESS,
-      paidAt: new Date(),
-      amount: session.amount_total / 100,
-      currency: session.currency.toUpperCase(),
-      paymentMethod: "card",
-      gatewayCustomerId: session.customer as string,
-      gatewaySubscriptionId: session.subscription as string, // Important!
-      metadata: {
-        ...transaction.metadata,
-        stripeSessionId: session.id,
-        stripePaymentIntentId: session.payment_intent,
-        stripeSubscriptionId: session.subscription,
+        status: TransactionStatus.SUCCESS,
+        paidAt: new Date(),
+        amount: session.amount_total / 100,
+        currency: session.currency.toUpperCase(),
+        paymentMethod: "card",
+        gatewayCustomerId: session.customer as string,
+        metadata: {
+          ...transaction.metadata,
+          stripeSessionId: session.id,
+          stripePaymentIntentId: session.payment_intent,
+        },
       },
-    });
+    );
 
     if (
       transaction.transactionType === TransactionType.SUBSCRIPTION ||
@@ -369,11 +529,10 @@ const handleCheckoutSessionCompleted = errorUtilities.withServiceErrorHandling(
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       StripeResponses.PROCESS_SUCCESSFUL,
-      transactionUpdate
+      transactionUpdate,
     );
-  }
+  },
 );
-
 
 // Handle failed renewal payments
 const handleInvoicePaymentFailed = errorUtilities.withServiceErrorHandling(
@@ -391,14 +550,14 @@ const handleInvoicePaymentFailed = errorUtilities.withServiceErrorHandling(
       return;
     }
 
-     const plan = await subscriptionPlanRepositories.getOne({
+    const plan = await subscriptionPlanRepositories.getOne({
       id: userSubscription.planId,
     });
 
     if (!plan) {
       throw errorUtilities.createError(
         "Subscription plan not found",
-        StatusCodes.NotFound
+        StatusCodes.NotFound,
       );
     }
 
@@ -422,7 +581,8 @@ const handleInvoicePaymentFailed = errorUtilities.withServiceErrorHandling(
         stripeSubscriptionId: subscriptionId,
         attemptCount: invoice.attempt_count,
         nextPaymentAttempt: invoice.next_payment_attempt,
-        failureReason: invoice.last_finalization_error?.message || 'Payment failed',
+        failureReason:
+          invoice.last_finalization_error?.message || "Payment failed",
       },
     };
 
@@ -431,13 +591,13 @@ const handleInvoicePaymentFailed = errorUtilities.withServiceErrorHandling(
     // Update subscription status to PAYMENT_FAILED (but don't cancel yet - Stripe will retry)
     await userSubscriptionRepositories.updateOne(
       { id: userSubscription.id },
-      { 
+      {
         status: SubscriptionStatus.FAILED,
         metadata: {
           lastPaymentFailure: new Date(),
           paymentRetryCount: invoice.attempt_count,
-        }
-      }
+        },
+      },
     );
 
     // Send payment failure notification to user
@@ -446,14 +606,16 @@ const handleInvoicePaymentFailed = errorUtilities.withServiceErrorHandling(
     //   nextAttempt: invoice.next_payment_attempt ? new Date(invoice.next_payment_attempt * 1000) : null,
     // });
 
-    console.log(`Payment failed for subscription: ${subscriptionId}, attempt: ${invoice.attempt_count}`);
+    console.log(
+      `Payment failed for subscription: ${subscriptionId}, attempt: ${invoice.attempt_count}`,
+    );
 
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       "Payment failure processed",
-      transactionData
+      transactionData,
     );
-  }
+  },
 );
 
 // Optional: Handle upcoming renewal notification
@@ -484,15 +646,17 @@ const handleUpcomingInvoice = errorUtilities.withServiceErrorHandling(
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       "Renewal reminder processed",
-      null
+      null,
     );
-  }
+  },
 );
 
-
-
 const cancelUserSubscription = errorUtilities.withServiceErrorHandling(
-  async (userId: string, subscriptionId: string, cancelImmediately: boolean = false) => {
+  async (
+    userId: string,
+    subscriptionId: string,
+    cancelImmediately: boolean = false,
+  ) => {
     // Get the user's subscription from your database
     const userSubscription = await userSubscriptionRepositories.getOne({
       id: subscriptionId,
@@ -503,14 +667,14 @@ const cancelUserSubscription = errorUtilities.withServiceErrorHandling(
     if (!userSubscription) {
       throw errorUtilities.createError(
         "Active subscription not found",
-        StatusCodes.NotFound
+        StatusCodes.NotFound,
       );
     }
 
     if (!userSubscription.gatewaySubscriptionId) {
       throw errorUtilities.createError(
         "Stripe subscription ID not found",
-        StatusCodes.BadRequest
+        StatusCodes.BadRequest,
       );
     }
 
@@ -518,7 +682,7 @@ const cancelUserSubscription = errorUtilities.withServiceErrorHandling(
       if (cancelImmediately) {
         // Cancel immediately - user loses access right away
         const canceledSubscription = await stripe.subscriptions.cancel(
-          userSubscription.gatewaySubscriptionId
+          userSubscription.gatewaySubscriptionId,
         );
 
         // Update in your database
@@ -529,22 +693,23 @@ const cancelUserSubscription = errorUtilities.withServiceErrorHandling(
             endDate: new Date(),
             cancelledAt: new Date(),
             metadata: {
-              cancellationReason: 'user_requested',
-              cancelledBy: 'user',
+              cancellationReason: "user_requested",
+              cancelledBy: "user",
               cancelledImmediately: true,
             },
-          }
+          },
         );
 
-        console.log(`Subscription cancelled immediately: ${userSubscription.gatewaySubscriptionId}`);
-
+        console.log(
+          `Subscription cancelled immediately: ${userSubscription.gatewaySubscriptionId}`,
+        );
       } else {
         // Cancel at period end - user keeps access until renewal date
         const updatedSubscription = await stripe.subscriptions.update(
           userSubscription.gatewaySubscriptionId,
           {
             cancel_at_period_end: true,
-          }
+          },
         );
 
         // Update in your database
@@ -554,15 +719,17 @@ const cancelUserSubscription = errorUtilities.withServiceErrorHandling(
             status: SubscriptionStatus.CANCELLING, // New status: active but won't renew
             cancelledAt: new Date(),
             metadata: {
-              cancellationReason: 'user_requested',
-              cancelledBy: 'user',
+              cancellationReason: "user_requested",
+              cancelledBy: "user",
               cancelAtPeriodEnd: true,
               // periodEnd: new Date(updatedSubscription.current_period_end * 1000),
             },
-          }
+          },
         );
 
-        console.log(`Subscription will cancel at period end: ${userSubscription.endDate}`);
+        console.log(
+          `Subscription will cancel at period end: ${userSubscription.endDate}`,
+        );
       }
 
       return responseUtilities.handleServicesResponse(
@@ -571,18 +738,19 @@ const cancelUserSubscription = errorUtilities.withServiceErrorHandling(
         {
           subscriptionId: userSubscription.id,
           cancelledImmediately: cancelImmediately,
-          accessUntil: cancelImmediately ? new Date() : userSubscription.endDate,
-        }
+          accessUntil: cancelImmediately
+            ? new Date()
+            : userSubscription.endDate,
+        },
       );
-
     } catch (error: any) {
-      console.error('Stripe cancellation error:', error);
+      console.error("Stripe cancellation error:", error);
       throw errorUtilities.createError(
         `Failed to cancel subscription: ${error.message}`,
-        StatusCodes.InternalServerError
+        StatusCodes.InternalServerError,
       );
     }
-  }
+  },
 );
 
 // Reactivate a subscription (if user changes their mind before period end)
@@ -597,14 +765,14 @@ const reactivateUserSubscription = errorUtilities.withServiceErrorHandling(
     if (!userSubscription) {
       throw errorUtilities.createError(
         "Cancelling subscription not found",
-        StatusCodes.NotFound
+        StatusCodes.NotFound,
       );
     }
 
     if (!userSubscription.gatewaySubscriptionId) {
       throw errorUtilities.createError(
         "Stripe subscription ID not found",
-        StatusCodes.BadRequest
+        StatusCodes.BadRequest,
       );
     }
 
@@ -614,7 +782,7 @@ const reactivateUserSubscription = errorUtilities.withServiceErrorHandling(
         userSubscription.gatewaySubscriptionId,
         {
           cancel_at_period_end: false,
-        }
+        },
       );
 
       // Update in your database
@@ -627,10 +795,12 @@ const reactivateUserSubscription = errorUtilities.withServiceErrorHandling(
             reactivatedAt: new Date(),
             cancelAtPeriodEnd: false,
           },
-        }
+        },
       );
 
-      console.log(`Subscription reactivated: ${userSubscription.gatewaySubscriptionId}`);
+      console.log(
+        `Subscription reactivated: ${userSubscription.gatewaySubscriptionId}`,
+      );
 
       return responseUtilities.handleServicesResponse(
         StatusCodes.OK,
@@ -638,17 +808,16 @@ const reactivateUserSubscription = errorUtilities.withServiceErrorHandling(
         {
           subscriptionId: userSubscription.id,
           renewalDate: userSubscription.renewalDate,
-        }
+        },
       );
-
     } catch (error: any) {
-      console.error('Stripe reactivation error:', error);
+      console.error("Stripe reactivation error:", error);
       throw errorUtilities.createError(
         `Failed to reactivate subscription: ${error.message}`,
-        StatusCodes.InternalServerError
+        StatusCodes.InternalServerError,
       );
     }
-  }
+  },
 );
 
 export default {
@@ -661,5 +830,5 @@ export default {
   handleInvoicePaymentFailed,
   handleUpcomingInvoice,
   reactivateUserSubscription,
-  cancelUserSubscription
+  cancelUserSubscription,
 };

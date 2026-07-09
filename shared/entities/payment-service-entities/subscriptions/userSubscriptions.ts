@@ -23,6 +23,7 @@ export interface UserSubscriptionAttributes {
   startDate: Date;
   endDate?: Date; // null for lifetime
   renewalDate?: Date; // next billing date
+  trialEndsAt?: Date; // when the 7-day free trial ends (native Stripe trial or manual lifetime trial)
   
   // Cancellation
   cancelledAt?: Date;
@@ -50,6 +51,7 @@ class UserSubscription
   public startDate!: Date;
   public endDate?: Date;
   public renewalDate?: Date;
+  public trialEndsAt?: Date;
   public cancelledAt?: Date;
   public cancellationReason?: string;
   public createdAt?: Date;
@@ -102,6 +104,11 @@ UserSubscription.init(
           type: DataTypes.DATE,
           allowNull: true,
           comment: 'next billing/renewal date for recurring plans',
+      },
+      trialEndsAt: {
+          type: DataTypes.DATE,
+          allowNull: true,
+          comment: 'when the 7-day free trial ends; null once converted to a paid period',
       },
       cancelledAt: {
           type: DataTypes.DATE,

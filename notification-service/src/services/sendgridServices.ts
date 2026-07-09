@@ -975,6 +975,46 @@ const sendFrequentNotificationService = errorUtilities.withServiceErrorHandling(
 //     }
 //   );
 
+const sendPaymentFailedEmailService = errorUtilities.withServiceErrorHandling(
+  async (
+    email: string,
+    firstName: string,
+    planName: string,
+    amount: string
+  ) => {
+    const html = renderEmailTemplate("payment-failed.html", {
+      firstName,
+      planName,
+      amount,
+      LOGO_URL:
+        "https://res.cloudinary.com/dgotesgcy/image/upload/v1765748764/zabbot-logo-white_yojqzm.png",
+      DASHBOARD_URL: "https://zabbot-app-development-4cnub.ondigitalocean.app/",
+    });
+
+    const messageDetails = {
+      to: email,
+      from: process.env.SENDGRID_FROM_EMAIL!,
+      subject: "Your Zabbot payment didn't go through",
+      text: `Hello ${firstName},\n\nYour free trial has ended and we couldn't process your payment for the ${planName} plan (${amount}). Please update your payment method to restore access.\n\nThank you!`,
+      html,
+    };
+
+    try {
+      const emailResponse = await nodemailerService.sendEmailService(
+        messageDetails
+      );
+      console.log("Email sent:", emailResponse);
+      return responseUtilities.handleServicesResponse(
+        200,
+        "Email sent successfully",
+        emailResponse
+      );
+    } catch (error: any) {
+      console.error("Nodemailer error:", error);
+    }
+  }
+);
+
 
 //   {
 //   firstName: "Bola",
@@ -1000,6 +1040,7 @@ export default {
   sendgridSendPasswordResetLinkService,
   sendgridSendPasswordResetConfirmationService,
   sendNotificationChangeService,
-  sendFrequentNotificationService
+  sendFrequentNotificationService,
+  sendPaymentFailedEmailService
 //   sendSubscriptionPaymentConfirmationEmailService
 };

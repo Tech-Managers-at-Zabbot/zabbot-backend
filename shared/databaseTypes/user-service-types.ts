@@ -27,6 +27,7 @@ export interface UserAttributes {
   country?: string;
   phoneNumber?: string;
   noOfSubscriptions?: number;
+  stripeCustomerId?: string;
   deletedAt?: Date;
   profilePicture?: string;
   bio?: string;
