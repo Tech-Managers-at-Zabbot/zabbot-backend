@@ -25,7 +25,7 @@ import subscriptionPlanRepositories from "../../repositories/subscriptionReposit
 const TRIAL_PERIOD_DAYS = 7;
 
 const createCheckoutSession = errorUtilities.withServiceErrorHandling(
-  async (subscriptionType: string, userId: string) => {
+  async (subscriptionType: string, userId: string, useremail: string) => {
     const plan = await subscriptionPlanRepositories.getOne({
       planType: subscriptionType,
     });
@@ -58,6 +58,7 @@ const createCheckoutSession = errorUtilities.withServiceErrorHandling(
         planId: plan.id,
         planType: plan.planType,
       },
+      customer_email: useremail,
       ...(existingCustomerId ? { customer: existingCustomerId } : {}),
     };
 
