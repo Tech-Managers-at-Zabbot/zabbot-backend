@@ -19,16 +19,17 @@ const createCheckoutSessionController =
       const { userId } = request.user;
       const serviceResponse = await stripeServices.createCheckoutSession(
         subscriptionType,
-        userId
+        userId,
+        request.user.email,
       );
 
       return responseUtilities.responseHandler(
         response,
         serviceResponse.message,
         serviceResponse.statusCode,
-        serviceResponse.data
+        serviceResponse.data,
       );
-    }
+    },
   );
 
 const stripeWebhookController = errorUtilities.withControllerErrorHandling(
@@ -42,14 +43,14 @@ const stripeWebhookController = errorUtilities.withControllerErrorHandling(
       event = stripe.webhooks.constructEvent(
         request.body,
         signature,
-        endpointSecret
+        endpointSecret,
       );
     } catch (err: any) {
       console.error(`Webhook signature verification failed.`, err.message);
       return responseUtilities.responseHandler(
         response,
         `Webhook Error: ${err.message}`,
-        StatusCodes.BadRequest
+        StatusCodes.BadRequest,
       );
     }
 
@@ -87,11 +88,10 @@ const stripeWebhookController = errorUtilities.withControllerErrorHandling(
     return responseUtilities.responseHandler(
       response,
       "Webhook processed successfully",
-      StatusCodes.OK
+      StatusCodes.OK,
     );
-  }
+  },
 );
-
 
 const cancelSubscriptionController = errorUtilities.withControllerErrorHandling(
   async (request: JwtPayload, response: Response) => {
@@ -102,40 +102,41 @@ const cancelSubscriptionController = errorUtilities.withControllerErrorHandling(
     const serviceResponse = await stripeServices.cancelUserSubscription(
       userId,
       subscriptionId,
-      cancelImmediately || false
+      cancelImmediately || false,
     );
 
     return responseUtilities.responseHandler(
       response,
       serviceResponse.message,
       serviceResponse.statusCode,
-      serviceResponse.data
+      serviceResponse.data,
     );
-  }
+  },
 );
 
-const reactivateSubscriptionController = errorUtilities.withControllerErrorHandling(
-  async (request: JwtPayload, response: Response) => {
-    const { subscriptionId } = request.params;
-    const { userId } = request.user;
+const reactivateSubscriptionController =
+  errorUtilities.withControllerErrorHandling(
+    async (request: JwtPayload, response: Response) => {
+      const { subscriptionId } = request.params;
+      const { userId } = request.user;
 
-    const serviceResponse = await stripeServices.reactivateUserSubscription(
-      userId,
-      subscriptionId
-    );
+      const serviceResponse = await stripeServices.reactivateUserSubscription(
+        userId,
+        subscriptionId,
+      );
 
-    return responseUtilities.responseHandler(
-      response,
-      serviceResponse.message,
-      serviceResponse.statusCode,
-      serviceResponse.data
-    );
-  }
-);
+      return responseUtilities.responseHandler(
+        response,
+        serviceResponse.message,
+        serviceResponse.statusCode,
+        serviceResponse.data,
+      );
+    },
+  );
 
 export default {
   createCheckoutSessionController,
   stripeWebhookController,
   cancelSubscriptionController,
-  reactivateSubscriptionController
+  reactivateSubscriptionController,
 };
