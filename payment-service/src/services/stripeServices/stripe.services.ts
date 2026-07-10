@@ -59,6 +59,7 @@ const createCheckoutSession = errorUtilities.withServiceErrorHandling(
         planType: plan.planType,
       },
       customer_email: useremail,
+      currency: plan.currency,
       ...(existingCustomerId ? { customer: existingCustomerId } : {}),
     };
 
