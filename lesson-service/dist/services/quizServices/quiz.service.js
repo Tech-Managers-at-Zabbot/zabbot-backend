@@ -29,12 +29,34 @@ const getCourseQuizzesService = utilities_1.errorUtilities.withServiceErrorHandl
         const lessonDetails = await lesson_repository_1.default.getLesson(quiz?.lessonId, attributes);
         return {
             ...quiz,
-            lessonDetails
+            lessonDetails,
         };
     }));
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.QuizResponses.SUCCESSFUL_PROCESS, allQuizzes);
 });
+const updateQuizService = utilities_1.errorUtilities.withServiceErrorHandling(async (quizId, quizData) => {
+    const existingQuiz = await quiz_repository_1.default.getQuiz(quizId);
+    if (!existingQuiz) {
+        throw utilities_1.errorUtilities.createError(responses_1.QuizResponses.QUIZ_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
+    }
+    const payload = {
+        ...quizData,
+        updatedAt: new Date(),
+    };
+    const updatedQuiz = await quiz_repository_1.default.updateQuiz(quizId, payload);
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.QuizResponses.QUIZ_UPDATED_SUCCESSFULLY, updatedQuiz);
+});
+const deleteQuizService = utilities_1.errorUtilities.withServiceErrorHandling(async (quizId) => {
+    const existingQuiz = await quiz_repository_1.default.getQuiz(quizId);
+    if (!existingQuiz) {
+        throw utilities_1.errorUtilities.createError(responses_1.QuizResponses.QUIZ_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
+    }
+    await quiz_repository_1.default.deleteQuiz(quizId);
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.QuizResponses.QUIZ_DELETED_SUCCESSFULLY, null);
+});
 exports.default = {
     createQuizService,
-    getCourseQuizzesService
+    getCourseQuizzesService,
+    updateQuizService,
+    deleteQuizService,
 };
