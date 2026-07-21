@@ -96,7 +96,7 @@ const stripeWebhookController = errorUtilities.withControllerErrorHandling(
 const cancelSubscriptionController = errorUtilities.withControllerErrorHandling(
   async (request: JwtPayload, response: Response) => {
     const { subscriptionId } = request.params;
-    const { cancelImmediately } = request.body;
+    const { cancelImmediately } = request.body || { cancelImmediately: false };
     const { userId } = request.user;
 
     const serviceResponse = await stripeServices.cancelUserSubscription(
