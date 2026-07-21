@@ -1,7 +1,8 @@
 import { Transaction } from "sequelize";
-import { errorUtilities } from "../../../shared/utilities";
+import { errorUtilities, responseUtilities } from "../../../shared/utilities";
 import Lessons from "../../../shared/entities/lesson-service-entities/lesson/lesson";
 import { LessonAttributes } from "../../../shared/databaseTypes/lesson-service-types";
+import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
 
 const lessonRepositories = {
   getLessons: async (filter?: { courseId: string }) => {
@@ -21,7 +22,7 @@ const lessonRepositories = {
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error Fetching lessons: ${error.message}`,
-        500
+        500,
       );
     }
   },
@@ -39,18 +40,21 @@ const lessonRepositories = {
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error Fetching lessons: ${error.message}`,
-        500
+        500,
       );
     }
   },
 
-  deleteLessonsByCourseId: async (courseId: string, transaction?: Transaction) => {
+  deleteLessonsByCourseId: async (
+    courseId: string,
+    transaction?: Transaction,
+  ) => {
     try {
       await Lessons.destroy({ where: { courseId }, transaction });
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error deleting lessons: ${error.message}`,
-        500
+        500,
       );
     }
   },
@@ -61,7 +65,7 @@ const lessonRepositories = {
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error deleting lesson: ${error.message}`,
-        500
+        500,
       );
     }
   },
@@ -78,7 +82,7 @@ const lessonRepositories = {
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error Fetching lessons: ${error.message}`,
-        500
+        500,
       );
     }
   },
@@ -95,7 +99,7 @@ const lessonRepositories = {
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error Fetching lesson: ${error.message}`,
-        500
+        500,
       );
     }
   },
@@ -109,7 +113,7 @@ const lessonRepositories = {
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error creating a new lesson: ${error.message}`,
-        500
+        500,
       );
     }
   },
@@ -117,15 +121,21 @@ const lessonRepositories = {
   updateLesson: async (lessonData: any, transaction?: Transaction) => {
     try {
       // Update the language
-      const updatedLesson = await lessonData.update(lessonData, {
-        transaction,
-      });
 
-      return updatedLesson;
+      const lesson = await Lessons.findByPk(lessonData.id, { transaction });
+      if (!lesson) throw new Error("Lesson not found");
+
+      const updatedLesson = await lesson.update(lessonData, { transaction });
+
+      return responseUtilities.handleServicesResponse(
+        StatusCodes.OK,
+        "",
+        updatedLesson,
+      );
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error Updating lesson: ${error.message}`,
-        500
+        500,
       );
     }
   },
@@ -133,7 +143,7 @@ const lessonRepositories = {
   newUpdateLesson: async (
     lessonId: string,
     lessonData: Partial<LessonAttributes> | any,
-    transaction?: Transaction
+    transaction?: Transaction,
   ) => {
     try {
       const [updatedCount, updatedLessons] = await Lessons.update(lessonData, {
@@ -141,19 +151,23 @@ const lessonRepositories = {
         returning: true,
         transaction,
       });
-      
+
       if (updatedCount === 0) {
         throw errorUtilities.createError(
           `Lesson not found or no changes applied`,
-          400
+          400,
         );
       }
 
-      return updatedLessons[0];
+      return responseUtilities.handleServicesResponse(
+        StatusCodes.OK,
+        "Lesson image updated successfully",
+        updatedLessons[0],
+      );
     } catch (error: any) {
       throw errorUtilities.createError(
-        `Error updating lesson: ${error.message}`,
-        500
+        `Error updating lessonx: ${error.message}`,
+        500,
       );
     }
   },
