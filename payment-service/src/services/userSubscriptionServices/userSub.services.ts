@@ -11,6 +11,7 @@ import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.response
 import { PaymentOptions } from "../../types/payment.types";
 import { TransactionType } from "../../../../shared/entities/payment-service-entities/transactions/transactions";
 import Users from "../../../../shared/entities/user-service-entities/users/users.entities";
+import transactionsRepositories from "../../repositories/transationRepositories/transaction.repositories";
 
 interface CreateOrUpdateSubscriptionOptions {
   // Grant access immediately without a completed payment (lifetime trial: card is
@@ -46,6 +47,14 @@ const createOrUpdateUserSubscription = errorUtilities.withServiceErrorHandling(
 
     const { userId } = transaction;
     const user = await Users.findByPk(userId);
+
+    const latestTransaction = transaction?.id
+      ? await transactionsRepositories.getOne({ id: transaction.id })
+      : null;
+
+    const gatewaySubscriptionId =
+      latestTransaction?.gatewaySubscriptionId ??
+      transaction?.gatewaySubscriptionId;
 
     if (!user) {
       console.warn(`User not found: ${userId}`);
@@ -97,7 +106,7 @@ const createOrUpdateUserSubscription = errorUtilities.withServiceErrorHandling(
     const existingSubscription = await userSubscriptionRepositories.getOne({
       userId: transaction.userId,
       planId: transaction.planId,
-      gatewaySubscriptionId: transaction.gatewaySubscriptionId,
+      gatewaySubscriptionId,
       status: SubscriptionStatus.ACTIVE,
     });
 
@@ -154,8 +163,7 @@ const createOrUpdateUserSubscription = errorUtilities.withServiceErrorHandling(
         {
           userId: transaction.userId,
           planId: transaction.planId,
-          gatewaySubscriptionId:
-            transaction.gatewaySubscriptionId || "weirdstuff",
+          gatewaySubscriptionId,
           status: SubscriptionStatus.ACTIVE,
         },
         {
@@ -178,7 +186,7 @@ const createOrUpdateUserSubscription = errorUtilities.withServiceErrorHandling(
         endDate,
         renewalDate,
         trialEndsAt,
-        gatewaySubscriptionId: transaction.gatewaySubscriptionId,
+        gatewaySubscriptionId,
       });
 
       // Increment user's subscription count
