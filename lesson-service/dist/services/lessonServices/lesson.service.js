@@ -83,7 +83,10 @@ const updateLesson = utilities_1.errorUtilities.withServiceErrorHandling(async (
     lesson.updatedAt = new Date();
     lesson.title = lessonData.title;
     lesson.description = lessonData.description;
-    const updatedLesson = await lesson_repository_1.default.updateLesson(lesson);
+    const updatedLesson = await lesson_repository_1.default.updateLesson({
+        ...lesson,
+        ...lessonData,
+    });
     return updatedLesson;
 });
 const updateLessonImageService = utilities_1.errorUtilities.withServiceErrorHandling(async (lessonId, mediaType, files) => {

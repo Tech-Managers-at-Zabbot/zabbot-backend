@@ -137,7 +137,10 @@ const updateLesson = errorUtilities.withServiceErrorHandling(
     lesson.title = lessonData.title;
     lesson.description = lessonData.description;
 
-    const updatedLesson = await lessonRepositories.updateLesson(lesson);
+    const updatedLesson = await lessonRepositories.updateLesson({
+      ...lesson,
+      ...lessonData,
+    });
 
     return updatedLesson;
   },
