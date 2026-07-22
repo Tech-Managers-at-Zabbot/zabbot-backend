@@ -30,7 +30,7 @@ const createOrUpdateUserSubscription = errorUtilities.withServiceErrorHandling(
 
     if (!transaction.planId) {
       console.warn(
-        "No planId found in transaction, skipping subscription creation"
+        "No planId found in transaction, skipping subscription creation",
       );
       return;
     }
@@ -84,12 +84,12 @@ const createOrUpdateUserSubscription = errorUtilities.withServiceErrorHandling(
           status: SubscriptionStatus.CANCELLED,
           cancelledAt: new Date(),
           cancellationReason: "Plan change",
-        }
+        },
       );
 
       console.log(
         `Cancelled previous subscription for plan change: ${anyActiveSubscription.id}. ` +
-          `New plan will start on: ${newPlanStartDate.toISOString()}`
+          `New plan will start on: ${newPlanStartDate.toISOString()}`,
       );
     }
 
@@ -154,7 +154,8 @@ const createOrUpdateUserSubscription = errorUtilities.withServiceErrorHandling(
         {
           userId: transaction.userId,
           planId: transaction.planId,
-          gatewaySubscriptionId: transaction.gatewaySubscriptionId,
+          gatewaySubscriptionId:
+            transaction.gatewaySubscriptionId || "weirdstuff",
           status: SubscriptionStatus.ACTIVE,
         },
         {
@@ -163,7 +164,7 @@ const createOrUpdateUserSubscription = errorUtilities.withServiceErrorHandling(
           renewalDate,
           endDate,
           trialEndsAt,
-        }
+        },
       );
 
       console.log(`Updated subscription for user: ${transaction.userId}`);
@@ -185,17 +186,17 @@ const createOrUpdateUserSubscription = errorUtilities.withServiceErrorHandling(
         {
           noOfSubscriptions: Number(user.noOfSubscriptions || "0") + 1,
         },
-        { where: { id: userId } }
+        { where: { id: userId } },
       );
 
       console.log(
         `Created ${grantTrialOnly ? "trial-granted " : ""}subscription for user: ${transaction.userId}. ` +
           `Start: ${startDate.toISOString()}, End: ${
             endDate?.toISOString() || "Lifetime"
-          }`
+          }`,
       );
     }
-  }
+  },
 );
 
 const calculateEndDate = (startDate: Date, planType: string): Date => {
@@ -226,9 +227,9 @@ const getUserSubscriptionService = errorUtilities.withServiceErrorHandling(
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       "Process successful",
-      existingSubscription
+      existingSubscription,
     );
-  }
+  },
 );
 
 export default {
