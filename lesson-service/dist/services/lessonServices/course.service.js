@@ -14,9 +14,13 @@ const user_course_repository_1 = __importDefault(require("../../repositories/use
 const responses_1 = require("../../responses/responses");
 const api_1 = require("../../../../shared/cloudinary/api");
 const databases_1 = require("../../../../config/databases");
-const getCoursesForLanguage = utilities_1.errorUtilities.withServiceErrorHandling(async (languageId, isActive) => {
+const getCoursesForLanguage = utilities_1.errorUtilities.withServiceErrorHandling(async ({ languageId, isActive, isAdmin, }) => {
     // const payload = { isActive, languageId };
-    const courses = await course_repository_1.default.getCourses(isActive, languageId);
+    const courses = await course_repository_1.default.getCourses({
+        isActive,
+        languageId,
+        isAdmin,
+    });
     if (!courses) {
         throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.COURSES_NOT_FETCHED, statusCodes_responses_1.StatusCodes.NotFound);
     }

@@ -4,19 +4,34 @@ import Courses from "../../../shared/entities/lesson-service-entities/course/cou
 // import LanguageContents from "../entities/language-content";
 
 const courseRepositories = {
-  getCourses: async (isActive: boolean = true, languageId: string) => {
+  getCourses: async ({
+    isActive,
+    languageId,
+    isAdmin,
+  }: {
+    isActive?: boolean | string;
+    languageId: string;
+    isAdmin?: boolean | string;
+  }) => {
     try {
-      const where: any = {
-        isActive,
-        languageId,
-      };
-      const courses = await Courses.findAll({ where: where });
+      const where: any = { languageId };
+      const isAdminFlag = String(isAdmin).toLowerCase() === "true";
+      const hasValidIsActive =
+        typeof isActive === "boolean" ||
+        (typeof isActive === "string" &&
+          (isActive.toLowerCase() === "true" || isActive.toLowerCase() === "false"));
+
+      if (!isAdminFlag && hasValidIsActive) {
+        where.isActive = String(isActive).toLowerCase() === "true";
+      }
+
+      const courses = await Courses.findAll({ where });
 
       return courses;
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error Fetching courses: ${error.message}`,
-        500
+        500,
       );
     }
   },
@@ -35,7 +50,7 @@ const courseRepositories = {
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error Fetching course: ${error.message}`,
-        500
+        500,
       );
     }
   },
@@ -51,7 +66,7 @@ const courseRepositories = {
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error Fetching course: ${error.message}`,
-        500
+        500,
       );
     }
   },
@@ -64,7 +79,7 @@ const courseRepositories = {
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error Fetching course by title: ${error.message}`,
-        500
+        500,
       );
     }
   },
@@ -78,19 +93,23 @@ const courseRepositories = {
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error Adding course: ${error.message}`,
-        500
+        500,
       );
     }
   },
 
-  updateCourse: async (id:string, courseData: any, transaction?: Transaction) => {
+  updateCourse: async (
+    id: string,
+    courseData: any,
+    transaction?: Transaction,
+  ) => {
     try {
       if (!id) {
         throw errorUtilities.createError("Course id is required", 400);
       }
       const [rowsUpdated, [updatedRecord]] = await Courses.update(courseData, {
         where: {
-          id
+          id,
         },
         returning: true,
       });
@@ -103,7 +122,7 @@ const courseRepositories = {
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error Updating course: ${error.message}`,
-        500
+        500,
       );
     }
   },
@@ -116,7 +135,7 @@ const courseRepositories = {
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error Deleting course: ${error.message}`,
-        500
+        500,
       );
     }
   },
