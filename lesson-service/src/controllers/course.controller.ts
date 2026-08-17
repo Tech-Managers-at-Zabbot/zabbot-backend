@@ -8,12 +8,13 @@ import { JwtPayload } from "jsonwebtoken";
 export const getCoursesController = errorUtilities.withControllerErrorHandling(
   async (req: Request, res: Response) => {
     const { languageId } = req.params;
-    const { isActive } = req.query;
+    const { isActive, isAdmin } = req.query;
 
-    const courses = await courseService.getCoursesForLanguage(
+    const courses = await courseService.getCoursesForLanguage({
       languageId,
       isActive,
-    );
+      isAdmin,
+    });
     return responseUtilities.responseHandler(
       res,
       courses.message,

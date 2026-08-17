@@ -10,8 +10,12 @@ const utilities_1 = require("../../../shared/utilities");
 // Controller to get all courses
 exports.getCoursesController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
     const { languageId } = req.params;
-    const { isActive } = req.query;
-    const courses = await course_service_1.default.getCoursesForLanguage(languageId, isActive);
+    const { isActive, isAdmin } = req.query;
+    const courses = await course_service_1.default.getCoursesForLanguage({
+        languageId,
+        isActive,
+        isAdmin,
+    });
     return utilities_1.responseUtilities.responseHandler(res, courses.message, courses.statusCode, courses.data);
 });
 // Controller to get a single course

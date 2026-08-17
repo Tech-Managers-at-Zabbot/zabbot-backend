@@ -15,9 +15,21 @@ import languageRepositories from "../../repositories/language.repository";
 import { users_service_db } from "../../../../config/databases";
 
 const getCoursesForLanguage = errorUtilities.withServiceErrorHandling(
-  async (languageId: string, isActive?: boolean) => {
+  async ({
+    languageId,
+    isActive,
+    isAdmin,
+  }: {
+    languageId: string;
+    isActive?: boolean | string;
+    isAdmin?: boolean | string;
+  }) => {
     // const payload = { isActive, languageId };
-    const courses = await courseRepositories.getCourses(isActive, languageId);
+    const courses = await courseRepositories.getCourses({
+      isActive,
+      languageId,
+      isAdmin,
+    });
     if (!courses) {
       throw errorUtilities.createError(
         CourseResponses.COURSES_NOT_FETCHED,
@@ -114,7 +126,10 @@ const deleteCourse = errorUtilities.withServiceErrorHandling(
       const lessonIds = lessons.map((lesson: any) => lesson.id);
 
       if (lessonIds.length > 0) {
-        await contentRepositories.deleteContentsByLessonIds(lessonIds, transaction);
+        await contentRepositories.deleteContentsByLessonIds(
+          lessonIds,
+          transaction,
+        );
       }
 
       await quizRepositories.deleteQuizzesByCourseId(id, transaction);

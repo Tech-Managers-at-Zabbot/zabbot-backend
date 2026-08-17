@@ -7,13 +7,17 @@ const utilities_1 = require("../../../shared/utilities");
 const course_1 = __importDefault(require("../../../shared/entities/lesson-service-entities/course/course"));
 // import LanguageContents from "../entities/language-content";
 const courseRepositories = {
-    getCourses: async (isActive = true, languageId) => {
+    getCourses: async ({ isActive, languageId, isAdmin, }) => {
         try {
-            const where = {
-                isActive,
-                languageId,
-            };
-            const courses = await course_1.default.findAll({ where: where });
+            const where = { languageId };
+            const isAdminFlag = String(isAdmin).toLowerCase() === "true";
+            const hasValidIsActive = typeof isActive === "boolean" ||
+                (typeof isActive === "string" &&
+                    (isActive.toLowerCase() === "true" || isActive.toLowerCase() === "false"));
+            if (!isAdminFlag && hasValidIsActive) {
+                where.isActive = String(isActive).toLowerCase() === "true";
+            }
+            const courses = await course_1.default.findAll({ where });
             return courses;
         }
         catch (error) {
@@ -73,7 +77,7 @@ const courseRepositories = {
             }
             const [rowsUpdated, [updatedRecord]] = await course_1.default.update(courseData, {
                 where: {
-                    id
+                    id,
                 },
                 returning: true,
             });
