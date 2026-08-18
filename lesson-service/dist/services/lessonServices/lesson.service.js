@@ -65,6 +65,7 @@ const getLessonWithContents = utilities_1.errorUtilities.withServiceErrorHandlin
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, "Successful", { lesson, contents, lessonQuizzes });
 });
 const createLesson = utilities_1.errorUtilities.withServiceErrorHandling(async (lessonData) => {
+    const { contents, languageId } = lessonData;
     const payload = {
         ...lessonData,
         id: (0, uuid_1.v4)(),
@@ -74,6 +75,37 @@ const createLesson = utilities_1.errorUtilities.withServiceErrorHandling(async (
         estimatedDuration: lessonData.estimatedDuration || 0,
     };
     const newLesson = await lesson_repository_1.default.addLesson(payload);
+    if (contents && contents.length > 0) {
+        for (const contentData of contents) {
+            // Create content
+            const newContentData = {
+                id: (0, uuid_1.v4)(),
+                lessonId: newLesson.id,
+                translation: contentData.translation,
+                isGrammarRule: false,
+                languageId,
+                sourceType: contentData.sourceType,
+                customText: contentData.customText,
+                ededunPhrases: contentData.ededunPhrases,
+                createdAt: new Date(),
+            };
+            await content_repository_1.default.createContent(newContentData);
+            // Create content files
+            if (contentData.contentFiles && contentData.contentFiles.length > 0) {
+                for (const fileData of contentData.contentFiles) {
+                    const contentFileData = {
+                        id: (0, uuid_1.v4)(),
+                        contentId: newContentData.id,
+                        contentType: fileData.contentType,
+                        filePath: fileData.filePath,
+                        description: fileData.description || null,
+                        createdAt: new Date(),
+                    };
+                    await content_repository_1.default.createContentFile(contentFileData);
+                }
+            }
+        }
+    }
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.Created, "Lesson created successfully", newLesson);
 });
 const updateLesson = utilities_1.errorUtilities.withServiceErrorHandling(async (id, lessonData) => {
