@@ -111,6 +111,7 @@ const getLessonWithContents = errorUtilities.withServiceErrorHandling(
 
 const createLesson = errorUtilities.withServiceErrorHandling(
   async (lessonData: Record<string, any>) => {
+    const { contents, languageId } = lessonData;
     const payload = {
       ...lessonData,
       id: v4(),
@@ -120,6 +121,40 @@ const createLesson = errorUtilities.withServiceErrorHandling(
       estimatedDuration: lessonData.estimatedDuration || 0,
     };
     const newLesson = await lessonRepositories.addLesson(payload);
+    if (contents && contents.length > 0) {
+      for (const contentData of contents) {
+        // Create content
+        const newContentData = {
+          id: v4(),
+          lessonId: newLesson.id,
+          translation: contentData.translation,
+          isGrammarRule: false,
+          languageId,
+          sourceType: contentData.sourceType,
+          customText: contentData.customText,
+          ededunPhrases: contentData.ededunPhrases,
+          createdAt: new Date(),
+        };
+
+        await contentRepositories.createContent(newContentData);
+
+        // Create content files
+        if (contentData.contentFiles && contentData.contentFiles.length > 0) {
+          for (const fileData of contentData.contentFiles) {
+            const contentFileData = {
+              id: v4(),
+              contentId: newContentData.id,
+              contentType: fileData.contentType,
+              filePath: fileData.filePath,
+              description: fileData.description || null,
+              createdAt: new Date(),
+            };
+
+            await contentRepositories.createContentFile(contentFileData);
+          }
+        }
+      }
+    }
     return responseUtilities.handleServicesResponse(
       StatusCodes.Created,
       "Lesson created successfully",
