@@ -37,14 +37,17 @@ const contentRepositories = {
     // },
     getLessonContents: async (lessonId) => {
         try {
-            const contents = await content_1.default.findAll({ where: { lessonId }, raw: true });
+            const contents = await content_1.default.findAll({
+                where: { lessonId },
+                raw: true,
+            });
             const sortedContents = contents.sort((a, b) => {
                 const getPriority = (content) => {
-                    if (content.contentType === 'normal')
+                    if (content.contentType === "normal")
                         return 1;
                     if (content.isGrammarRule === true)
                         return 2;
-                    if (content.contentType === 'proverbs')
+                    if (content.contentType === "proverbs")
                         return 3;
                     return 4;
                 };
@@ -53,7 +56,7 @@ const contentRepositories = {
                 if (priorityA !== priorityB) {
                     return priorityA - priorityB;
                 }
-                return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
             });
             return sortedContents;
         }
@@ -63,7 +66,10 @@ const contentRepositories = {
     },
     getLanguageContents: async (languageId) => {
         try {
-            const contents = await content_1.default.findAll({ where: { languageId }, raw: true });
+            const contents = await content_1.default.findAll({
+                where: { languageId },
+                raw: true,
+            });
             return contents;
         }
         catch (error) {
@@ -80,10 +86,21 @@ const contentRepositories = {
             throw utilities_1.errorUtilities.createError(`Error creating a new content: ${error.message}`, 500);
         }
     },
-    updateContent: async (contentData, transaction) => {
+    updateContent: async (id, contentData, transaction) => {
         try {
-            // Update the content
-            const updatedContent = await contentData.update(contentData, { transaction });
+            if (!id) {
+                throw utilities_1.errorUtilities.createError("Content id is required", 400);
+            }
+            const payload = { ...contentData };
+            delete payload.id;
+            const [rowsUpdated, [updatedContent]] = await content_1.default.update(payload, {
+                where: { id },
+                returning: true,
+                transaction,
+            });
+            if (rowsUpdated === 0) {
+                throw utilities_1.errorUtilities.createError("No content updated", 400);
+            }
             return updatedContent;
         }
         catch (error) {
@@ -134,7 +151,10 @@ const contentRepositories = {
     // CRUD CONTENTS SESSION END
     getContentFiles: async (contentId) => {
         try {
-            const contentFiles = await content_file_1.default.findAll({ where: { contentId }, raw: true });
+            const contentFiles = await content_file_1.default.findAll({
+                where: { contentId },
+                raw: true,
+            });
             return contentFiles;
         }
         catch (error) {
@@ -143,7 +163,9 @@ const contentRepositories = {
     },
     createContentFile: async (contentFileData, transaction) => {
         try {
-            const newContentFile = await content_file_1.default.create(contentFileData, { transaction });
+            const newContentFile = await content_file_1.default.create(contentFileData, {
+                transaction,
+            });
             return newContentFile;
         }
         catch (error) {

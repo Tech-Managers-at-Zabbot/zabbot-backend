@@ -46,7 +46,7 @@ const addContent = utilities_1.errorUtilities.withServiceErrorHandling(async (co
         languageId: contentData.languageId,
         translation: contentData.translation,
         level: contentData.level,
-        createdAt: new Date()
+        createdAt: new Date(),
     };
     const newContent = await content_repository_1.default.createContent(payload);
     return newContent;
@@ -56,12 +56,14 @@ const updateContent = utilities_1.errorUtilities.withServiceErrorHandling(async 
     if (!content) {
         throw utilities_1.errorUtilities.createError(`Content not found`, 404);
     }
-    content.lessonId = contentData.lessonId;
-    content.languageId = contentData.languageId;
-    content.translation = contentData.translation;
-    content.updatedAt = new Date();
-    const updatedContent = await content_repository_1.default.updateContent(content);
-    return updatedContent;
+    const payload = {
+        ...content.get({ plain: true }),
+        ...contentData,
+        id,
+        updatedAt: new Date(),
+    };
+    const updatedContent = await content_repository_1.default.updateContent(id, payload);
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.CourseResponses.PROCESS_SUCCESSFUL, updatedContent);
 });
 const deleteContent = utilities_1.errorUtilities.withServiceErrorHandling(async (id) => {
     const content = await content_repository_1.default.getContent(id);
@@ -77,18 +79,25 @@ const addContentFile = utilities_1.errorUtilities.withServiceErrorHandling(async
         const failed = [];
         await Promise.all(contentData.map(async (data) => {
             try {
-                const createdFile = await content_repository_1.default.createContentFile({ ...data, id: (0, uuid_1.v4)(), createdAt: new Date() });
+                const createdFile = await content_repository_1.default.createContentFile({
+                    ...data,
+                    id: (0, uuid_1.v4)(),
+                    createdAt: new Date(),
+                });
                 if (createdFile) {
                     created.push(createdFile);
                 }
                 else {
-                    failed.push({ data, reason: 'Unknown creation failure (no result returned)' });
+                    failed.push({
+                        data,
+                        reason: "Unknown creation failure (no result returned)",
+                    });
                 }
             }
             catch (error) {
                 failed.push({
                     data,
-                    reason: error?.message || 'Unknown error during creation',
+                    reason: error?.message || "Unknown error during creation",
                 });
             }
         }));
@@ -110,5 +119,5 @@ exports.default = {
     updateContent,
     deleteContent,
     getContentsForLanguage,
-    addContentFile
+    addContentFile,
 };
