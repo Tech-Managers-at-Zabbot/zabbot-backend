@@ -5,7 +5,7 @@ import {
 } from "../../../../shared/utilities";
 import contentRepositories from "../../repositories/content.repository";
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
-import { CourseResponses } from "../../responses/responses";
+import { ContentResponses, CourseResponses } from "../../responses/responses";
 import { v4 } from "uuid";
 
 const getContents = errorUtilities.withServiceErrorHandling(async () => {
@@ -97,7 +97,7 @@ const updateContent = errorUtilities.withServiceErrorHandling(
     const updatedContent = await contentRepositories.updateContent(id, payload);
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
-      CourseResponses.PROCESS_SUCCESSFUL,
+      ContentResponses.PROCESS_SUCCESSFUL,
       updatedContent,
     );
   },
@@ -112,7 +112,10 @@ const deleteContent = errorUtilities.withServiceErrorHandling(
 
     await contentRepositories.deleteContent(id);
 
-    return { message: "Content deleted successfully" };
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.OK,
+      ContentResponses.PROCESS_SUCCESSFUL,
+    );
   },
 );
 
@@ -169,6 +172,49 @@ const addContentFile = errorUtilities.withServiceErrorHandling(
   },
 );
 
+const updateContentFile = errorUtilities.withServiceErrorHandling(
+  async (id: string, contentFileData: any) => {
+    const contentFile = await contentRepositories.getContentFilesById(id);
+    if (!contentFile) {
+      throw errorUtilities.createError("Content file not found", 404);
+    }
+
+    const payload = {
+      ...contentFile.get({ plain: true }),
+      ...contentFileData,
+      id,
+      updatedAt: new Date(),
+    };
+
+    const updatedContentFile = await contentRepositories.updateContentFile(
+      id,
+      payload,
+    );
+
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.OK,
+      CourseResponses.PROCESS_SUCCESSFUL,
+      updatedContentFile,
+    );
+  },
+);
+
+const deleteContentFile = errorUtilities.withServiceErrorHandling(
+  async (id: string) => {
+    const contentFile = await contentRepositories.getContentFilesById(id);
+    if (!contentFile) {
+      throw errorUtilities.createError("Content file not found", 404);
+    }
+
+    await contentRepositories.deleteContentFile(id);
+
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.OK,
+      CourseResponses.PROCESS_SUCCESSFUL,
+    );
+  },
+);
+
 export default {
   getContents,
   getContent,
@@ -178,4 +224,6 @@ export default {
   deleteContent,
   getContentsForLanguage,
   addContentFile,
+  updateContentFile,
+  deleteContentFile,
 };

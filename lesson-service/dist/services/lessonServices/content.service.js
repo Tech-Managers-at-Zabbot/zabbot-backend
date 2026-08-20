@@ -63,7 +63,7 @@ const updateContent = utilities_1.errorUtilities.withServiceErrorHandling(async 
         updatedAt: new Date(),
     };
     const updatedContent = await content_repository_1.default.updateContent(id, payload);
-    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.CourseResponses.PROCESS_SUCCESSFUL, updatedContent);
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.ContentResponses.PROCESS_SUCCESSFUL, updatedContent);
 });
 const deleteContent = utilities_1.errorUtilities.withServiceErrorHandling(async (id) => {
     const content = await content_repository_1.default.getContent(id);
@@ -71,7 +71,7 @@ const deleteContent = utilities_1.errorUtilities.withServiceErrorHandling(async 
         throw utilities_1.errorUtilities.createError(`Content not found`, 404);
     }
     await content_repository_1.default.deleteContent(id);
-    return { message: "Content deleted successfully" };
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.ContentResponses.PROCESS_SUCCESSFUL);
 });
 const addContentFile = utilities_1.errorUtilities.withServiceErrorHandling(async (contentData) => {
     if (Array.isArray(contentData)) {
@@ -111,6 +111,28 @@ const addContentFile = utilities_1.errorUtilities.withServiceErrorHandling(async
         return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.Created, responses_1.CourseResponses.PROCESS_SUCCESSFUL, newContentFile);
     }
 });
+const updateContentFile = utilities_1.errorUtilities.withServiceErrorHandling(async (id, contentFileData) => {
+    const contentFile = await content_repository_1.default.getContentFilesById(id);
+    if (!contentFile) {
+        throw utilities_1.errorUtilities.createError("Content file not found", 404);
+    }
+    const payload = {
+        ...contentFile.get({ plain: true }),
+        ...contentFileData,
+        id,
+        updatedAt: new Date(),
+    };
+    const updatedContentFile = await content_repository_1.default.updateContentFile(id, payload);
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.CourseResponses.PROCESS_SUCCESSFUL, updatedContentFile);
+});
+const deleteContentFile = utilities_1.errorUtilities.withServiceErrorHandling(async (id) => {
+    const contentFile = await content_repository_1.default.getContentFilesById(id);
+    if (!contentFile) {
+        throw utilities_1.errorUtilities.createError("Content file not found", 404);
+    }
+    await content_repository_1.default.deleteContentFile(id);
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.CourseResponses.PROCESS_SUCCESSFUL);
+});
 exports.default = {
     getContents,
     getContent,
@@ -120,4 +142,6 @@ exports.default = {
     deleteContent,
     getContentsForLanguage,
     addContentFile,
+    updateContentFile,
+    deleteContentFile,
 };
