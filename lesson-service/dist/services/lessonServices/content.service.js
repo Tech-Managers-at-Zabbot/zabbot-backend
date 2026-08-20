@@ -104,7 +104,11 @@ const addContentFile = utilities_1.errorUtilities.withServiceErrorHandling(async
         return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.MultiStatus, responses_1.CourseResponses.PROCESS_COMPLETED, { created, failed });
     }
     else {
-        const newContentFile = await content_repository_1.default.createContentFile(contentData);
+        const newContentFile = await content_repository_1.default.createContentFile({
+            ...contentData,
+            id: (0, uuid_1.v4)(),
+            createdAt: new Date(),
+        });
         if (!newContentFile) {
             throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.PROCESS_UNSUCCESSFUL, statusCodes_responses_1.StatusCodes.NotImplemented);
         }
