@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.QuizResponses = exports.UserLessonResponses = exports.CourseResponses = exports.DailyGoalResponses = exports.LanguageResponses = exports.DailyWordResponses = void 0;
+exports.QuizResponses = exports.UserLessonResponses = exports.ContentResponses = exports.CourseResponses = exports.DailyGoalResponses = exports.LanguageResponses = exports.DailyWordResponses = void 0;
 var DailyWordResponses;
 (function (DailyWordResponses) {
     DailyWordResponses["NOT_FOUND"] = "This word does not exist, please check and try again";
@@ -40,6 +40,11 @@ var CourseResponses;
     CourseResponses["PROCESS_UNSUCCESSFUL"] = "Process unsuccessful, please try again";
     CourseResponses["PROCESS_COMPLETED"] = "Process completed";
 })(CourseResponses || (exports.CourseResponses = CourseResponses = {}));
+var ContentResponses;
+(function (ContentResponses) {
+    ContentResponses["CONTENTS_NOT_FETCHED"] = "Unable to fetch contents, try again";
+    ContentResponses["PROCESS_SUCCESSFUL"] = "Process Successful";
+})(ContentResponses || (exports.ContentResponses = ContentResponses = {}));
 var UserLessonResponses;
 (function (UserLessonResponses) {
     UserLessonResponses["PROCESS_SUCCESSFUL"] = "Process Successful";

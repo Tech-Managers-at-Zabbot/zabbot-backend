@@ -89,6 +89,20 @@ export const updateContentController =
     },
   );
 
+export const deleteContentController =
+  errorUtilities.withControllerErrorHandling(
+    async (req: Request, res: Response) => {
+      const { id } = req.params;
+      const content = await contentService.deleteContent(id);
+      return responseUtilities.responseHandler(
+        res,
+        content.message,
+        content.statusCode,
+        content.data,
+      );
+    },
+  );
+
 export const addContentFileController =
   errorUtilities.withControllerErrorHandling(
     async (request: Request, response: Response) => {
@@ -97,6 +111,38 @@ export const addContentFileController =
       );
       return responseUtilities.responseHandler(
         response,
+        contentFileDetails.message,
+        contentFileDetails.statusCode,
+        contentFileDetails.data,
+      );
+    },
+  );
+
+export const updateContentFileController =
+  errorUtilities.withControllerErrorHandling(
+    async (req: Request, res: Response) => {
+      const { id } = req.params;
+      const payload = req.body;
+      const contentFileDetails = await contentService.updateContentFile(
+        id,
+        payload,
+      );
+      return responseUtilities.responseHandler(
+        res,
+        contentFileDetails.message,
+        contentFileDetails.statusCode,
+        contentFileDetails.data,
+      );
+    },
+  );
+
+export const deleteContentFileController =
+  errorUtilities.withControllerErrorHandling(
+    async (req: Request, res: Response) => {
+      const { id } = req.params;
+      const contentFileDetails = await contentService.deleteContentFile(id);
+      return responseUtilities.responseHandler(
+        res,
         contentFileDetails.message,
         contentFileDetails.statusCode,
         contentFileDetails.data,

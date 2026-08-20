@@ -208,6 +208,64 @@ const contentRepositories = {
     }
   },
 
+  getContentFilesById: async (id: string) => {
+    try {
+      const contentFile = await ContentFiles.findByPk(id);
+      return contentFile;
+    } catch (error: any) {
+      throw errorUtilities.createError(
+        `Error fetching content file: ${error.message}`,
+        500,
+      );
+    }
+  },
+
+  updateContentFile: async (id: string, contentFileData: any, transaction?: Transaction) => {
+    try {
+      if (!id) {
+        throw errorUtilities.createError("Content file id is required", 400);
+      }
+
+      const payload = { ...contentFileData };
+      delete payload.id;
+
+      const [rowsUpdated, [updatedContentFile]] = await ContentFiles.update(payload, {
+        where: { id },
+        returning: true,
+        transaction,
+      });
+
+      if (rowsUpdated === 0) {
+        throw errorUtilities.createError("No content file updated", 400);
+      }
+
+      return updatedContentFile;
+    } catch (error: any) {
+      throw errorUtilities.createError(
+        `Error updating content file: ${error.message}`,
+        500,
+      );
+    }
+  },
+
+  deleteContentFile: async (id: string, transaction?: Transaction) => {
+    try {
+      const currentContentFile = await ContentFiles.findByPk(id, { transaction });
+      if (!currentContentFile) {
+        throw errorUtilities.createError("Content file does not exist", 404);
+      }
+
+      await ContentFiles.destroy({ where: { id }, transaction });
+
+      return { message: "Content file deleted successfully" };
+    } catch (error: any) {
+      throw errorUtilities.createError(
+        `Error deleting content file: ${error.message}`,
+        500,
+      );
+    }
+  },
+
   createContentFile: async (
     contentFileData: any,
     transaction?: Transaction,

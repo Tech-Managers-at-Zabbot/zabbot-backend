@@ -37,6 +37,11 @@ export enum CourseResponses {
   PROCESS_COMPLETED = "Process completed",
 }
 
+export enum ContentResponses {
+  CONTENTS_NOT_FETCHED = "Unable to fetch contents, try again",
+  PROCESS_SUCCESSFUL = "Process Successful",
+}
+
 export enum UserLessonResponses {
   PROCESS_SUCCESSFUL = "Process Successful",
   USER_LESSON_CREATED = "User lesson created successfully",

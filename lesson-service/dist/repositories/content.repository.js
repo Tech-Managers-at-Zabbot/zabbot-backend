@@ -161,6 +161,49 @@ const contentRepositories = {
             throw utilities_1.errorUtilities.createError(`Error fetching files for this content: ${error.message}`, 500);
         }
     },
+    getContentFilesById: async (id) => {
+        try {
+            const contentFile = await content_file_1.default.findByPk(id);
+            return contentFile;
+        }
+        catch (error) {
+            throw utilities_1.errorUtilities.createError(`Error fetching content file: ${error.message}`, 500);
+        }
+    },
+    updateContentFile: async (id, contentFileData, transaction) => {
+        try {
+            if (!id) {
+                throw utilities_1.errorUtilities.createError("Content file id is required", 400);
+            }
+            const payload = { ...contentFileData };
+            delete payload.id;
+            const [rowsUpdated, [updatedContentFile]] = await content_file_1.default.update(payload, {
+                where: { id },
+                returning: true,
+                transaction,
+            });
+            if (rowsUpdated === 0) {
+                throw utilities_1.errorUtilities.createError("No content file updated", 400);
+            }
+            return updatedContentFile;
+        }
+        catch (error) {
+            throw utilities_1.errorUtilities.createError(`Error updating content file: ${error.message}`, 500);
+        }
+    },
+    deleteContentFile: async (id, transaction) => {
+        try {
+            const currentContentFile = await content_file_1.default.findByPk(id, { transaction });
+            if (!currentContentFile) {
+                throw utilities_1.errorUtilities.createError("Content file does not exist", 404);
+            }
+            await content_file_1.default.destroy({ where: { id }, transaction });
+            return { message: "Content file deleted successfully" };
+        }
+        catch (error) {
+            throw utilities_1.errorUtilities.createError(`Error deleting content file: ${error.message}`, 500);
+        }
+    },
     createContentFile: async (contentFileData, transaction) => {
         try {
             const newContentFile = await content_file_1.default.create(contentFileData, {

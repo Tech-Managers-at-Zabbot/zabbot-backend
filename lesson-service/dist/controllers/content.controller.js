@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addContentFileController = exports.updateContentController = exports.addContentController = exports.getContentController = exports.getLanguageContentsController = exports.getLessonContentsController = exports.getContentsController = void 0;
+exports.deleteContentFileController = exports.updateContentFileController = exports.addContentFileController = exports.deleteContentController = exports.updateContentController = exports.addContentController = exports.getContentController = exports.getLanguageContentsController = exports.getLessonContentsController = exports.getContentsController = void 0;
 const content_service_1 = __importDefault(require("../services/lessonServices/content.service"));
 const utilities_1 = require("../../../shared/utilities");
 // Controller to get all contents
@@ -42,7 +42,23 @@ exports.updateContentController = utilities_1.errorUtilities.withControllerError
     const content = await content_service_1.default.updateContent(id, payload);
     return utilities_1.responseUtilities.responseHandler(res, content.message, content.statusCode, content.data);
 });
+exports.deleteContentController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
+    const { id } = req.params;
+    const content = await content_service_1.default.deleteContent(id);
+    return utilities_1.responseUtilities.responseHandler(res, content.message, content.statusCode, content.data);
+});
 exports.addContentFileController = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {
     const contentFileDetails = await content_service_1.default.addContentFile(request.body);
     return utilities_1.responseUtilities.responseHandler(response, contentFileDetails.message, contentFileDetails.statusCode, contentFileDetails.data);
+});
+exports.updateContentFileController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
+    const { id } = req.params;
+    const payload = req.body;
+    const contentFileDetails = await content_service_1.default.updateContentFile(id, payload);
+    return utilities_1.responseUtilities.responseHandler(res, contentFileDetails.message, contentFileDetails.statusCode, contentFileDetails.data);
+});
+exports.deleteContentFileController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
+    const { id } = req.params;
+    const contentFileDetails = await content_service_1.default.deleteContentFile(id);
+    return utilities_1.responseUtilities.responseHandler(res, contentFileDetails.message, contentFileDetails.statusCode, contentFileDetails.data);
 });
