@@ -198,8 +198,6 @@ export function rolePermit(roles: string[]) {
     response: Response,
     next: NextFunction,
   ): Promise<any> => {
-    console.log("request.user", request.user);
-
     const userRole = request.user.role;
     const { userId } = request.user;
     if (!userRole || !userId) {

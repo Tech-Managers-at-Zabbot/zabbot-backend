@@ -158,7 +158,6 @@ const generalAuthFunction = async (request, response, next) => {
 exports.generalAuthFunction = generalAuthFunction;
 function rolePermit(roles) {
     return async (request, response, next) => {
-        console.log("request.user", request.user);
         const userRole = request.user.role;
         const { userId } = request.user;
         if (!userRole || !userId) {

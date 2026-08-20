@@ -155,8 +155,11 @@ const addContentFile = errorUtilities.withServiceErrorHandling(
         { created, failed },
       );
     } else {
-      const newContentFile =
-        await contentRepositories.createContentFile(contentData);
+      const newContentFile = await contentRepositories.createContentFile({
+        ...contentData,
+        id: v4(),
+        createdAt: new Date(),
+      });
       if (!newContentFile) {
         throw errorUtilities.createError(
           CourseResponses.PROCESS_UNSUCCESSFUL,
