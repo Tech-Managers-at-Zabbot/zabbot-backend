@@ -42,6 +42,7 @@ const addContent = utilities_1.errorUtilities.withServiceErrorHandling(async (co
     if (!lesson)
         throw utilities_1.errorUtilities.createError(`Lesson not found`, 404);
     const payload = {
+        ...contentData,
         lessonId: contentData.lessonId,
         languageId: contentData.languageId,
         translation: contentData.translation,
