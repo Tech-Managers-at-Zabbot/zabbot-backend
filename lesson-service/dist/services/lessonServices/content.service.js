@@ -47,9 +47,10 @@ const addContent = utilities_1.errorUtilities.withServiceErrorHandling(async (co
         translation: contentData.translation,
         level: contentData.level,
         createdAt: new Date(),
+        id: (0, uuid_1.v4)(),
     };
     const newContent = await content_repository_1.default.createContent(payload);
-    return newContent;
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.ContentResponses.PROCESS_SUCCESSFUL, newContent);
 });
 const updateContent = utilities_1.errorUtilities.withServiceErrorHandling(async (id, contentData) => {
     const content = await content_repository_1.default.getContent(id);
