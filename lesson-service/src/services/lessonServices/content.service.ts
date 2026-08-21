@@ -73,10 +73,15 @@ const addContent = errorUtilities.withServiceErrorHandling(
       translation: contentData.translation,
       level: contentData.level,
       createdAt: new Date(),
+      id: v4(),
     };
 
     const newContent = await contentRepositories.createContent(payload);
-    return newContent;
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.OK,
+      ContentResponses.PROCESS_SUCCESSFUL,
+      newContent,
+    );
   },
 );
 
