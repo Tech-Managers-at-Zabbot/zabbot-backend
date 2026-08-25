@@ -149,7 +149,6 @@ const deleteCourse = errorUtilities.withServiceErrorHandling(
 const getCourseWithLessonsService = errorUtilities.withServiceErrorHandling(
   async (languageId: string) => {
     const course = await courseRepositories.getCourseWithLanguageId(languageId);
-    console.log("course", course);
     if (!course) {
       throw errorUtilities.createError(
         CourseResponses.COURSE_NOT_FOUND,

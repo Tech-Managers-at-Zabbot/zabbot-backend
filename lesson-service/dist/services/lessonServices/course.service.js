@@ -76,7 +76,6 @@ const deleteCourse = utilities_1.errorUtilities.withServiceErrorHandling(async (
 });
 const getCourseWithLessonsService = utilities_1.errorUtilities.withServiceErrorHandling(async (languageId) => {
     const course = await course_repository_1.default.getCourseWithLanguageId(languageId);
-    console.log("course", course);
     if (!course) {
         throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.COURSE_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
     }

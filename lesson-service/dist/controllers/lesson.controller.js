@@ -8,8 +8,8 @@ const lesson_service_1 = __importDefault(require("../services/lessonServices/les
 const utilities_1 = require("../../../shared/utilities");
 // Controller to get all lessons
 exports.getLessonsController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
-    const payload = req.body;
-    const lessons = await lesson_service_1.default.getLessons(payload);
+    const filter = req.query;
+    const lessons = await lesson_service_1.default.getLessons(filter);
     return utilities_1.responseUtilities.responseHandler(res, lessons.message, lessons.statusCode, lessons.data);
 });
 // Controller to get a single lesson

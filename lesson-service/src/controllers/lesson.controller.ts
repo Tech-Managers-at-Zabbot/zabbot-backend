@@ -6,8 +6,8 @@ import courseService from "../services/lessonServices/course.service";
 // Controller to get all lessons
 export const getLessonsController = errorUtilities.withControllerErrorHandling(
   async (req: Request, res: Response) => {
-    const payload = req.body;
-    const lessons = await lessonService.getLessons(payload);
+    const filter = req.query;
+    const lessons = await lessonService.getLessons(filter);
     return responseUtilities.responseHandler(
       res,
       lessons.message,

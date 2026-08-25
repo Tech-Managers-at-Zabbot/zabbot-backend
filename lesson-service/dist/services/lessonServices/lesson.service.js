@@ -14,8 +14,8 @@ const api_1 = require("../../../../shared/cloudinary/api");
 const course_repository_1 = __importDefault(require("../../repositories/course.repository"));
 const databases_1 = require("../../../../config/databases");
 // import languageRepositories from "src/repositories/language.repository";
-const getLessons = utilities_1.errorUtilities.withServiceErrorHandling(async () => {
-    const lessons = await lesson_repository_1.default.getLessons();
+const getLessons = utilities_1.errorUtilities.withServiceErrorHandling(async (filter) => {
+    const lessons = await lesson_repository_1.default.getLessons(filter);
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, "", lessons);
 });
 const getLesson = utilities_1.errorUtilities.withServiceErrorHandling(async (id) => {

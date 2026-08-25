@@ -13,8 +13,8 @@ import courseRepositories from "../../repositories/course.repository";
 import { users_service_db } from "../../../../config/databases";
 // import languageRepositories from "src/repositories/language.repository";
 
-const getLessons = errorUtilities.withServiceErrorHandling(async () => {
-  const lessons = await lessonRepositories.getLessons();
+const getLessons = errorUtilities.withServiceErrorHandling(async (filter) => {
+  const lessons = await lessonRepositories.getLessons(filter);
   return responseUtilities.handleServicesResponse(StatusCodes.OK, "", lessons);
 });
 
