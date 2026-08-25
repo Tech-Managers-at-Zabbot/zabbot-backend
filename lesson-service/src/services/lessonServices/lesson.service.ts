@@ -181,6 +181,18 @@ const updateLesson = errorUtilities.withServiceErrorHandling(
   },
 );
 
+const changeLessonStatus = errorUtilities.withServiceErrorHandling(
+  async (id: string) => {
+    const updatedLesson = await lessonRepositories.toggleLessonStatus(id);
+
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.OK,
+      "Lesson status updated successfully",
+      updatedLesson,
+    );
+  },
+);
+
 const updateLessonImageService = errorUtilities.withServiceErrorHandling(
   async (lessonId: string, mediaType: string, files: Record<string, any>[]) => {
     const lesson = await lessonRepositories.getLesson(lessonId);
@@ -253,6 +265,7 @@ export default {
   getLesson,
   createLesson,
   updateLesson,
+  changeLessonStatus,
   deleteLesson,
   getLessonWithContents,
   getLessonsForLanguage,

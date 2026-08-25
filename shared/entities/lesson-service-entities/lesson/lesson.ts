@@ -1,6 +1,6 @@
-import { DataTypes, Model, Sequelize } from 'sequelize';
-import { users_service_db } from '../../../../config/databases';
-import { LessonAttributes } from '../../../databaseTypes/lesson-service-types';
+import { DataTypes, Model, Sequelize } from "sequelize";
+import { users_service_db } from "../../../../config/databases";
+import { LessonAttributes } from "../../../databaseTypes/lesson-service-types";
 
 class Lessons extends Model<LessonAttributes> implements LessonAttributes {
   public id!: string;
@@ -17,6 +17,7 @@ class Lessons extends Model<LessonAttributes> implements LessonAttributes {
   public outcomes?: string;
   public objectives?: string;
   public estimatedDuration!: number;
+  public isActive!: boolean;
 }
 
 Lessons.init(
@@ -27,11 +28,11 @@ Lessons.init(
       defaultValue: DataTypes.UUIDV4,
     },
     title: {
-      type: DataTypes.TEXT('long'),
-      allowNull: false
+      type: DataTypes.TEXT("long"),
+      allowNull: false,
     },
     description: {
-      type: DataTypes.TEXT('long'),
+      type: DataTypes.TEXT("long"),
       allowNull: false,
     },
     estimatedDuration: {
@@ -39,24 +40,29 @@ Lessons.init(
       allowNull: false,
     },
     outcomes: {
-      type: DataTypes.TEXT('long'),
-      allowNull: true
+      type: DataTypes.TEXT("long"),
+      allowNull: true,
     },
     objectives: {
-      type: DataTypes.TEXT('long'),
-      allowNull: true
+      type: DataTypes.TEXT("long"),
+      allowNull: true,
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
     },
     languageId: {
       type: DataTypes.UUID,
       allowNull: false,
     },
     headLineTag: {
-      type: DataTypes.TEXT('long'),
+      type: DataTypes.TEXT("long"),
       allowNull: true,
     },
-    lessonImg:{
+    lessonImg: {
       type: DataTypes.TEXT,
-      allowNull: true
+      allowNull: true,
     },
     courseId: {
       type: DataTypes.UUID,
@@ -65,7 +71,7 @@ Lessons.init(
     totalContents: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      defaultValue: 0
+      defaultValue: 0,
     },
     createdAt: {
       type: DataTypes.DATE,
@@ -74,19 +80,19 @@ Lessons.init(
     },
     updatedAt: {
       type: DataTypes.DATE,
-      allowNull: true
+      allowNull: true,
     },
     orderNumber: {
       type: DataTypes.INTEGER,
-      allowNull: false
-    }
+      allowNull: false,
+    },
   },
   {
     sequelize: users_service_db,
-    modelName: 'Lessons',
-    tableName: 'lessons',
+    modelName: "Lessons",
+    tableName: "lessons",
     timestamps: true,
-  }
+  },
 );
 
 export default Lessons;

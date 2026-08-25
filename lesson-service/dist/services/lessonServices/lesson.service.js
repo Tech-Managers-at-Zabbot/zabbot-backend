@@ -121,6 +121,10 @@ const updateLesson = utilities_1.errorUtilities.withServiceErrorHandling(async (
     });
     return updatedLesson;
 });
+const changeLessonStatus = utilities_1.errorUtilities.withServiceErrorHandling(async (id) => {
+    const updatedLesson = await lesson_repository_1.default.toggleLessonStatus(id);
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, "Lesson status updated successfully", updatedLesson);
+});
 const updateLessonImageService = utilities_1.errorUtilities.withServiceErrorHandling(async (lessonId, mediaType, files) => {
     const lesson = await lesson_repository_1.default.getLesson(lessonId);
     if (!lesson) {
@@ -161,6 +165,7 @@ exports.default = {
     getLesson,
     createLesson,
     updateLesson,
+    changeLessonStatus,
     deleteLesson,
     getLessonWithContents,
     getLessonsForLanguage,

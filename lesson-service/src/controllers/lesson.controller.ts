@@ -92,6 +92,20 @@ export const updateLessonController =
     },
   );
 
+export const changeLessonStatusController =
+  errorUtilities.withControllerErrorHandling(
+    async (req: Request, res: Response) => {
+      const { id } = req.params;
+      const lesson = await lessonService.changeLessonStatus(id);
+      return responseUtilities.responseHandler(
+        res,
+        lesson.message,
+        lesson.statusCode,
+        lesson.data,
+      );
+    },
+  );
+
 export const getLessonWithContentsController =
   errorUtilities.withControllerErrorHandling(
     async (req: Request, res: Response) => {

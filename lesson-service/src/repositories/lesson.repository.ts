@@ -5,11 +5,14 @@ import { LessonAttributes } from "../../../shared/databaseTypes/lesson-service-t
 import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
 
 const lessonRepositories = {
-  getLessons: async (filter?: { courseId: string }) => {
+  getLessons: async (filter?: { courseId?: string; isActive?: boolean }) => {
     try {
       const where: any = {};
       if (typeof filter?.courseId === "string") {
         where.courseId = filter.courseId;
+      }
+      if (typeof filter?.isActive === "boolean") {
+        where.isActive = filter.isActive;
       }
 
       const lessons = await Lessons.findAll({
@@ -167,6 +170,37 @@ const lessonRepositories = {
     } catch (error: any) {
       throw errorUtilities.createError(
         `Error updating lessonx: ${error.message}`,
+        500,
+      );
+    }
+  },
+
+  toggleLessonStatus: async (id: string, transaction?: Transaction) => {
+    try {
+      const lesson = await Lessons.findByPk(id, { transaction });
+      if (!lesson) {
+        throw errorUtilities.createError("Lesson not found", 404);
+      }
+
+      const nextStatus =
+        lesson.isActive === undefined ? true : !lesson.isActive;
+      const [updatedCount, [updatedLesson]] = await Lessons.update(
+        { isActive: nextStatus },
+        {
+          where: { id },
+          returning: true,
+          transaction,
+        },
+      );
+
+      if (updatedCount === 0) {
+        throw errorUtilities.createError("Lesson status was not updated", 400);
+      }
+
+      return updatedLesson;
+    } catch (error: any) {
+      throw errorUtilities.createError(
+        `Error toggling lesson status: ${error.message}`,
         500,
       );
     }

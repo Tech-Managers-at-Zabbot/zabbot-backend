@@ -13,6 +13,9 @@ const lessonRepositories = {
             if (typeof filter?.courseId === "string") {
                 where.courseId = filter.courseId;
             }
+            if (typeof filter?.isActive === "boolean") {
+                where.isActive = filter.isActive;
+            }
             const lessons = await lesson_1.default.findAll({
                 where,
                 raw: true,
@@ -117,6 +120,27 @@ const lessonRepositories = {
         }
         catch (error) {
             throw utilities_1.errorUtilities.createError(`Error updating lessonx: ${error.message}`, 500);
+        }
+    },
+    toggleLessonStatus: async (id, transaction) => {
+        try {
+            const lesson = await lesson_1.default.findByPk(id, { transaction });
+            if (!lesson) {
+                throw utilities_1.errorUtilities.createError("Lesson not found", 404);
+            }
+            const nextStatus = lesson.isActive === undefined ? true : !lesson.isActive;
+            const [updatedCount, [updatedLesson]] = await lesson_1.default.update({ isActive: nextStatus }, {
+                where: { id },
+                returning: true,
+                transaction,
+            });
+            if (updatedCount === 0) {
+                throw utilities_1.errorUtilities.createError("Lesson status was not updated", 400);
+            }
+            return updatedLesson;
+        }
+        catch (error) {
+            throw utilities_1.errorUtilities.createError(`Error toggling lesson status: ${error.message}`, 500);
         }
     },
 };
