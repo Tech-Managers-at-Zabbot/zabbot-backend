@@ -175,17 +175,19 @@ const lessonRepositories = {
     }
   },
 
-  toggleLessonStatus: async (id: string, transaction?: Transaction) => {
+  updateLessonStatus: async (
+    id: string,
+    status: boolean,
+    transaction?: Transaction,
+  ) => {
     try {
       const lesson = await Lessons.findByPk(id, { transaction });
       if (!lesson) {
         throw errorUtilities.createError("Lesson not found", 404);
       }
 
-      const nextStatus =
-        lesson.isActive === undefined ? true : !lesson.isActive;
       const [updatedCount, [updatedLesson]] = await Lessons.update(
-        { isActive: nextStatus },
+        { isActive: status },
         {
           where: { id },
           returning: true,
@@ -200,7 +202,7 @@ const lessonRepositories = {
       return updatedLesson;
     } catch (error: any) {
       throw errorUtilities.createError(
-        `Error toggling lesson status: ${error.message}`,
+        `Error updating lesson status: ${error.message}`,
         500,
       );
     }

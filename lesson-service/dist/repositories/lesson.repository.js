@@ -122,14 +122,13 @@ const lessonRepositories = {
             throw utilities_1.errorUtilities.createError(`Error updating lessonx: ${error.message}`, 500);
         }
     },
-    toggleLessonStatus: async (id, transaction) => {
+    updateLessonStatus: async (id, status, transaction) => {
         try {
             const lesson = await lesson_1.default.findByPk(id, { transaction });
             if (!lesson) {
                 throw utilities_1.errorUtilities.createError("Lesson not found", 404);
             }
-            const nextStatus = lesson.isActive === undefined ? true : !lesson.isActive;
-            const [updatedCount, [updatedLesson]] = await lesson_1.default.update({ isActive: nextStatus }, {
+            const [updatedCount, [updatedLesson]] = await lesson_1.default.update({ isActive: status }, {
                 where: { id },
                 returning: true,
                 transaction,
@@ -140,7 +139,7 @@ const lessonRepositories = {
             return updatedLesson;
         }
         catch (error) {
-            throw utilities_1.errorUtilities.createError(`Error toggling lesson status: ${error.message}`, 500);
+            throw utilities_1.errorUtilities.createError(`Error updating lesson status: ${error.message}`, 500);
         }
     },
 };
