@@ -110,6 +110,7 @@ export interface LessonAttributes {
     headLineTag?: string;
     languageId: string;
     estimatedDuration: number;
+    isActive?: boolean;
     createdAt: Date;
     totalContents?: number;
     outcomes?: string;
