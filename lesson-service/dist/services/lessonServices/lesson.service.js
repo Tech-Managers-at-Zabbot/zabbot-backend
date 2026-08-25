@@ -121,8 +121,14 @@ const updateLesson = utilities_1.errorUtilities.withServiceErrorHandling(async (
     });
     return updatedLesson;
 });
-const changeLessonStatus = utilities_1.errorUtilities.withServiceErrorHandling(async (id) => {
-    const updatedLesson = await lesson_repository_1.default.toggleLessonStatus(id);
+const changeLessonStatus = utilities_1.errorUtilities.withServiceErrorHandling(async (id, isActive) => {
+    if (isActive === undefined || isActive === null) {
+        throw utilities_1.errorUtilities.createError("Lesson isActive is required", 400);
+    }
+    const normalizedStatus = typeof isActive === "string"
+        ? isActive.toLowerCase() === "true"
+        : Boolean(isActive);
+    const updatedLesson = await lesson_repository_1.default.updateLessonStatus(id, normalizedStatus);
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, "Lesson status updated successfully", updatedLesson);
 });
 const updateLessonImageService = utilities_1.errorUtilities.withServiceErrorHandling(async (lessonId, mediaType, files) => {

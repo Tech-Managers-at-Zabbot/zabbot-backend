@@ -44,7 +44,8 @@ exports.updateLessonController = utilities_1.errorUtilities.withControllerErrorH
 });
 exports.changeLessonStatusController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
     const { id } = req.params;
-    const lesson = await lesson_service_1.default.changeLessonStatus(id);
+    const { isActive } = req.body;
+    const lesson = await lesson_service_1.default.changeLessonStatus(id, isActive);
     return utilities_1.responseUtilities.responseHandler(res, lesson.message, lesson.statusCode, lesson.data);
 });
 exports.getLessonWithContentsController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {

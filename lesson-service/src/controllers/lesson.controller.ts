@@ -96,7 +96,8 @@ export const changeLessonStatusController =
   errorUtilities.withControllerErrorHandling(
     async (req: Request, res: Response) => {
       const { id } = req.params;
-      const lesson = await lessonService.changeLessonStatus(id);
+      const { isActive } = req.body;
+      const lesson = await lessonService.changeLessonStatus(id, isActive);
       return responseUtilities.responseHandler(
         res,
         lesson.message,

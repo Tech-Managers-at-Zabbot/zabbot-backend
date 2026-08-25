@@ -182,8 +182,20 @@ const updateLesson = errorUtilities.withServiceErrorHandling(
 );
 
 const changeLessonStatus = errorUtilities.withServiceErrorHandling(
-  async (id: string) => {
-    const updatedLesson = await lessonRepositories.toggleLessonStatus(id);
+  async (id: string, isActive?: boolean | string) => {
+    if (isActive === undefined || isActive === null) {
+      throw errorUtilities.createError("Lesson isActive is required", 400);
+    }
+
+    const normalizedStatus =
+      typeof isActive === "string"
+        ? isActive.toLowerCase() === "true"
+        : Boolean(isActive);
+
+    const updatedLesson = await lessonRepositories.updateLessonStatus(
+      id,
+      normalizedStatus,
+    );
 
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
