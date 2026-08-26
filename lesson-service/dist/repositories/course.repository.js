@@ -13,11 +13,15 @@ const courseRepositories = {
             const isAdminFlag = String(isAdmin).toLowerCase() === "true";
             const hasValidIsActive = typeof isActive === "boolean" ||
                 (typeof isActive === "string" &&
-                    (isActive.toLowerCase() === "true" || isActive.toLowerCase() === "false"));
+                    (isActive.toLowerCase() === "true" ||
+                        isActive.toLowerCase() === "false"));
             if (!isAdminFlag && hasValidIsActive) {
                 where.isActive = String(isActive).toLowerCase() === "true";
             }
-            const courses = await course_1.default.findAll({ where });
+            const courses = await course_1.default.findAll({
+                where,
+                order: [["orderNumber", "ASC"]],
+            });
             return courses;
         }
         catch (error) {

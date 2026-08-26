@@ -31,7 +31,12 @@ Courses.init({
     level: {
         type: sequelize_1.DataTypes.ENUM,
         values: Object.values(lesson_service_types_1.Level),
-        allowNull: false
+        allowNull: false,
+    },
+    orderNumber: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
     },
     estimatedDuration: {
         type: sequelize_1.DataTypes.INTEGER,
@@ -40,12 +45,12 @@ Courses.init({
     totalLessons: {
         type: sequelize_1.DataTypes.INTEGER,
         allowNull: true,
-        defaultValue: 0
+        defaultValue: 0,
     },
     totalContents: {
         type: sequelize_1.DataTypes.INTEGER,
         allowNull: true,
-        defaultValue: 0
+        defaultValue: 0,
     },
     thumbnailImage: {
         type: sequelize_1.DataTypes.STRING,
@@ -62,16 +67,16 @@ Courses.init({
     createdAt: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: false,
-        defaultValue: sequelize_1.DataTypes.DATE
+        defaultValue: sequelize_1.DataTypes.DATE,
     },
     updatedAt: {
         type: sequelize_1.DataTypes.DATE,
-        allowNull: true
+        allowNull: true,
     },
 }, {
     sequelize: databases_1.users_service_db,
-    modelName: 'Courses',
-    tableName: 'courses',
+    modelName: "Courses",
+    tableName: "courses",
     timestamps: true,
 });
 exports.default = Courses;
