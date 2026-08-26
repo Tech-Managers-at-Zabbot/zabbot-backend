@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.QuizResponses = exports.UserLessonResponses = exports.ContentResponses = exports.CourseResponses = exports.DailyGoalResponses = exports.LanguageResponses = exports.DailyWordResponses = void 0;
+exports.FlashcardResponses = exports.QuizResponses = exports.UserLessonResponses = exports.ContentResponses = exports.CourseResponses = exports.DailyGoalResponses = exports.LanguageResponses = exports.DailyWordResponses = void 0;
 var DailyWordResponses;
 (function (DailyWordResponses) {
     DailyWordResponses["NOT_FOUND"] = "This word does not exist, please check and try again";
@@ -69,3 +69,11 @@ var QuizResponses;
     QuizResponses["QUIZ_SUBMISSION_FAILED"] = "Quiz submission failed, please try again";
     QuizResponses["SUCCESSFUL_PROCESS"] = "Process successful";
 })(QuizResponses || (exports.QuizResponses = QuizResponses = {}));
+var FlashcardResponses;
+(function (FlashcardResponses) {
+    FlashcardResponses["FLASHCARD_NOT_FOUND"] = "Flashcard not found, please try again";
+    FlashcardResponses["FLASHCARD_CREATED_SUCCESSFULLY"] = "Flashcard created successfully";
+    FlashcardResponses["FLASHCARD_UPDATED_SUCCESSFULLY"] = "Flashcard updated successfully";
+    FlashcardResponses["FLASHCARD_DELETED_SUCCESSFULLY"] = "Flashcard deleted successfully";
+    FlashcardResponses["SUCCESSFUL_PROCESS"] = "Process successful";
+})(FlashcardResponses || (exports.FlashcardResponses = FlashcardResponses = {}));

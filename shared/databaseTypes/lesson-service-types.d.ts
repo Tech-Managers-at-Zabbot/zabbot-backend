@@ -199,3 +199,20 @@ export interface DailyWordAttributes {
     isUsed: boolean;
     pronunciationNote?: string;
 }
+export interface IconAttribution {
+    name: string;
+    url: string;
+}
+export interface FlashcardAttributes {
+    id: string;
+    language: string;
+    yorubaWord: string;
+    englishWord: string;
+    transcription: string;
+    tonal: string;
+    image: string;
+    audio: string[];
+    iconAttributions: IconAttribution;
+    createdAt: Date;
+    updatedAt?: Date;
+}

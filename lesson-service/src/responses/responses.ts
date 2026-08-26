@@ -65,3 +65,11 @@ export enum QuizResponses {
   QUIZ_SUBMISSION_FAILED = "Quiz submission failed, please try again",
   SUCCESSFUL_PROCESS = "Process successful",
 }
+
+export enum FlashcardResponses {
+  FLASHCARD_NOT_FOUND = "Flashcard not found, please try again",
+  FLASHCARD_CREATED_SUCCESSFULLY = "Flashcard created successfully",
+  FLASHCARD_UPDATED_SUCCESSFULLY = "Flashcard updated successfully",
+  FLASHCARD_DELETED_SUCCESSFULLY = "Flashcard deleted successfully",
+  SUCCESSFUL_PROCESS = "Process successful",
+}

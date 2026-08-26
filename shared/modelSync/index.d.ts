@@ -1,6 +1,7 @@
 import "../entities/lesson-service-entities/content/content";
 import "../entities/lesson-service-entities/contentFile/content-file";
 import "../entities/lesson-service-entities/course/course";
+import "../entities/lesson-service-entities/flashcard/flashcard";
 import "../entities/lesson-service-entities/language/language";
 import "../entities/lesson-service-entities/lesson/lesson";
 import "../entities/lesson-service-entities/quiz/quiz";
