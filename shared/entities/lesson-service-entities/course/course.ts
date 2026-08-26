@@ -1,6 +1,9 @@
-import { DataTypes, Model, Sequelize } from 'sequelize';
-import { users_service_db } from '../../../../config/databases';
-import { CourseAttributes, Level } from '../../../databaseTypes/lesson-service-types';
+import { DataTypes, Model, Sequelize } from "sequelize";
+import { users_service_db } from "../../../../config/databases";
+import {
+  CourseAttributes,
+  Level,
+} from "../../../databaseTypes/lesson-service-types";
 
 class Courses extends Model<CourseAttributes> implements CourseAttributes {
   public id!: string;
@@ -8,6 +11,7 @@ class Courses extends Model<CourseAttributes> implements CourseAttributes {
   public description?: string;
   public languageId!: string;
   public isActive!: boolean;
+  public orderNumber!: number;
   public estimatedDuration?: number;
   public totalLessons?: number;
   public thumbnailImage?: string;
@@ -15,8 +19,8 @@ class Courses extends Model<CourseAttributes> implements CourseAttributes {
   public prerequisites?: string[];
   public createdAt!: Date;
   public updatedAt?: Date;
-  public level!: Level
-  public totalContents?: number
+  public level!: Level;
+  public totalContents?: number;
 }
 
 Courses.init(
@@ -46,7 +50,12 @@ Courses.init(
     level: {
       type: DataTypes.ENUM,
       values: Object.values(Level),
-      allowNull: false
+      allowNull: false,
+    },
+    orderNumber: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
     },
     estimatedDuration: {
       type: DataTypes.INTEGER,
@@ -55,12 +64,12 @@ Courses.init(
     totalLessons: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      defaultValue: 0
+      defaultValue: 0,
     },
-     totalContents: {
+    totalContents: {
       type: DataTypes.INTEGER,
       allowNull: true,
-      defaultValue: 0
+      defaultValue: 0,
     },
     thumbnailImage: {
       type: DataTypes.STRING,
@@ -77,19 +86,19 @@ Courses.init(
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: DataTypes.DATE
+      defaultValue: DataTypes.DATE,
     },
     updatedAt: {
       type: DataTypes.DATE,
-      allowNull: true
+      allowNull: true,
     },
   },
   {
     sequelize: users_service_db,
-    modelName: 'Courses',
-    tableName: 'courses',
+    modelName: "Courses",
+    tableName: "courses",
     timestamps: true,
-  }
+  },
 );
 
 export default Courses;

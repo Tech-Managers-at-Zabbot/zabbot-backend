@@ -90,6 +90,7 @@ const createCourseWithLessons = utilities_1.errorUtilities.withServiceErrorHandl
         title: courseData.title,
         description: courseData.description,
         level: courseData.level,
+        orderNumber: courseData.orderNumber ?? 0,
         estimatedDuration: courseData.estimatedDuration,
         thumbnailImage: courseData.thumbnailImage,
         id: (0, uuid_1.v4)(),

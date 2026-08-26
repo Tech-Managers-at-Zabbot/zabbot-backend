@@ -1,11 +1,12 @@
-import { Model } from 'sequelize';
-import { CourseAttributes, Level } from '../../../databaseTypes/lesson-service-types';
+import { Model } from "sequelize";
+import { CourseAttributes, Level } from "../../../databaseTypes/lesson-service-types";
 declare class Courses extends Model<CourseAttributes> implements CourseAttributes {
     id: string;
     title: string;
     description?: string;
     languageId: string;
     isActive: boolean;
+    orderNumber: number;
     estimatedDuration?: number;
     totalLessons?: number;
     thumbnailImage?: string;

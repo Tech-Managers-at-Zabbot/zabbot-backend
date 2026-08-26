@@ -173,6 +173,7 @@ const createCourseWithLessons = errorUtilities.withServiceErrorHandling(
       title: courseData.title,
       description: courseData.description,
       level: courseData.level,
+      orderNumber: courseData.orderNumber ?? 0,
       estimatedDuration: courseData.estimatedDuration,
       thumbnailImage: courseData.thumbnailImage,
       id: v4(),

@@ -19,13 +19,17 @@ const courseRepositories = {
       const hasValidIsActive =
         typeof isActive === "boolean" ||
         (typeof isActive === "string" &&
-          (isActive.toLowerCase() === "true" || isActive.toLowerCase() === "false"));
+          (isActive.toLowerCase() === "true" ||
+            isActive.toLowerCase() === "false"));
 
       if (!isAdminFlag && hasValidIsActive) {
         where.isActive = String(isActive).toLowerCase() === "true";
       }
 
-      const courses = await Courses.findAll({ where });
+      const courses = await Courses.findAll({
+        where,
+        order: [["orderNumber", "ASC"]],
+      });
 
       return courses;
     } catch (error: any) {
