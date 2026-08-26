@@ -5,6 +5,7 @@ import dailyWordRouter from './dailyWord.route';
 import contentRouter from './content.route';
 import goalRouter from './dailyGoal.route';
 import courseRouter from './course.route';
+import flashcardRouter from './flashcard.route';
 import quizRouter from './quiz.route';
 import leaderboardRouter from './leaderboard.route';
 import userLessonRouter from './userLesson.route';
@@ -17,6 +18,7 @@ rootRouter.use('/daily-words', dailyWordRouter);
 rootRouter.use('/contents', contentRouter);
 rootRouter.use('/goals', goalRouter)
 rootRouter.use('/courses', courseRouter);
+rootRouter.use('/flashcards', flashcardRouter);
 rootRouter.use('/user-lessons', userLessonRouter);
 rootRouter.use('/quizzes', quizRouter);
 rootRouter.use('/leaderboard', leaderboardRouter)

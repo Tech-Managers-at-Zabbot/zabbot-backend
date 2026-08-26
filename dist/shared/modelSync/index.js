@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 require("../entities/lesson-service-entities/content/content");
 require("../entities/lesson-service-entities/contentFile/content-file");
 require("../entities/lesson-service-entities/course/course");
+require("../entities/lesson-service-entities/flashcard/flashcard");
 require("../entities/lesson-service-entities/language/language");
 require("../entities/lesson-service-entities/lesson/lesson");
 require("../entities/lesson-service-entities/quiz/quiz");

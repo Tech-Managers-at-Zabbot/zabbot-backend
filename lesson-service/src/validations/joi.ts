@@ -218,6 +218,33 @@ const getQuizzesQuerySchema = Joi.object({
   limit: Joi.number().integer().min(1).max(100).default(10),
 });
 
+const iconAttributionsSchema = Joi.object({
+  name: Joi.string().min(1).required(),
+  url: Joi.string().uri().required(),
+});
+
+const createFlashcardSchema = Joi.object({
+  language: Joi.string().min(1).required(),
+  yorubaWord: Joi.string().min(1).required(),
+  englishWord: Joi.string().min(1).required(),
+  transcription: Joi.string().min(1).required(),
+  tonal: Joi.string().min(1).required(),
+  image: Joi.string().min(1).required(),
+  audio: Joi.array().items(Joi.string().min(1)).required(),
+  iconAttributions: iconAttributionsSchema.required(),
+});
+
+const updateFlashcardSchema = Joi.object({
+  language: Joi.string().min(1).optional(),
+  yorubaWord: Joi.string().min(1).optional(),
+  englishWord: Joi.string().min(1).optional(),
+  transcription: Joi.string().min(1).optional(),
+  tonal: Joi.string().min(1).optional(),
+  image: Joi.string().min(1).optional(),
+  audio: Joi.array().items(Joi.string().min(1)).optional(),
+  iconAttributions: iconAttributionsSchema.optional(),
+}).min(1);
+
 
 export default {
     inputValidator,
@@ -225,4 +252,6 @@ export default {
     updateQuizSchema,
     submitQuizAnswerSchema,
     getQuizzesQuerySchema,
+    createFlashcardSchema,
+    updateFlashcardSchema,
 }
