@@ -9,7 +9,7 @@ const createError = (message, statusCode, specialCodeMessage) => ({
     isOperational: true,
 });
 const createUnknownError = (error) => ({
-    message: `Something went wrong: ${error.message || 'Unknown error'}`,
+    message: `Something went wrong: ${error.message || "Unknown error"}`,
     statusCode: error.statusCode || 500,
     timestamp: new Date(),
     details: error.stack || error.message,
@@ -32,30 +32,30 @@ const withServiceErrorHandling = (fn) => {
             return await fn(...args);
         }
         catch (error) {
-            console.error('Service error:', error.message);
+            console.error("Service error:", error.message);
             throw error;
         }
     };
 };
 const globalErrorHandler = (err, req, res, next) => {
     const errorResponse = err.isOperational ? err : (0, exports.createUnknownError)(err);
-    console.error('❌ Error:', errorResponse.details || err);
+    console.error("❌ Error:", errorResponse.details || err);
     return res.status(errorResponse.statusCode).json({
-        status: 'error',
+        status: "error",
         message: errorResponse.message,
         timestamp: errorResponse.timestamp,
         specialCodeMessage: errorResponse?.specialCodeMessage,
-        details: !err.isOperational ? errorResponse.details : '',
+        details: !err.isOperational ? errorResponse.details : "",
     });
 };
 exports.globalErrorHandler = globalErrorHandler;
 const processErrorHandler = () => {
-    process.on('uncaughtException', (err) => {
-        console.error('💥 UNCAUGHT EXCEPTION:', err);
+    process.on("uncaughtException", (err) => {
+        console.error("💥 UNCAUGHT EXCEPTION:", err);
         process.exit(1);
     });
-    process.on('unhandledRejection', (reason, promise) => {
-        console.error('💥 UNHANDLED REJECTION:', reason);
+    process.on("unhandledRejection", (reason, promise) => {
+        console.error("💥 UNHANDLED REJECTION:", reason);
     });
 };
 exports.default = {
@@ -64,5 +64,5 @@ exports.default = {
     withServiceErrorHandling,
     withControllerErrorHandling,
     globalErrorHandler: exports.globalErrorHandler,
-    processErrorHandler
+    processErrorHandler,
 };

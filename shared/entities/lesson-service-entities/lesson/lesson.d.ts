@@ -1,5 +1,5 @@
-import { Model } from 'sequelize';
-import { LessonAttributes } from '../../../databaseTypes/lesson-service-types';
+import { Model } from "sequelize";
+import { LessonAttributes } from "../../../databaseTypes/lesson-service-types";
 declare class Lessons extends Model<LessonAttributes> implements LessonAttributes {
     id: string;
     title: string;
@@ -11,8 +11,10 @@ declare class Lessons extends Model<LessonAttributes> implements LessonAttribute
     totalContents?: number;
     languageId: string;
     headLineTag?: string;
+    lessonImg: string;
     outcomes?: string;
     objectives?: string;
     estimatedDuration: number;
+    isActive: boolean;
 }
 export default Lessons;

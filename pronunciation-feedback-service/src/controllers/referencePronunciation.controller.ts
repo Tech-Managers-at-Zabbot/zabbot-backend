@@ -92,7 +92,11 @@ export const comparePronunciation = errorUtilities.withControllerErrorHandling(
     }
 
     const referencePronunciationId = req.params.id;
-    const { voice } = req.body;
+    const { voice, isInLesson, isInLessonUrl, isInLessonAudioId } = req.body;
+
+    const parsedIsInLesson =
+  isInLesson === true ||
+  isInLesson === "true";
 
     const pronunciation =
       await pronunciationFeedbackService.comparePronounciation({
@@ -100,6 +104,9 @@ export const comparePronunciation = errorUtilities.withControllerErrorHandling(
         userId: user.userId,
         referencePronunciationId,
         voice,
+        isInLesson: parsedIsInLesson,
+        isInLessonUrl,
+        isInLessonAudioId,
       });
 
     return responseUtilities.responseHandler(

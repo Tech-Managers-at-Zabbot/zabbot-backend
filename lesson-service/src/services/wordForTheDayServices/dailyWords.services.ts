@@ -187,7 +187,7 @@ const getTodayWordService = errorUtilities.withServiceErrorHandling(
                 const oldWordFilter = {
                     languageId,
                     dateUsed: {
-                        [Op.lt]: thirtyDaysAgo
+                        [Op.lte]: thirtyDaysAgo
                     }
                 };
 

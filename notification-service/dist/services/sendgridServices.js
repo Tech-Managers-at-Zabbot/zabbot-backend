@@ -3,10 +3,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const renderEmailTemplate_1 = require("../emails/renderEmailTemplate");
 const utilities_1 = require("../../../shared/utilities");
 const sendgridConfig_1 = __importDefault(require("../config/sendgridConfig"));
 const enums_1 = require("../constants/enums");
 const services_1 = require("../services");
+const statusCodes_responses_1 = require("../../../shared/statusCodes/statusCodes.responses");
+const userNotification_repositories_1 = __importDefault(require("../../../shared/repositories/userNotification.repositories"));
 const listIdMap = {
     [enums_1.SendgridListName.FOUNDERS_LIST]: process.env.SENDGRID_FOUNDERS_LIST_ID,
     [enums_1.SendgridListName.CONTRIBUTORS]: process.env.SENDGRID_CONTRIBUTORS_LIST_ID,
@@ -14,7 +17,7 @@ const listIdMap = {
     [enums_1.SendgridListName.UPDATES]: process.env.SENDGRID_UPDATES_LIST_ID,
 };
 const sendWelcomeFoundingListEmailService = utilities_1.errorUtilities.withServiceErrorHandling(async (email, firstName, lastName, country) => {
-    const token = utilities_1.helpersUtilities.generateToken({ email }, '30d');
+    const token = utilities_1.helpersUtilities.generateToken({ email }, "30d");
     const unsubscribeUrl = `${process.env.UNSUBSCRIBE_URL}/founders-circle/unsubscribe?token=${token}`;
     const messageDetails = {
         to: email,
@@ -24,7 +27,7 @@ const sendWelcomeFoundingListEmailService = utilities_1.errorUtilities.withServi
         },
         templateId: process.env.SENDGRID_FOUNDING_LIST_WELCOME_TEMPLATE_ID,
         dynamic_template_data: {
-            unsubscribe_url: unsubscribeUrl
+            unsubscribe_url: unsubscribeUrl,
         },
         subject: `Ẹ káàbọ̀! (Welcome!) ${firstName}`,
         trackingSettings: {
@@ -34,8 +37,10 @@ const sendWelcomeFoundingListEmailService = utilities_1.errorUtilities.withServi
                 // substitutionTag: "{{{unsubscribe}}}"
             },
             asm: {
-                group_id: parseInt(process.env.SENDGRID_UNSUBSCRIBE_GROUP_ID || '0'),
-                groups_to_display: [parseInt(process.env.SENDGRID_UNSUBSCRIBE_GROUP_ID || '0')]
+                group_id: parseInt(process.env.SENDGRID_UNSUBSCRIBE_GROUP_ID || "0"),
+                groups_to_display: [
+                    parseInt(process.env.SENDGRID_UNSUBSCRIBE_GROUP_ID || "0"),
+                ],
             },
             //              customArgs: {
             //   unsubscribe: unsubscribeUrl
@@ -45,11 +50,11 @@ const sendWelcomeFoundingListEmailService = utilities_1.errorUtilities.withServi
     try {
         const emailResponse = await sendgridConfig_1.default.sendgridMail.send(messageDetails);
         await addToSendGridFoundersList(email, firstName, lastName, country);
-        console.log('Email sent:', emailResponse[0]?.statusCode);
+        console.log("Email sent:", emailResponse[0]?.statusCode);
         return emailResponse;
     }
     catch (error) {
-        console.error('SendGrid error:', error.response?.body || error);
+        console.error("SendGrid error:", error.response?.body || error);
         throw error;
     }
 });
@@ -60,22 +65,22 @@ const addToSendGridFoundersList = utilities_1.errorUtilities.withServiceErrorHan
                 email,
                 first_name: firstName,
                 last_name: lastName,
-                country
+                country,
             },
         ],
         list_ids: [process.env.SENDGRID_FOUNDERS_LIST_ID],
     };
     try {
         const [response] = await sendgridConfig_1.default.sendgridClient.request({
-            method: 'PUT',
-            url: '/v3/marketing/contacts',
+            method: "PUT",
+            url: "/v3/marketing/contacts",
             body: data,
         });
-        console.log('adding user', response?.statusCode);
+        console.log("adding user", response?.statusCode);
         return response;
     }
     catch (error) {
-        console.error('Error adding to SendGrid list:', error.response?.body || error);
+        console.error("Error adding to SendGrid list:", error.response?.body || error);
         throw error;
     }
 });
@@ -150,7 +155,7 @@ const addToSendGridFoundersList = utilities_1.errorUtilities.withServiceErrorHan
 //     }
 // });
 const rollbackDeleteOperations = async (email, firstName, lastName, userCountry, completedListIds) => {
-    console.log('Starting rollback for completed operations:', completedListIds);
+    console.log("Starting rollback for completed operations:", completedListIds);
     if (completedListIds.length === 0)
         return;
     try {
@@ -160,25 +165,25 @@ const rollbackDeleteOperations = async (email, firstName, lastName, userCountry,
                     email,
                     first_name: firstName,
                     last_name: lastName,
-                    country: userCountry
+                    country: userCountry,
                 },
             ],
             list_ids: completedListIds,
         };
         const rollbackResponse = await sendgridConfig_1.default.sendgridClient.request({
-            method: 'PUT',
+            method: "PUT",
             url: `/v3/marketing/contacts`,
-            body: rollbackData
+            body: rollbackData,
         });
         if (rollbackResponse[0].statusCode === 202) {
-            console.log('Rollback successful: User re-added to', completedListIds.length, 'lists');
+            console.log("Rollback successful: User re-added to", completedListIds.length, "lists");
         }
         else {
-            console.error('Rollback failed with status:', rollbackResponse[0].statusCode);
+            console.error("Rollback failed with status:", rollbackResponse[0].statusCode);
         }
     }
     catch (rollbackError) {
-        console.error('Critical error during rollback:', rollbackError);
+        console.error("Critical error during rollback:", rollbackError);
         // You might want to log this to a monitoring system or database
         // for manual intervention
     }
@@ -195,11 +200,11 @@ const removeFromSengridFoundersListService = utilities_1.errorUtilities.withServ
             body: data,
         });
         if (findContact?.statusCode !== 200) {
-            throw utilities_1.errorUtilities.createError('Process failed, please try again later', findContact.statusCode);
+            throw utilities_1.errorUtilities.createError("Process failed, please try again later", findContact.statusCode);
         }
         const sendgridUserId = findContact?.body?.result[email]?.contact?.id;
         if (!sendgridUserId) {
-            throw utilities_1.errorUtilities.createError('User not found', 404);
+            throw utilities_1.errorUtilities.createError("User not found", 404);
         }
         const userFirstName = findContact?.body?.result[email]?.contact?.first_name;
         const userLastName = findContact?.body?.result[email]?.contact?.last_name;
@@ -209,30 +214,31 @@ const removeFromSengridFoundersListService = utilities_1.errorUtilities.withServ
         const deleteOperations = [
             {
                 listId: process.env.SENDGRID_FOUNDERS_LIST_ID,
-                name: 'FOUNDERS_LIST'
+                name: "FOUNDERS_LIST",
             },
             {
                 listId: process.env.SENDGRID_BETA_TESTERS_LIST_ID,
-                name: 'BETA_TESTERS_LIST'
+                name: "BETA_TESTERS_LIST",
             },
             {
                 listId: process.env.SENDGRID_CONTRIBUTORS_LIST_ID,
-                name: 'CONTRIBUTORS_LIST'
+                name: "CONTRIBUTORS_LIST",
             },
             {
                 listId: process.env.SENDGRID_UPDATES_LIST_ID,
-                name: 'UPDATES_LIST'
-            }
+                name: "UPDATES_LIST",
+            },
         ];
         // Execute all delete operations with transaction-like behavior
         for (const operation of deleteOperations) {
             try {
                 const deleteResponse = await sendgridConfig_1.default.sendgridClient.request({
-                    method: 'DELETE',
+                    method: "DELETE",
                     url: `/v3/marketing/lists/${operation.listId}/contacts`,
                     qs: queryParams,
                 });
-                if (deleteResponse[0].statusCode !== 202 && deleteResponse[0].statusCode !== 204) {
+                if (deleteResponse[0].statusCode !== 202 &&
+                    deleteResponse[0].statusCode !== 204) {
                     throw new Error(`Delete failed for ${operation.name}: Status ${deleteResponse[0].statusCode}`);
                 }
                 completedOperations.push(operation.listId);
@@ -254,18 +260,18 @@ const removeFromSengridFoundersListService = utilities_1.errorUtilities.withServ
             list_ids: [process.env.SENDGRID_FOUNDERS_LIST_ID],
         };
         const addResponse = await sendgridConfig_1.default.sendgridClient.request({
-            method: 'PUT',
+            method: "PUT",
             url: `/v3/marketing/contacts`,
-            body: unsubscribeData
+            body: unsubscribeData,
         });
         if (addResponse[0].statusCode !== 202) {
             await rollbackDeleteOperations(email, userFirstName, userLastName, userCountry, completedOperations);
-            throw utilities_1.errorUtilities.createError('Failed to add to unsubscribe list. All operations rolled back.', addResponse[0].statusCode);
+            throw utilities_1.errorUtilities.createError("Failed to add to unsubscribe list. All operations rolled back.", addResponse[0].statusCode);
         }
-        return utilities_1.responseUtilities.handleServicesResponse(200, 'Successfully processed unsubscription');
+        return utilities_1.responseUtilities.handleServicesResponse(200, "Successfully processed unsubscription");
     }
     catch (error) {
-        console.error('Error Unsubscribing:', error.response?.body || error);
+        console.error("Error Unsubscribing:", error.response?.body || error);
         throw utilities_1.errorUtilities.createError(`Error Unsubscribing: ${error.response?.body || error}`, 500);
     }
 });
@@ -277,19 +283,19 @@ const addToSendGridBetaTestersListService = utilities_1.errorUtilities.withServi
                 email,
                 first_name: `${firstName}`,
                 last_name: `${lastName}`,
-                country: country
+                country: country,
             },
         ],
         list_ids: [process.env.SENDGRID_BETA_TESTERS_LIST_ID],
     };
     try {
         const [response] = await sendgridConfig_1.default.sendgridClient.request({
-            method: 'PUT',
-            url: '/v3/marketing/contacts',
+            method: "PUT",
+            url: "/v3/marketing/contacts",
             body: data,
         });
         if (response?.statusCode === 200 || response?.statusCode === 202) {
-            return utilities_1.responseUtilities.handleServicesResponse(200, 'User added successful');
+            return utilities_1.responseUtilities.handleServicesResponse(200, "User added successful");
         }
         return response;
     }
@@ -306,19 +312,19 @@ const addToSendGridContributorsListService = utilities_1.errorUtilities.withServ
                 email,
                 first_name: `${firstName}`,
                 last_name: `${lastName}`,
-                country: country
+                country: country,
             },
         ],
         list_ids: [process.env.SENDGRID_CONTRIBUTORS_LIST_ID],
     };
     try {
         const [response] = await sendgridConfig_1.default.sendgridClient.request({
-            method: 'PUT',
-            url: '/v3/marketing/contacts',
+            method: "PUT",
+            url: "/v3/marketing/contacts",
             body: data,
         });
         if (response?.statusCode === 200 || response?.statusCode === 202) {
-            return utilities_1.responseUtilities.handleServicesResponse(200, 'User added successful');
+            return utilities_1.responseUtilities.handleServicesResponse(200, "User added successful");
         }
         return response;
     }
@@ -335,19 +341,19 @@ const addToSendGridUpdatesListService = utilities_1.errorUtilities.withServiceEr
                 email,
                 first_name: `${firstName}`,
                 last_name: `${lastName}`,
-                country: country
+                country: country,
             },
         ],
         list_ids: [process.env.SENDGRID_UPDATES_LIST_ID],
     };
     try {
         const [response] = await sendgridConfig_1.default.sendgridClient.request({
-            method: 'PUT',
-            url: '/v3/marketing/contacts',
+            method: "PUT",
+            url: "/v3/marketing/contacts",
             body: data,
         });
         if (response?.statusCode === 200 || response?.statusCode === 202) {
-            return utilities_1.responseUtilities.handleServicesResponse(200, 'User added successful');
+            return utilities_1.responseUtilities.handleServicesResponse(200, "User added successful");
         }
         return response;
     }
@@ -369,11 +375,11 @@ const addCustomFieldToSendgridList = utilities_1.errorUtilities.withServiceError
     };
     try {
         const [response] = await sendgridConfig_1.default.sendgridClient.request({
-            method: 'POST',
-            url: '/v3/marketing/field_definitions',
+            method: "POST",
+            url: "/v3/marketing/field_definitions",
             body: data,
         });
-        console.log('Adding Field', response);
+        console.log("Adding Field", response);
         return response;
     }
     catch (error) {
@@ -438,11 +444,11 @@ const sendWelcomeEmailWithOtpService = utilities_1.errorUtilities.withServiceErr
     }
     try {
         const emailResponse = await services_1.nodemailerService.sendEmailService(messageDetails);
-        console.log('Email sent:', emailResponse);
-        return utilities_1.responseUtilities.handleServicesResponse(200, 'Email sent successfully', emailResponse);
+        console.log("Email sent:", emailResponse);
+        return utilities_1.responseUtilities.handleServicesResponse(200, "Email sent successfully", emailResponse);
     }
     catch (error) {
-        console.error('Nodemailer error:', error);
+        console.error("Nodemailer error:", error);
         // throw errorUtilities.createError(`Failed to send email: ${error.message}`, 500);
     }
 });
@@ -491,11 +497,11 @@ const sendgridResendOtpService = utilities_1.errorUtilities.withServiceErrorHand
     };
     try {
         const emailResponse = await services_1.nodemailerService.sendEmailService(messageDetails);
-        console.log('Email sent:', emailResponse);
-        return utilities_1.responseUtilities.handleServicesResponse(200, 'Email sent successfully', emailResponse);
+        console.log("Email sent:", emailResponse);
+        return utilities_1.responseUtilities.handleServicesResponse(200, "Email sent successfully", emailResponse);
     }
     catch (error) {
-        console.error('Nodemailer error:', error);
+        console.error("Nodemailer error:", error);
         // throw errorUtilities.createError(`Failed to send email: ${error.message}`, 500);
     }
 });
@@ -544,11 +550,11 @@ const sendgridSendPasswordResetLinkService = utilities_1.errorUtilities.withServ
     };
     try {
         const emailResponse = await services_1.nodemailerService.sendEmailService(messageDetails);
-        console.log('Email sent:', emailResponse);
-        return utilities_1.responseUtilities.handleServicesResponse(200, 'Email sent successfully', emailResponse);
+        console.log("Email sent:", emailResponse);
+        return utilities_1.responseUtilities.handleServicesResponse(200, "Email sent successfully", emailResponse);
     }
     catch (error) {
-        console.error('Nodemailer error:', error);
+        console.error("Nodemailer error:", error);
         throw utilities_1.errorUtilities.createError(`Failed to send email: ${error.message}, please try again`, 500);
     }
 });
@@ -599,14 +605,150 @@ const sendgridSendPasswordResetConfirmationService = utilities_1.errorUtilities.
     };
     try {
         const emailResponse = await services_1.nodemailerService.sendEmailService(messageDetails);
-        console.log('Email sent:', emailResponse);
-        return utilities_1.responseUtilities.handleServicesResponse(200, 'Email sent successfully', emailResponse);
+        console.log("Email sent:", emailResponse);
+        return utilities_1.responseUtilities.handleServicesResponse(200, "Email sent successfully", emailResponse);
     }
     catch (error) {
-        console.error('Nodemailer error:', error);
+        console.error("Nodemailer error:", error);
         // throw errorUtilities.createError(`Failed to send email: ${error.message}, please try again`, 500);
     }
 });
+const sendNotificationChangeService = utilities_1.errorUtilities.withServiceErrorHandling(async (email, firstName, notificationPreference) => {
+    const html = (0, renderEmailTemplate_1.renderEmailTemplate)("notification-preference.html", {
+        firstName,
+        notificationPreference,
+        //   LOGO_URL: "../assets/zabbot-logo-white.png",
+    });
+    let messageDetails = {
+        to: email,
+        from: process.env.SENDGRID_FROM_EMAIL,
+        subject: `Ẹ káàbọ̀! (Welcome!) ${firstName}`,
+        text: `Hello ${firstName},\n\nWelcome to Zabbot!\n\nThank you!`,
+        html,
+    };
+    try {
+        const emailResponse = await services_1.nodemailerService.sendEmailService(messageDetails);
+        console.log("Email sent:", emailResponse);
+        return utilities_1.responseUtilities.handleServicesResponse(200, "Email sent successfully", emailResponse);
+    }
+    catch (error) {
+        console.error("Nodemailer error:", error);
+        // throw errorUtilities.createError(`Failed to send email: ${error.message}`, 500);
+    }
+});
+const sendFrequentNotificationService = utilities_1.errorUtilities.withServiceErrorHandling(async (email, firstName, userId) => {
+    const templates = [
+        "reminder-1-heritage.html",
+        "reminder-2-consistency.html",
+        "reminder-3-family.html",
+        "reminder-4-preservation.html",
+        "reminder-5-pronunciation.html",
+        "reminder-6-stories.html",
+        "reminder-7-progress.html",
+        "reminder-8-busy.html",
+        "reminder-9-confidence.html",
+        "reminder-10-momentum.html",
+        "reminder-11-community.html",
+        "reminder-12-brain.html",
+        "reminder-13-music.html",
+        "reminder-14-names.html",
+        "reminder-15-generations.html",
+        "reminder-16-morning.html",
+        "reminder-17-weekend.html",
+        "reminder-18-travel.html",
+        "reminder-19-food.html",
+        "reminder-20-greetings.html",
+        "reminder-21-children.html",
+        "reminder-22-proverbs.html",
+        "reminder-23-evening.html",
+        "reminder-24-celebrations.html",
+        "reminder-25-numbers.html",
+        "reminder-26-emotions.html",
+        "reminder-27-professional.html",
+        "reminder-28-nature.html",
+        "reminder-29-streak.html",
+        "reminder-30-pride.html",
+    ];
+    const notificationSetting = await userNotification_repositories_1.default.getOne({
+        userId,
+    });
+    if (!notificationSetting) {
+        throw utilities_1.errorUtilities.createError("Notification settings not found", statusCodes_responses_1.StatusCodes.NotFound);
+    }
+    const sentTemplates = notificationSetting.sentTemplates || [];
+    // Get available templates (ones not sent yet)
+    const availableTemplates = templates.filter((template) => !sentTemplates.includes(template));
+    // If all templates have been used, reset the list
+    const templatesToChooseFrom = availableTemplates.length > 0 ? availableTemplates : templates;
+    // Randomly select a template
+    const randomIndex = Math.floor(Math.random() * templatesToChooseFrom.length);
+    const selectedTemplate = templatesToChooseFrom[randomIndex];
+    // Update sentTemplates array
+    const updatedSentTemplates = availableTemplates.length > 0
+        ? [...sentTemplates, selectedTemplate]
+        : [selectedTemplate]; // Reset if we cycled through all
+    // Update the notification setting with the new template
+    await userNotification_repositories_1.default.updateOne({ userId }, { sentTemplates: updatedSentTemplates });
+    const html = (0, renderEmailTemplate_1.renderEmailTemplate)(selectedTemplate, {
+        firstName,
+        LOGO_URL: "https://res.cloudinary.com/dgotesgcy/image/upload/v1765748764/zabbot-logo-white_yojqzm.png",
+        APP_URL: "https://zabbot-app-development-4cnub.ondigitalocean.app/",
+    });
+    let messageDetails = {
+        to: email,
+        from: process.env.SENDGRID_FROM_EMAIL,
+        subject: `Ẹ káàbọ̀! (Welcome!) ${firstName}`,
+        text: `Hello ${firstName},\n\nWelcome to Zabbot!\n\nThank you!`,
+        html,
+    };
+    try {
+        const emailResponse = await services_1.nodemailerService.sendEmailService(messageDetails);
+        console.log("Email sent:", emailResponse);
+        return utilities_1.responseUtilities.handleServicesResponse(200, "Email sent successfully", emailResponse);
+    }
+    catch (error) {
+        console.error("Nodemailer error:", error);
+    }
+});
+// const sendSubscriptionPaymentConfirmationEmailService =
+//   errorUtilities.withServiceErrorHandling(
+//     async (email: string, firstName: string, planName: string, amountPaid:string, billingCycle: string, nextBillingDate: string) => {
+//       // Implementation for sending subscription payment confirmation email
+//     }
+//   );
+const sendPaymentFailedEmailService = utilities_1.errorUtilities.withServiceErrorHandling(async (email, firstName, planName, amount) => {
+    const html = (0, renderEmailTemplate_1.renderEmailTemplate)("payment-failed.html", {
+        firstName,
+        planName,
+        amount,
+        LOGO_URL: "https://res.cloudinary.com/dgotesgcy/image/upload/v1765748764/zabbot-logo-white_yojqzm.png",
+        DASHBOARD_URL: "https://zabbot-app-development-4cnub.ondigitalocean.app/",
+    });
+    const messageDetails = {
+        to: email,
+        from: process.env.SENDGRID_FROM_EMAIL,
+        subject: "Your Zabbot payment didn't go through",
+        text: `Hello ${firstName},\n\nYour free trial has ended and we couldn't process your payment for the ${planName} plan (${amount}). Please update your payment method to restore access.\n\nThank you!`,
+        html,
+    };
+    try {
+        const emailResponse = await services_1.nodemailerService.sendEmailService(messageDetails);
+        console.log("Email sent:", emailResponse);
+        return utilities_1.responseUtilities.handleServicesResponse(200, "Email sent successfully", emailResponse);
+    }
+    catch (error) {
+        console.error("Nodemailer error:", error);
+    }
+});
+//   {
+//   firstName: "Bola",
+//   planName: "Annual Subscription",
+//   amountPaid: "US$69.99",
+//   billingCycle: "Yearly",
+//   nextBillingDate: "March 12, 2026",
+//   LOGO_URL: "https://cdn.zabbot.ai/logo-white.png",
+//   DASHBOARD_URL: "https://app.zabbot.ai/dashboard"
+// }
 exports.default = {
     sendWelcomeFoundingListEmailService,
     addToSendGridFoundersList,
@@ -618,5 +760,9 @@ exports.default = {
     sendWelcomeEmailWithOtpService,
     sendgridResendOtpService,
     sendgridSendPasswordResetLinkService,
-    sendgridSendPasswordResetConfirmationService
+    sendgridSendPasswordResetConfirmationService,
+    sendNotificationChangeService,
+    sendFrequentNotificationService,
+    sendPaymentFailedEmailService
+    //   sendSubscriptionPaymentConfirmationEmailService
 };

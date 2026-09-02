@@ -173,6 +173,17 @@ const userCourseRepositories = {
       );
     }
   },
+
+  deleteUserCoursesByCourseId: async (courseId: string, transaction?: Transaction) => {
+    try {
+      await UserCourses.destroy({ where: { courseId }, transaction });
+    } catch (error: any) {
+      throw errorUtilities.createError(
+        `Error Deleting user courses: ${error.message}`,
+        500
+      );
+    }
+  },
 };
 
 export default userCourseRepositories;

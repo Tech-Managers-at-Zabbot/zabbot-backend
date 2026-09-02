@@ -176,6 +176,25 @@ const adminGetsPhraseWithRecordingsForZabbotBatch = async (
   );
 };
 
+
+const adminGetsAllRecordings = async (
+  request: Request,
+  response: Response
+): Promise<any> => {
+  const page = Number(request.query.page) || 1;
+  const search = request.query.search as string | undefined;
+
+  const fetchRecordings = await adminServices.getAllRecordings(page, search);
+
+  return responseUtilities.responseHandler(
+    response,
+    fetchRecordings.message,
+    fetchRecordings.statusCode,
+    fetchRecordings.data
+  );
+};
+
+
 export default {
   adminCreatePhrase,
   adminUpdatesPhrase,
@@ -183,5 +202,6 @@ export default {
   adminCreatesManyPhrases,
   adminDeletesCloudinaryLeftOverRecordings,
   adminGetsPhraseWithRecordingsForZabbot,
-  adminGetsPhraseWithRecordingsForZabbotBatch
+  adminGetsPhraseWithRecordingsForZabbotBatch,
+  adminGetsAllRecordings
 };

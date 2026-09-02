@@ -58,6 +58,7 @@ export interface CourseAttributes {
     languageId: string;
     isActive: boolean;
     level: Level;
+    orderNumber: number;
     estimatedDuration?: number;
     totalLessons?: number;
     totalContents?: number;
@@ -98,6 +99,7 @@ export interface LessonAttributes {
     description: string;
     courseId: string;
     orderNumber: string;
+    lessonImg: string;
     contents?: {
         id?: string;
         translation: string;
@@ -109,6 +111,7 @@ export interface LessonAttributes {
     headLineTag?: string;
     languageId: string;
     estimatedDuration: number;
+    isActive?: boolean;
     createdAt: Date;
     totalContents?: number;
     outcomes?: string;
@@ -146,6 +149,21 @@ export interface UserCourseAttributes {
     languageId: string;
     isActive: boolean;
 }
+export interface UserLessonAttributes {
+    id: string;
+    userId: string;
+    courseId: string;
+    lessonId: string;
+    languageId: string;
+    percentageCompletion: number;
+    isCompleted: boolean;
+    score?: number;
+    startedAt?: Date;
+    completedAt?: Date;
+    lastAccessed?: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
+}
 export interface UserQuizAnswerAttributes {
     id: string;
     userId: string;
@@ -180,4 +198,21 @@ export interface DailyWordAttributes {
     englishText: string;
     isUsed: boolean;
     pronunciationNote?: string;
+}
+export interface IconAttribution {
+    name: string;
+    url: string;
+}
+export interface FlashcardAttributes {
+    id: string;
+    language: string;
+    yorubaWord: string;
+    englishWord: string;
+    transcription: string;
+    tonal: string;
+    image: string;
+    audio: string[];
+    iconAttributions: IconAttribution;
+    createdAt: Date;
+    updatedAt?: Date;
 }

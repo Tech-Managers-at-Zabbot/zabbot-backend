@@ -197,10 +197,36 @@ const getQuizzesQuerySchema = joi_1.default.object({
     page: joi_1.default.number().integer().min(1).default(1),
     limit: joi_1.default.number().integer().min(1).max(100).default(10),
 });
+const iconAttributionsSchema = joi_1.default.object({
+    name: joi_1.default.string().min(1).required(),
+    url: joi_1.default.string().uri().required(),
+});
+const createFlashcardSchema = joi_1.default.object({
+    language: joi_1.default.string().min(1).required(),
+    yorubaWord: joi_1.default.string().min(1).required(),
+    englishWord: joi_1.default.string().min(1).required(),
+    transcription: joi_1.default.string().min(1).required(),
+    tonal: joi_1.default.string().min(1).required(),
+    image: joi_1.default.string().min(1).required(),
+    audio: joi_1.default.array().items(joi_1.default.string().min(1)).required(),
+    iconAttributions: iconAttributionsSchema.required(),
+});
+const updateFlashcardSchema = joi_1.default.object({
+    language: joi_1.default.string().min(1).optional(),
+    yorubaWord: joi_1.default.string().min(1).optional(),
+    englishWord: joi_1.default.string().min(1).optional(),
+    transcription: joi_1.default.string().min(1).optional(),
+    tonal: joi_1.default.string().min(1).optional(),
+    image: joi_1.default.string().min(1).optional(),
+    audio: joi_1.default.array().items(joi_1.default.string().min(1)).optional(),
+    iconAttributions: iconAttributionsSchema.optional(),
+}).min(1);
 exports.default = {
     inputValidator,
     createQuizSchema,
     updateQuizSchema,
     submitQuizAnswerSchema,
     getQuizzesQuerySchema,
+    createFlashcardSchema,
+    updateFlashcardSchema,
 };

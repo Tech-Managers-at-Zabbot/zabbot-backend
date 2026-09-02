@@ -3,12 +3,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.quizController = exports.dailyGoalController = exports.wordForTheDayController = void 0;
+exports.leaderboardController = exports.quizController = exports.flashcardController = exports.dailyGoalController = exports.wordForTheDayController = void 0;
 // import languageController from "./language.controller";
 // import lessonController from "./lesson.controller";
 const wordForTheDay_controller_1 = __importDefault(require("./wordForTheDay.controller"));
 exports.wordForTheDayController = wordForTheDay_controller_1.default;
 const dailyGoal_controller_1 = __importDefault(require("./dailyGoal.controller"));
 exports.dailyGoalController = dailyGoal_controller_1.default;
+const flashcard_controller_1 = __importDefault(require("./flashcard.controller"));
+exports.flashcardController = flashcard_controller_1.default;
 const quiz_controller_1 = __importDefault(require("./quiz.controller"));
 exports.quizController = quiz_controller_1.default;
+const leaderboard_controller_1 = __importDefault(require("./leaderboard.controller"));
+exports.leaderboardController = leaderboard_controller_1.default;

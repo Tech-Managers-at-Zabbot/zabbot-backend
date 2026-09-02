@@ -21,7 +21,6 @@ import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
 import UserPronunciation from "../../../shared/entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation";
 import config from "../../../config/config";
 
-
 Ffmpeg.setFfmpegPath(ffmpegPath as string);
 
 const sampleRate = 16000;
@@ -56,23 +55,26 @@ const safeTensorDispose = (tensor: tf.Tensor | null) => {
 // New lightweight embedding function using OpenAI API
 const getTextEmbedding = async (text: string): Promise<any> => {
   try {
-    const response = await openai.embeddings.create({
+    const response = (await openai.embeddings.create({
       model: "text-embedding-3-small", // Most cost-effective option
       input: text.toLowerCase().trim(), // Normalize text
       encoding_format: "float",
-    }) as any;
+    })) as any;
 
     return response.data[0].embedding;
   } catch (error: any) {
     throw errorUtilities.createError(
       `Error getting text embedding: ${error.message}`,
-      500
+      500,
     );
   }
 };
 
 // Helper function for cosine similarity
-const calculateCosineSimilarity = (vecA: number[] | any, vecB: number[] | any[]): number => {
+const calculateCosineSimilarity = (
+  vecA: number[] | any,
+  vecB: number[] | any[],
+): number => {
   const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
   const normA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
   const normB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
@@ -82,7 +84,7 @@ const calculateCosineSimilarity = (vecA: number[] | any, vecB: number[] | any[])
 // Enhanced text similarity function using embeddings
 const getEnhancedTextSimilarity = async (
   userTranscription: string,
-  masterTranscription: string
+  masterTranscription: string,
 ): Promise<{
   embeddingSimilarity: number;
   textSimilarity: number;
@@ -97,14 +99,14 @@ const getEnhancedTextSimilarity = async (
   // Calculate cosine similarity between embeddings
   const embeddingSimilarity = calculateCosineSimilarity(
     userEmbedding,
-    masterEmbedding
+    masterEmbedding,
   );
 
   // Keep existing text similarity calculation
   const matcher = new SequenceMatcher(
     null,
     userTranscription,
-    masterTranscription
+    masterTranscription,
   );
   const seqSim = matcher.ratio();
 
@@ -112,7 +114,7 @@ const getEnhancedTextSimilarity = async (
   const maxLen = Math.max(
     userTranscription.length,
     masterTranscription.length,
-    1
+    1,
   );
   const levSim = 1 - levDist / maxLen;
 
@@ -135,7 +137,7 @@ const cleanupFiles = async (filePaths: string[]) => {
       await fsPromises.unlink(filePath);
     } catch (error) {
       // Ignore errors if file doesn't exist
-      console.warn(`Could not delete file ${filePath}:`, error);
+      // console.warn(`Could not delete file ${filePath}:`, error);
     }
   });
 
@@ -148,11 +150,17 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
     file,
     userId,
     voice = "femaleVoice",
+    isInLesson = false,
+    isInLessonUrl,
+    isInLessonAudioId,
   }: {
     userId: string;
     referencePronunciationId: string;
-    file: any
+    file: any;
     voice?: string;
+    isInLesson?: boolean;
+    isInLessonUrl?: string;
+    isInLessonAudioId: string;
   }) => {
     logMemoryUsage("Start of comparePronounciation");
 
@@ -184,16 +192,27 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
     let userTensorScaled: tf.Tensor | null = null;
 
     try {
-      const masterPronunciation =
-        await referenePronunciationRepositories.getPronunciation(
-          referencePronunciationId
-        );
-      if (!masterPronunciation) {
-        throw errorUtilities.createError("Reference file not found", 404);
-      }
+      let url: string;
+      let audioId: string;
 
-      const url = masterPronunciation.get(voice) as string;
-      await getMasterFile(url, masterRawFilePath);
+      if (!isInLesson) {
+        const masterPronunciation =
+          await referenePronunciationRepositories.getPronunciation(
+            referencePronunciationId,
+          );
+        if (!masterPronunciation) {
+          throw errorUtilities.createError("Reference file not found", 404);
+        }
+        url = masterPronunciation.get(voice) as string;
+
+        await getMasterFile(url, masterRawFilePath);
+
+        audioId = masterPronunciation.get("id");
+      } else {
+        url = isInLessonUrl;
+        await getMasterFile(url, masterRawFilePath);
+        audioId = isInLessonAudioId;
+      }
 
       logMemoryUsage("Before user audio processing");
       const { tensor: userTensorRaw, raw: userRawAudio } =
@@ -218,13 +237,13 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
       if (isInvalid(userRawAudio)) {
         throw errorUtilities.createError(
           `Your recording was too short or too quiet`,
-          500
+          500,
         );
       }
       if (isInvalid(masterRawAudio)) {
         throw errorUtilities.createError(
           "Reference audio is too short or too quiet",
-          500
+          500,
         );
       }
 
@@ -243,7 +262,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
       // Volume matching (keeping for consistency)
       const [masterScaled, userScaled] = await matchVolumes(
         masterTensor,
-        userTensor
+        userTensor,
       );
       masterTensorScaled = masterScaled;
       userTensorScaled = userScaled;
@@ -300,12 +319,16 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         assetType: "video",
       });
 
-      const userPronunciationData = await saveUserPronunciation({
-        userId,
-        pronunciationId: masterPronunciation.get("id"),
-        recordingUrl: userPronunciationUpload,
-        pronuciationPlotUrl: plotResult,
-      });
+      let newuserPronunciationData: UserPronunciation | null = null;
+
+      if (!isInLesson) {
+        newuserPronunciationData = await saveUserPronunciation({
+          userId,
+          pronunciationId: audioId, //masterPronunciation.get("id"),
+          recordingUrl: userPronunciationUpload,
+          pronuciationPlotUrl: plotResult,
+        });
+      }
 
       // Clean up files
       await cleanupFiles([
@@ -326,7 +349,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         StatusCodes.Created,
         "Pronunciation completed",
         {
-          userPronunciationData,
+          userPronunciationData: newuserPronunciationData,
           remark,
           refTransctipt: masterTranscription,
           userTranscript: userTranscription,
@@ -335,7 +358,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
           finalScore,
           plot: plotResult,
           // Removed dtwPlot to save memory
-        }
+        },
       );
     } catch (error: any) {
       // Clean up files on error
@@ -355,7 +378,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
 
       throw errorUtilities.createError(
         `Error comparing pronunciation: ${error.message}`,
-        500
+        500,
       );
     } finally {
       // Clean up tensors (much fewer now!)
@@ -364,7 +387,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
       safeTensorDispose(normalisedUserAudio);
       safeTensorDispose(normalisedMasterAudio);
       safeTensorDispose(
-        masterTensorScaled !== masterTensor ? masterTensorScaled : null
+        masterTensorScaled !== masterTensor ? masterTensorScaled : null,
       );
       safeTensorDispose(userTensorScaled);
 
@@ -375,7 +398,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
 
       logMemoryUsage("After tensor cleanup");
     }
-  }
+  },
 );
 
 const getMasterFile = async (url: string, outputPath: string) => {
@@ -406,7 +429,7 @@ const uploadToCloudinary = async ({
   } catch (error: any) {
     throw errorUtilities.createError(
       `Error uploading user pronunciation to cloudinary: ${error.message}`,
-      500
+      500,
     );
   }
 };
@@ -415,7 +438,7 @@ const uploadToCloudinary = async ({
 const convertAudio = (
   inputPath: string,
   outputPath: string,
-  options: (cmd: Ffmpeg.FfmpegCommand) => void
+  options: (cmd: Ffmpeg.FfmpegCommand) => void,
 ): Promise<void> => {
   return new Promise((resolve, reject) => {
     const command = Ffmpeg(inputPath);
@@ -444,12 +467,12 @@ export const loadAndTrimAudio = async ({
   try {
     console.log("Converting to WAV...");
     await convertAudio(rawFilePath, wavFilePath, (cmd) =>
-      cmd.audioChannels(1).audioFrequency(16000).format("wav")
+      cmd.audioChannels(1).audioFrequency(16000).format("wav"),
     );
 
     console.log("Trimming silence...");
     await convertAudio(wavFilePath, trimmedFilePath, (cmd) =>
-      cmd.audioFilters("silenceremove=1:0:-30dB")
+      cmd.audioFilters("silenceremove=1:0:-30dB"),
     );
 
     console.log("Reading trimmed file...");
@@ -472,7 +495,7 @@ export const loadAndTrimAudio = async ({
     safeTensorDispose(tensorAudio);
     throw errorUtilities.createError(
       `Error processing audio: ${err.message}`,
-      500
+      500,
     );
   }
 };
@@ -480,7 +503,7 @@ export const loadAndTrimAudio = async ({
 const isInvalid = (
   audio: Float32Array | any,
   threshold = 0.01,
-  minDuration = 0.5
+  minDuration = 0.5,
 ): boolean => {
   const isTooShort = audio.length < sampleRate * minDuration;
   const maxAmplitude = Math.max(...audio.map(Math.abs));
@@ -516,7 +539,7 @@ const rms = async (tensor: tf.Tensor): Promise<number> => {
 
 const matchVolumes = async (
   masterTensor: tf.Tensor,
-  userTensor: tf.Tensor
+  userTensor: tf.Tensor,
 ): Promise<[tf.Tensor, tf.Tensor]> => {
   const masterRms = await rms(masterTensor);
   const userRms = await rms(userTensor);
@@ -533,7 +556,7 @@ const matchVolumes = async (
 const writeWavFile = async (
   path: string,
   sampleRate: number,
-  audioData: Float32Array
+  audioData: Float32Array,
 ): Promise<void> => {
   const wav = new WaveFile();
   wav.fromScratch(1, sampleRate, "32f", audioData);
@@ -555,7 +578,7 @@ const getTranscription = async (filePath: string) => {
 const plotOverlay = async (
   refData: Float32Array,
   userData: Float32Array,
-  outputPath: string
+  outputPath: string,
 ): Promise<void> => {
   const width = 1000;
   const height = 400;
@@ -640,6 +663,7 @@ const saveUserPronunciation = async ({
     recordingUrl,
     pronuciationPlotUrl,
   };
+
   return userPronunciationRepositories.addPronunciation(userPronunciationData);
 };
 
@@ -655,7 +679,7 @@ const createFileDirectories = async ({
   const userRawFilePath = path.join(
     __dirname,
     "../utilities/audioFiles/uploads/raw",
-    reqFileName
+    reqFileName,
   );
   const paths: Record<string, string> = {
     userRawFilePath,
@@ -669,7 +693,7 @@ const createFileDirectories = async ({
   for (let key in userFilePaths) {
     const directory = path.join(
       __dirname,
-      userFilePaths[key as keyof typeof userFilePaths]
+      userFilePaths[key as keyof typeof userFilePaths],
     );
     await fsPromises.mkdir(directory, { recursive: true });
     paths[key] = path.join(directory, `${userfileName}.wav`);
@@ -684,7 +708,7 @@ const createFileDirectories = async ({
   for (let key in masterFilePaths) {
     const directory = path.join(
       __dirname,
-      masterFilePaths[key as keyof typeof masterFilePaths]
+      masterFilePaths[key as keyof typeof masterFilePaths],
     );
     await fsPromises.mkdir(directory, { recursive: true });
     paths[key] = path.join(directory, `${masterFileName}.wav`);
@@ -696,7 +720,7 @@ const createFileDirectories = async ({
   for (let key in plotPaths) {
     const directory = path.join(
       __dirname,
-      plotPaths[key as keyof typeof plotPaths]
+      plotPaths[key as keyof typeof plotPaths],
     );
     await fsPromises.mkdir(directory, { recursive: true });
     if (key && typeof key === "string" && key.includes("Path")) {

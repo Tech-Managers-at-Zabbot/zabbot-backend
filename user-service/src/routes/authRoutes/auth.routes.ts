@@ -3,6 +3,7 @@ import { emailAuthControllers, googleAuthControllers } from "../../controllers";
 import express, { Request, Response, NextFunction } from "express";
 import passport from "passport";
 import config from "../../../../config/config";
+import { generalAuthFunction } from "../../../../shared/middleware/authorization.middleware";
 
 const router = express.Router();
 
@@ -30,6 +31,25 @@ router.post(
   "/reset-password",
   joiValidations.inputValidator(joiValidations.resetPasswordSchema),
   emailAuthControllers.userResetPasswordController
+);
+router.post(
+  "/change-password",
+  joiValidations.inputValidator(joiValidations.changePasswordSchema),
+  generalAuthFunction,
+  emailAuthControllers.changeUserPasswordController
+);
+
+router.patch(
+  "/update-user-names",
+  joiValidations.inputValidator(joiValidations.updateUserNameSchema),
+  generalAuthFunction,
+  emailAuthControllers.updateUserNamesController
+);
+
+router.get(
+  "/single-user",
+  generalAuthFunction,
+  emailAuthControllers.getSingleUserDetailsController
 );
 
 // Google Registration Route

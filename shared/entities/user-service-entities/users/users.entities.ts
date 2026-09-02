@@ -22,6 +22,8 @@ class Users extends Model<UserAttributes> implements UserAttributes {
     public refreshToken?: string;
     public country?: string;
     public phoneNumber?: string;
+    public noOfSubscriptions?: number;
+    public stripeCustomerId?: string;
     public deletedAt?: Date;
     public profilePicture?: string;
     public bio?: string;
@@ -55,6 +57,10 @@ class Users extends Model<UserAttributes> implements UserAttributes {
         question: string;
         answer: string;
     }[];
+    public currentStreak?: number;
+    public longestStreak?: number;
+    public lastStreakDate?: Date;
+    public badges?: number;
 }
 
 Users.init(
@@ -119,6 +125,15 @@ Users.init(
             type: DataTypes.STRING,
             allowNull: true,
         },
+        noOfSubscriptions:{
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            defaultValue: 0
+        },
+        stripeCustomerId: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
         deletedAt: {
             type: DataTypes.DATE,
             allowNull: true,
@@ -167,6 +182,25 @@ Users.init(
         securityQuestions: {
             type: DataTypes.JSON,
             allowNull: true,
+        },
+        currentStreak: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
+        },
+        longestStreak: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
+        },
+        lastStreakDate: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        },
+        badges: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
         },
         registerMethod: {
             type: DataTypes.ENUM(...Object.values(RegisterMethods)),

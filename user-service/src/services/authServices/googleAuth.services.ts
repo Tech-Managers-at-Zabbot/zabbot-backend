@@ -22,55 +22,16 @@ const googleOAuthRegister = async (
   accessToken: string,
   refreshToken: string,
   profile: Profile,
-  done: VerifyCallback
+  done: VerifyCallback,
 ) => {
   try {
     let user = await usersRepositories.getOne(
       { email: profile.emails?.[0].value },
-      ["id", "email"]
+      ["id", "email"],
     );
 
     if (user) {
       return done(new Error("user_already_exists"));
-    }
-
-    try {
-      const isBetaTester = await axios.get(
-        `${config.LOCAL_FOUNDERS_LIST_URL}/beta-tester-check?email=${profile.emails?.[0].value}`,
-        {
-          timeout: 10000,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (isBetaTester.status !== StatusCodes.OK) {
-        const errorMessage =
-          isBetaTester.status === StatusCodes.Forbidden
-            ? "unauthorized_for_testing"
-            : "failed_tester_check";
-
-        return done(new Error(errorMessage));
-      }
-    } catch (err: any) {
-      console.log("📊 Registration Error details:", {
-        status: err.response?.status,
-        statusText: err.response?.statusText,
-        data: err.response?.data,
-        code: err.code,
-      });
-
-      let customError = "authentication_failed";
-      if (err.response?.status === StatusCodes.NotFound) {
-        customError = "signup_as_tester";
-      } else if (err.response?.status === 403) {
-        customError = "unauthorized_for_testing";
-      } else {
-        customError = "failed_tester_check";
-      }
-
-      return done(new Error(customError));
     }
 
     // Create new user
@@ -84,6 +45,7 @@ const googleOAuthRegister = async (
       isBlocked: false,
       isFirstTimeLogin: true,
       role: UserRoles.USER,
+      noOfSubscriptions: 0,
       profilePicture: profile?.photos?.[0].value,
       googleAccessToken: accessToken,
       googleRefreshToken: refreshToken,
@@ -124,12 +86,11 @@ const googleOAuthRegister = async (
       },
       {
         refreshToken: appRefreshToken,
-      }
+      },
     );
 
-    const userDetails: any = await usersRepositories.extractUserDetails(
-      newUser
-    );
+    const userDetails: any =
+      await usersRepositories.extractUserDetails(newUser);
 
     userDetails.languageId = config.YORUBA_LANGUAGE_ID!;
 
@@ -148,7 +109,7 @@ const googleOAuthRegister = async (
       .catch((error) => {
         console.error(
           `Background email processing failed for ${createUserPayload.email}:`,
-          error.message
+          error.message,
         );
       });
 
@@ -167,7 +128,7 @@ const googleOAuthLogin = async (
   accessToken: string,
   refreshToken: string,
   profile: Profile,
-  done: VerifyCallback
+  done: VerifyCallback,
 ) => {
   try {
     let user = await usersRepositories.getOne(
@@ -180,7 +141,7 @@ const googleOAuthLogin = async (
         "isActive",
         "isBlocked",
         "registerMethod",
-      ]
+      ],
     );
 
     if (!user) {
@@ -227,12 +188,11 @@ const googleOAuthLogin = async (
         timeZone:
           request?.query?.state ||
           Intl.DateTimeFormat().resolvedOptions().timeZone,
-      }
+      },
     );
 
-    const userDetails: any = await usersRepositories.extractUserDetails(
-      newUser
-    );
+    const userDetails: any =
+      await usersRepositories.extractUserDetails(newUser);
 
     userDetails.languageId = config.YORUBA_LANGUAGE_ID!;
 

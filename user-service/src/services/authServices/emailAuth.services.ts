@@ -16,11 +16,23 @@ import { OtpResponses } from "../../responses/otpResponses/otp.responses";
 import userRepositories from "../../repositories/userRepositories/users.repositories";
 import otpRepositories from "../../repositories/otpRepositories/otp.repositories";
 import config from "../../../../config/config";
-import { UserAttributes, UserRoles, RegisterMethods, OtpNotificationType, OtpAttributes } from "../../../../shared/databaseTypes/user-service-types";
-
+import {
+  UserAttributes,
+  UserRoles,
+  RegisterMethods,
+  OtpNotificationType,
+  OtpAttributes,
+} from "../../../../shared/databaseTypes/user-service-types";
+// import UserLeaderboard from "../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities";
+import UserLeaderboard from "../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities";
+import UserLessons from "../../../../shared/entities/lesson-service-entities/userLesson/user-lesson";
+import Lessons from "../../../../shared/entities/lesson-service-entities/lesson/lesson";
+import userNotificationsRepositories from "../../../../shared/repositories/userNotification.repositories";
+import { NotificationFrequency } from "../../../../shared/entities/user-service-entities/userNotificationSettings/userNotificationSettings.entities";
 const registerUserService = errorUtilities.withServiceErrorHandling(
   async (registerPayload: UserAttributes) => {
-    const { firstName, lastName, email, password, role, timeZone } = registerPayload;
+    const { firstName, lastName, email, password, role, timeZone } =
+      registerPayload;
 
     const userExists = await usersRepositories.getOne({ email: email }, [
       "id",
@@ -30,7 +42,7 @@ const registerUserService = errorUtilities.withServiceErrorHandling(
     if (userExists) {
       throw errorUtilities.createError(
         GeneralResponses.EMAIL_EXISTS_LOGIN,
-        StatusCodes.BadRequest
+        StatusCodes.BadRequest,
       );
     }
 
@@ -46,6 +58,7 @@ const registerUserService = errorUtilities.withServiceErrorHandling(
       isActive: true,
       isBlocked: false,
       timeZone,
+      noOfSubscriptions: 0,
       isFirstTimeLogin: true,
       role: role ?? UserRoles.USER,
       registerMethod: RegisterMethods.EMAIL,
@@ -53,12 +66,52 @@ const registerUserService = errorUtilities.withServiceErrorHandling(
 
     const newUser = await usersRepositories.create(createUserPayload);
 
+    const now = new Date();
+
+    const dayStart = new Date(now);
+    dayStart.setHours(0, 0, 0, 0);
+
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+
+    const createLeaderBoard = await UserLeaderboard.create({
+      id: v4(),
+      userId: createUserPayload.id,
+      username: `${createUserPayload.firstName} ${createUserPayload.lastName}`,
+      dailyScore: 0,
+      weeklyScore: 0,
+      allTimeScore: 0,
+      quizzesCompleted: 0,
+      quizzesCorrect: 0,
+      dailyWordsListened: 0,
+      weekStartDate: weekStart,
+      dayStartDate: dayStart,
+      lastUpdated: now,
+      lastUpdatedDate: dayStart,
+      lastUpdatedWeek: weekStart,
+    });
+
     if (!newUser) {
       throw errorUtilities.createError(
         GeneralResponses.PROCESS_UNSSUCCESSFUL,
-        StatusCodes.InternalServerError
+        StatusCodes.InternalServerError,
       );
     }
+
+    await userNotificationsRepositories.create({
+      id: v4(),
+      userId: createUserPayload.id,
+      frequency: NotificationFrequency.NEVER,
+      lastNotificationDate: now,
+      nextNotificationDate: null,
+      sentTemplates: [],
+      dailyReminders: false,
+      weeklyReminders: false,
+      biWeeklyReminders: false,
+      noNotificationsAndReminders: false,
+    });
+
     if (createUserPayload.role === UserRoles.USER) {
       const otp = helperFunctions.generateOtp();
 
@@ -96,7 +149,7 @@ const registerUserService = errorUtilities.withServiceErrorHandling(
         .catch((error) => {
           console.error(
             `Background email processing failed for ${createUserPayload.email}:`,
-            error.message
+            error.message,
           );
         });
     }
@@ -106,13 +159,13 @@ const registerUserService = errorUtilities.withServiceErrorHandling(
       role && role === UserRoles.ADMIN
         ? GeneralResponses.ADMIN_REGISTRATION_SUCCESSFUL
         : GeneralResponses.USER_REGSTRATION_SUCCESSFUL,
-      createUserPayload.email
+      createUserPayload.email,
     );
-  }
+  },
 );
 
 const verifyUserAccountService = errorUtilities.withServiceErrorHandling(
-  async (email: string, otp: string) => {
+  async (email, otp: string) => {
     const user = await userRepositories.getOne({ email }, [
       "id",
       "email",
@@ -123,14 +176,14 @@ const verifyUserAccountService = errorUtilities.withServiceErrorHandling(
     if (!user) {
       throw errorUtilities.createError(
         GeneralResponses.USER_NOT_FOUND,
-        StatusCodes.NotFound
+        StatusCodes.NotFound,
       );
     }
 
     if (user.isVerified) {
       throw errorUtilities.createError(
         GeneralResponses.ALREADY_VERIFIED_ACCOUNT,
-        StatusCodes.BadRequest
+        StatusCodes.BadRequest,
       );
     }
 
@@ -140,19 +193,19 @@ const verifyUserAccountService = errorUtilities.withServiceErrorHandling(
         isUsed: false,
         notificationType: OtpNotificationType.EMAIL,
       },
-      ["id", "otp", "expiresAt", "isUsed", "attempts"]
+      ["id", "otp", "expiresAt", "isUsed", "attempts"],
     );
 
     if (!otpData) {
       throw errorUtilities.createError(
         OtpResponses.INVALID_OTP,
-        StatusCodes.NotFound
+        StatusCodes.NotFound,
       );
     }
     if (otpData.attempts >= 4) {
       throw errorUtilities.createError(
         OtpResponses.OTP_EXCEEDED_ATTEMPTS,
-        StatusCodes.Forbidden
+        StatusCodes.Forbidden,
       );
     }
     const isOtpValid = await helperFunctions.comparePasswords(otp, otpData.otp);
@@ -160,11 +213,11 @@ const verifyUserAccountService = errorUtilities.withServiceErrorHandling(
     if (!isOtpValid) {
       await otpRepositories.updateOne(
         { id: otpData.id },
-        { attempts: otpData.attempts + 1 }
+        { attempts: otpData.attempts + 1 },
       );
       throw errorUtilities.createError(
         OtpResponses.INVALID_OTP,
-        StatusCodes.Unauthorized
+        StatusCodes.Unauthorized,
       );
     }
 
@@ -172,13 +225,13 @@ const verifyUserAccountService = errorUtilities.withServiceErrorHandling(
       await otpRepositories.updateOne({ id: otpData.id }, { isUsed: true });
       throw errorUtilities.createError(
         OtpResponses.OTP_EXPIRED,
-        StatusCodes.Unauthorized
+        StatusCodes.Unauthorized,
       );
     }
 
     await otpRepositories.updateOne(
       { id: otpData.id },
-      { isUsed: true, verifiedAt: new Date() }
+      { isUsed: true, verifiedAt: new Date() },
     );
 
     const userId = user.id;
@@ -190,15 +243,15 @@ const verifyUserAccountService = errorUtilities.withServiceErrorHandling(
       {
         isVerified: true,
         verifiedAt: new Date(),
-      }
+      },
     );
 
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       GeneralResponses.SUCCESSFUL_VERIFICATION,
-      { email: user.email, role: user.role }
+      { email: user.email, role: user.role },
     );
-  }
+  },
 );
 
 const resendVerificationOtpService = errorUtilities.withServiceErrorHandling(
@@ -214,14 +267,14 @@ const resendVerificationOtpService = errorUtilities.withServiceErrorHandling(
     if (!user) {
       throw errorUtilities.createError(
         GeneralResponses.USER_NOT_FOUND,
-        StatusCodes.NotFound
+        StatusCodes.NotFound,
       );
     }
 
     if (user.isVerified) {
       throw errorUtilities.createError(
         GeneralResponses.ALREADY_VERIFIED_ACCOUNT,
-        StatusCodes.BadRequest
+        StatusCodes.BadRequest,
       );
     }
 
@@ -245,7 +298,7 @@ const resendVerificationOtpService = errorUtilities.withServiceErrorHandling(
       console.error("ERROR====> OTP CREATION FAILED:", otpCreated);
       throw errorUtilities.createError(
         OtpResponses.OTP_CREATION_FAILED,
-        StatusCodes.InternalServerError
+        StatusCodes.InternalServerError,
       );
     }
     const emailData = {
@@ -256,22 +309,22 @@ const resendVerificationOtpService = errorUtilities.withServiceErrorHandling(
     try {
       await axios.post(
         `${config.NOTIFICATION_SERVICE_ROUTE}/auth-notification/resend-verification-otp`,
-        emailData
+        emailData,
       );
     } catch (error: any) {
       console.error(`Error Resending Verification Mail: ${error.message}`);
       throw errorUtilities.createError(
         OtpResponses.OTP_RESEND_FAILED,
-        StatusCodes.InternalServerError
+        StatusCodes.InternalServerError,
       );
     }
 
     return responseUtilities.handleServicesResponse(
       StatusCodes.Created,
       GeneralResponses.USER_REGSTRATION_SUCCESSFUL,
-      user.email
+      user.email,
     );
-  }
+  },
 );
 
 const loginUserService = errorUtilities.withServiceErrorHandling(
@@ -288,21 +341,21 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
     if (!user) {
       throw errorUtilities.createError(
         GeneralResponses.USER_NOT_FOUND,
-        StatusCodes.NotFound
+        StatusCodes.NotFound,
       );
     }
 
     if (!user.isActive) {
       throw errorUtilities.createError(
         GeneralResponses.INACTIVE_ACCOUNT,
-        StatusCodes.Forbidden
+        StatusCodes.Forbidden,
       );
     }
 
     if (user.isBlocked) {
       throw errorUtilities.createError(
         GeneralResponses.BLOCKED_ACCOUNT,
-        StatusCodes.Forbidden
+        StatusCodes.Forbidden,
       );
     }
 
@@ -333,7 +386,7 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
         throw errorUtilities.createError(
           GeneralResponses.UNVERIFIED_ACCOUNT,
           StatusCodes.InternalServerError,
-          codeDetails
+          codeDetails,
         );
       }
       const emailData = {
@@ -344,32 +397,32 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
       try {
         await axios.post(
           `${config.NOTIFICATION_SERVICE_ROUTE}/auth-notification/resend-verification-otp`,
-          emailData
+          emailData,
         );
       } catch (error: any) {
         console.error(`Error Resending Verification Mail: ${error.message}`);
         throw errorUtilities.createError(
           GeneralResponses.UNVERIFIED_ACCOUNT,
           StatusCodes.InternalServerError,
-          codeDetails
+          codeDetails,
         );
       }
       throw errorUtilities.createError(
         GeneralResponses.UNVERIFIED_ACCOUNT,
         StatusCodes.Forbidden,
-        codeDetails
+        codeDetails,
       );
     }
 
     const isPasswordValid = await helperFunctions.comparePasswords(
       password,
-      user.password
+      user.password,
     );
 
     if (!isPasswordValid) {
       throw errorUtilities.createError(
         GeneralResponses.INVALID_CREDENTIALS,
-        StatusCodes.Unauthorized
+        StatusCodes.Unauthorized,
       );
     }
 
@@ -387,6 +440,7 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
         userId: user.id,
         email: user.email,
         role: user.role,
+        stayLoggedIn: Boolean(stayLoggedIn),
       },
       expires: "60d",
     };
@@ -400,20 +454,37 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
       },
       {
         refreshToken,
-        timeZone
-      }
+        timeZone,
+      },
     );
 
-    const userDetails:Record<string, any> = await usersRepositories.extractUserDetails(user);
+    let userSub;
+    try {
+      userSub = await axios.get(
+        `${config.PAYMENT_SERVICE_ROUTE}/subscription-plans/user-subscription`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+    } catch (error: any) {
+      console.error(`Error fetching user Sub: ${error.message}`);
+    }
 
-    userDetails.languageId = config.YORUBA_LANGUAGE_ID!
+    const userDetails: Record<string, any> =
+      await usersRepositories.extractUserDetails(user);
+
+    userDetails.languageId = config.YORUBA_LANGUAGE_ID!;
+
+    userDetails.userSubscription = userSub?.data?.data;
 
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       GeneralResponses.SUCCESSFUL_LOGIN,
-      { token: accessToken, user: userDetails }
+      { token: accessToken, user: userDetails },
     );
-  }
+  },
 );
 
 const passwordResetRequestService = errorUtilities.withServiceErrorHandling(
@@ -430,26 +501,26 @@ const passwordResetRequestService = errorUtilities.withServiceErrorHandling(
     if (!user) {
       throw errorUtilities.createError(
         GeneralResponses.USER_NOT_FOUND,
-        StatusCodes.NotFound
+        StatusCodes.NotFound,
       );
     }
     if (!user.isVerified) {
       throw errorUtilities.createError(
         GeneralResponses.UNVERIFIED_ACCOUNT,
-        StatusCodes.Forbidden
+        StatusCodes.Forbidden,
       );
     }
     if (!user.isActive) {
       throw errorUtilities.createError(
         GeneralResponses.INACTIVE_ACCOUNT,
-        StatusCodes.Forbidden
+        StatusCodes.Forbidden,
       );
     }
 
     if (user.isBlocked) {
       throw errorUtilities.createError(
         GeneralResponses.BLOCKED_ACCOUNT,
-        StatusCodes.Forbidden
+        StatusCodes.Forbidden,
       );
     }
     const tokenData = {
@@ -476,7 +547,7 @@ const passwordResetRequestService = errorUtilities.withServiceErrorHandling(
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
 
       // if (sendLink.status !== 200) {
@@ -500,16 +571,16 @@ const passwordResetRequestService = errorUtilities.withServiceErrorHandling(
       //         } else {
       throw errorUtilities.createError(
         error?.response?.data?.message,
-        error?.response?.status
+        error?.response?.status,
       );
       // }
     }
     return responseUtilities.handleServicesResponse(
       StatusCodes.Created,
       GeneralResponses.SUCCESSFUL_PASSWORD_RESET_LINK_SENT,
-      user.email
+      user.email,
     );
-  }
+  },
 );
 
 const resetPasswordService = errorUtilities.withServiceErrorHandling(
@@ -521,19 +592,19 @@ const resetPasswordService = errorUtilities.withServiceErrorHandling(
     const { token, newPassword, confirmNewPassword } = resetPayload;
     if (newPassword !== confirmNewPassword) {
       throw errorUtilities.createError(
-        GeneralResponses.MISMATCHED_PASSEORD,
-        StatusCodes.BadRequest
+        GeneralResponses.MISMATCHED_PASSWORD,
+        StatusCodes.BadRequest,
       );
     }
     const tokenValidation = helperFunctions.validateToken(token);
     const { userId } = tokenValidation as { userId: string };
     if (!userId) {
       console.error(
-        "ERROR====> PASSWORD RESET ERROR: Invalid token: Missing user ID"
+        "ERROR====> PASSWORD RESET ERROR: Invalid token: Missing user ID",
       );
       throw errorUtilities.createError(
         GeneralResponses.INVALID_TOKEN,
-        StatusCodes.BadRequest
+        StatusCodes.BadRequest,
       );
     }
     const user = await usersRepositories.getOne({ id: userId }, [
@@ -549,37 +620,37 @@ const resetPasswordService = errorUtilities.withServiceErrorHandling(
     if (!user) {
       throw errorUtilities.createError(
         GeneralResponses.USER_NOT_FOUND,
-        StatusCodes.NotFound
+        StatusCodes.NotFound,
       );
     }
     if (!user.isVerified) {
       throw errorUtilities.createError(
         GeneralResponses.UNVERIFIED_ACCOUNT,
-        StatusCodes.Forbidden
+        StatusCodes.Forbidden,
       );
     }
     if (!user.isActive) {
       throw errorUtilities.createError(
         GeneralResponses.INACTIVE_ACCOUNT,
-        StatusCodes.Forbidden
+        StatusCodes.Forbidden,
       );
     }
 
     if (user.isBlocked) {
       throw errorUtilities.createError(
         GeneralResponses.BLOCKED_ACCOUNT,
-        StatusCodes.Forbidden
+        StatusCodes.Forbidden,
       );
     }
     const hashedPassword = await helperFunctions.hashPassword(newPassword);
     const updatedUser = await usersRepositories.updateOne(
       { id: userId },
-      { password: hashedPassword }
+      { password: hashedPassword },
     );
     if (!updatedUser) {
       throw errorUtilities.createError(
         GeneralResponses.FAILED_PASSWORD_RESET,
-        StatusCodes.InternalServerError
+        StatusCodes.InternalServerError,
       );
     }
     const emailData = {
@@ -595,18 +666,140 @@ const resetPasswordService = errorUtilities.withServiceErrorHandling(
       .catch((error) => {
         console.error(
           `Background email processing failed for ${user.email}:`,
-          error.message
+          error.message,
         );
       });
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       GeneralResponses.SUCCESSFUL_PASSWORD_RESET,
-      { email: user.email }
+      { email: user.email },
     );
-  }
+  },
 );
 
+const changePasswordService = errorUtilities.withServiceErrorHandling(
+  async (userId, currentPassword, newPassword, confirmNewPassword) => {
+    if (newPassword !== confirmNewPassword) {
+      throw errorUtilities.createError(
+        GeneralResponses.MISMATCHED_PASSWORD,
+        StatusCodes.BadRequest,
+      );
+    }
 
+    const user = await usersRepositories.getOne({ id: userId }, [
+      "id",
+      "email",
+      "password",
+      "firstName",
+    ]);
+
+    if (!user) {
+      throw errorUtilities.createError(
+        GeneralResponses.USER_NOT_FOUND,
+        StatusCodes.NotFound,
+      );
+    }
+
+    const isCurrentPasswordValid = await helperFunctions.comparePasswords(
+      currentPassword,
+      user.password,
+    );
+
+    if (!isCurrentPasswordValid) {
+      throw errorUtilities.createError(
+        "The current password you entered is incorrect",
+        StatusCodes.Unauthorized,
+      );
+    }
+
+    const hashedNewPassword = await helperFunctions.hashPassword(newPassword);
+
+    const updatedUser = await usersRepositories.updateOne(
+      { id: userId },
+      { password: hashedNewPassword },
+    );
+
+    if (!updatedUser) {
+      throw errorUtilities.createError(
+        GeneralResponses.FAILED_PASSWORD_CHANGE,
+        StatusCodes.InternalServerError,
+      );
+    }
+
+    const emailData = {
+      email: user.email,
+      firstName: user.firstName,
+    };
+
+    const emailPayload = {
+      url: `${config.NOTIFICATION_SERVICE_ROUTE}/auth-notification/password-change-success`,
+      emailData,
+    };
+
+    endpointCallsUtilities
+      .processEmailsInBackground(emailPayload)
+      .catch((error) => {
+        console.error(
+          `Background email processing failed for ${user.email}:`,
+          error.message,
+        );
+      });
+
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.OK,
+      GeneralResponses.SUCCESSFUL_PASSWORD_CHANGE,
+      { email: user.email },
+    );
+  },
+);
+
+const editUserNamesService = errorUtilities.withServiceErrorHandling(
+  async (
+    updateData: { firstName?: string; lastName?: string },
+    userId: string,
+  ) => {
+    const updatedUser = await usersRepositories.updateOne(
+      { id: userId },
+      updateData,
+    );
+
+    if (!updatedUser) {
+      throw errorUtilities.createError(
+        GeneralResponses.PROCESS_UNSSUCCESSFUL,
+        StatusCodes.InternalServerError,
+      );
+    }
+
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.OK,
+      GeneralResponses.PROCESS_SUCCESSFUL,
+    );
+  },
+);
+
+const getSingleUserDetailsService = errorUtilities.withServiceErrorHandling(
+  async (userId: string) => {
+    const [getUser, completedLessonsCount, totalLessonsCount] = await Promise.all([
+      userRepositories.getOne({ id: userId }),
+      UserLessons.count({ where: { userId, isCompleted: true } }),
+      Lessons.count(),
+    ]);
+
+    if (!getUser) {
+      throw errorUtilities.createError(
+        GeneralResponses.USER_NOT_FOUND,
+        StatusCodes.NotFound,
+      );
+    }
+    const newUser = await userRepositories.extractUserDetails(getUser);
+
+    return responseUtilities.handleServicesResponse(
+      StatusCodes.OK,
+      GeneralResponses.PROCESS_SUCCESSFUL,
+      { ...newUser, completedLessonsCount, totalLessonsCount },
+    );
+  },
+);
 
 export default {
   registerUserService,
@@ -615,4 +808,7 @@ export default {
   loginUserService,
   passwordResetRequestService,
   resetPasswordService,
+  changePasswordService,
+  editUserNamesService,
+  getSingleUserDetailsService,
 };

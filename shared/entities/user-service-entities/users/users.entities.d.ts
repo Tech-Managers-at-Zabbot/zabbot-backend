@@ -19,6 +19,8 @@ declare class Users extends Model<UserAttributes> implements UserAttributes {
     refreshToken?: string;
     country?: string;
     phoneNumber?: string;
+    noOfSubscriptions?: number;
+    stripeCustomerId?: string;
     deletedAt?: Date;
     profilePicture?: string;
     bio?: string;
@@ -52,5 +54,9 @@ declare class Users extends Model<UserAttributes> implements UserAttributes {
         question: string;
         answer: string;
     }[];
+    currentStreak?: number;
+    longestStreak?: number;
+    lastStreakDate?: Date;
+    badges?: number;
 }
 export default Users;

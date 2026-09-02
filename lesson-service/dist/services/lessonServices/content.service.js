@@ -42,26 +42,30 @@ const addContent = utilities_1.errorUtilities.withServiceErrorHandling(async (co
     if (!lesson)
         throw utilities_1.errorUtilities.createError(`Lesson not found`, 404);
     const payload = {
+        ...contentData,
         lessonId: contentData.lessonId,
         languageId: contentData.languageId,
         translation: contentData.translation,
         level: contentData.level,
-        createdAt: new Date()
+        createdAt: new Date(),
+        id: (0, uuid_1.v4)(),
     };
     const newContent = await content_repository_1.default.createContent(payload);
-    return newContent;
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.ContentResponses.PROCESS_SUCCESSFUL, newContent);
 });
 const updateContent = utilities_1.errorUtilities.withServiceErrorHandling(async (id, contentData) => {
     const content = await content_repository_1.default.getContent(id);
     if (!content) {
         throw utilities_1.errorUtilities.createError(`Content not found`, 404);
     }
-    content.lessonId = contentData.lessonId;
-    content.languageId = contentData.languageId;
-    content.translation = contentData.translation;
-    content.updatedAt = new Date();
-    const updatedContent = await content_repository_1.default.updateContent(content);
-    return updatedContent;
+    const payload = {
+        ...content.get({ plain: true }),
+        ...contentData,
+        id,
+        updatedAt: new Date(),
+    };
+    const updatedContent = await content_repository_1.default.updateContent(id, payload);
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.ContentResponses.PROCESS_SUCCESSFUL, updatedContent);
 });
 const deleteContent = utilities_1.errorUtilities.withServiceErrorHandling(async (id) => {
     const content = await content_repository_1.default.getContent(id);
@@ -69,7 +73,7 @@ const deleteContent = utilities_1.errorUtilities.withServiceErrorHandling(async 
         throw utilities_1.errorUtilities.createError(`Content not found`, 404);
     }
     await content_repository_1.default.deleteContent(id);
-    return { message: "Content deleted successfully" };
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.ContentResponses.PROCESS_SUCCESSFUL);
 });
 const addContentFile = utilities_1.errorUtilities.withServiceErrorHandling(async (contentData) => {
     if (Array.isArray(contentData)) {
@@ -77,30 +81,63 @@ const addContentFile = utilities_1.errorUtilities.withServiceErrorHandling(async
         const failed = [];
         await Promise.all(contentData.map(async (data) => {
             try {
-                const createdFile = await content_repository_1.default.createContentFile({ ...data, id: (0, uuid_1.v4)(), createdAt: new Date() });
+                const createdFile = await content_repository_1.default.createContentFile({
+                    ...data,
+                    id: (0, uuid_1.v4)(),
+                    createdAt: new Date(),
+                });
                 if (createdFile) {
                     created.push(createdFile);
                 }
                 else {
-                    failed.push({ data, reason: 'Unknown creation failure (no result returned)' });
+                    failed.push({
+                        data,
+                        reason: "Unknown creation failure (no result returned)",
+                    });
                 }
             }
             catch (error) {
                 failed.push({
                     data,
-                    reason: error?.message || 'Unknown error during creation',
+                    reason: error?.message || "Unknown error during creation",
                 });
             }
         }));
         return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.MultiStatus, responses_1.CourseResponses.PROCESS_COMPLETED, { created, failed });
     }
     else {
-        const newContentFile = await content_repository_1.default.createContentFile(contentData);
+        const newContentFile = await content_repository_1.default.createContentFile({
+            ...contentData,
+            id: (0, uuid_1.v4)(),
+            createdAt: new Date(),
+        });
         if (!newContentFile) {
             throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.PROCESS_UNSUCCESSFUL, statusCodes_responses_1.StatusCodes.NotImplemented);
         }
         return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.Created, responses_1.CourseResponses.PROCESS_SUCCESSFUL, newContentFile);
     }
+});
+const updateContentFile = utilities_1.errorUtilities.withServiceErrorHandling(async (id, contentFileData) => {
+    const contentFile = await content_repository_1.default.getContentFilesById(id);
+    if (!contentFile) {
+        throw utilities_1.errorUtilities.createError("Content file not found", 404);
+    }
+    const payload = {
+        ...contentFile.get({ plain: true }),
+        ...contentFileData,
+        id,
+        updatedAt: new Date(),
+    };
+    const updatedContentFile = await content_repository_1.default.updateContentFile(id, payload);
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.CourseResponses.PROCESS_SUCCESSFUL, updatedContentFile);
+});
+const deleteContentFile = utilities_1.errorUtilities.withServiceErrorHandling(async (id) => {
+    const contentFile = await content_repository_1.default.getContentFilesById(id);
+    if (!contentFile) {
+        throw utilities_1.errorUtilities.createError("Content file not found", 404);
+    }
+    await content_repository_1.default.deleteContentFile(id);
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.CourseResponses.PROCESS_SUCCESSFUL);
 });
 exports.default = {
     getContents,
@@ -110,5 +147,7 @@ exports.default = {
     updateContent,
     deleteContent,
     getContentsForLanguage,
-    addContentFile
+    addContentFile,
+    updateContentFile,
+    deleteContentFile,
 };

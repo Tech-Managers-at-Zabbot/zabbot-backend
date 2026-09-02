@@ -11,6 +11,8 @@ dotenv_flow_1.default.config({
     path: process_1.default.cwd(),
 });
 require("./cronJob-services/lessonServiceJobs");
+const sendNotificationsJobs_1 = __importDefault(require("./cronJob-services/sendNotificationsJobs"));
+const lifetimeTrialChargeJobs_1 = __importDefault(require("./cronJob-services/lifetimeTrialChargeJobs"));
 const express_1 = __importDefault(require("express"));
 const http_proxy_middleware_1 = require("http-proxy-middleware");
 const child_process_1 = require("child_process");
@@ -73,6 +75,15 @@ const services = [
         entryPoint: {
             dev: path_1.default.resolve(__dirname, "./pronunciation-feedback-service/src/app.ts"),
             prod: path_1.default.resolve(__dirname, "../pronunciation-feedback-service/dist/app.js"),
+        },
+    },
+    {
+        name: "payment-service",
+        path: "/api/v1/payments",
+        port: 3008,
+        entryPoint: {
+            dev: path_1.default.resolve(__dirname, "./payment-service/src/app.ts"),
+            prod: path_1.default.resolve(__dirname, "../payment-service/dist/app.js"),
         },
     },
 ];
@@ -220,6 +231,8 @@ process_1.default.on("SIGINT", () => shutdown(0));
 async function init() {
     await startServices();
     await (0, syncDb_1.syncDatabases)();
+    sendNotificationsJobs_1.default.startNotificationCron();
+    lifetimeTrialChargeJobs_1.default.startLifetimeTrialChargeCron();
 }
 init();
 app.use((req, res, next) => {

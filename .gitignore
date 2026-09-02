@@ -16,3 +16,9 @@ store.ts
 holder
 .env*
 dist
+.env.*
+.env
+!.env.example
+flyway*.conf
+.DS_Store
+shared/tsconfig.tsbuildinfo

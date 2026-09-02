@@ -63,11 +63,16 @@ const calculateEndTime = (startTime, duration, startDate) => {
 const comparePasswords = async (password, userPassword) => {
     return password === userPassword;
 };
+const normalizeYoruba = (text) => text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
 exports.default = {
     hashPassword,
     bcryptValidate,
     generateTokens,
     dateFormatter,
     calculateEndTime,
-    comparePasswords
+    comparePasswords,
+    normalizeYoruba
 };

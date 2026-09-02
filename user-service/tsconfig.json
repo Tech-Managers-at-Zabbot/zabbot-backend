@@ -13,10 +13,8 @@
     "noImplicitAny": false
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "../shared/repositories/userNotification.repositories.ts"
   ],
-  "references": [
-    { "path": "../shared" },
-    { "path": "../config" }
-  ]
+  "references": [{ "path": "../shared" }, { "path": "../config" }]
 }

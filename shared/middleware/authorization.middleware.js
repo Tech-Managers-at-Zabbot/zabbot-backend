@@ -14,57 +14,81 @@ const generalAuthFunction = async (request, response, next) => {
         const authorizationHeader = request.headers.authorization;
         if (!authorizationHeader) {
             return response.status(403).json({
-                status: 'Failed',
-                message: 'Please login again',
+                status: "Failed",
+                message: "Please login again",
             });
         }
-        const authorizationToken = authorizationHeader.split(' ')[1];
+        const authorizationToken = authorizationHeader.split(" ")[1];
         if (!authorizationToken) {
             return response.status(403).json({
-                status: 'Failed',
-                message: 'Login required',
+                status: "Failed",
+                message: "Login required",
             });
         }
         let verifiedUser;
         try {
             verifiedUser = jsonwebtoken_1.default.verify(authorizationToken, `${config_1.default.APP_JWT_SECRET}`);
             const decodedToken = jsonwebtoken_1.default.decode(authorizationToken);
-            const projection = ['refreshToken', 'isVerified', "isActive", "isBlocked", "role", "accessToken", "id"];
-            const userDetails = await users_entities_1.default.findOne({ where: { id: decodedToken?.userId }, attributes: projection, raw: true });
+            const projection = [
+                "refreshToken",
+                "isVerified",
+                "isActive",
+                "isBlocked",
+                "role",
+                "accessToken",
+                "id",
+            ];
+            const userDetails = await users_entities_1.default.findOne({
+                where: { id: decodedToken?.userId },
+                attributes: projection,
+                raw: true,
+            });
             if (!userDetails) {
                 return response.status(403).json({
-                    status: 'error',
-                    message: 'User not found, please login again or contact admin',
+                    status: "error",
+                    message: "User not found, please login again or contact admin",
                 });
             }
             if (userDetails?.isBlocked) {
                 return response.status(403).json({
-                    status: 'error',
-                    message: 'Account blocked, please contact admin',
+                    status: "error",
+                    message: "Account blocked, please contact admin",
                 });
             }
             if (!userDetails.refreshToken) {
                 return response.status(403).json({
-                    status: 'error',
-                    message: 'Please login again.',
+                    status: "error",
+                    message: "Please login again.",
                 });
             }
         }
         catch (error) {
-            if (error.message === 'jwt expired') {
+            if (error.message === "jwt expired") {
                 const decodedToken = jsonwebtoken_1.default.decode(authorizationToken);
                 if (!decodedToken?.userId) {
                     return response.status(403).json({
-                        status: 'error',
-                        message: 'Invalid token',
+                        status: "error",
+                        message: "Invalid token",
                     });
                 }
-                const projection = ['refreshToken', 'isVerified', "isActive", "isBlocked", "role", "accessToken", "id"];
-                const userDetails = await users_entities_1.default.findOne({ where: { id: decodedToken?.userId }, attributes: projection, raw: true });
+                const projection = [
+                    "refreshToken",
+                    "isVerified",
+                    "isActive",
+                    "isBlocked",
+                    "role",
+                    "accessToken",
+                    "id",
+                ];
+                const userDetails = await users_entities_1.default.findOne({
+                    where: { id: decodedToken?.userId },
+                    attributes: projection,
+                    raw: true,
+                });
                 if (!userDetails) {
                     return response.status(403).json({
-                        status: 'error',
-                        message: 'User not found, please login again or contact admin',
+                        status: "error",
+                        message: "User not found, please login again or contact admin",
                     });
                 }
                 const refreshToken = userDetails?.refreshToken;
@@ -74,47 +98,50 @@ const generalAuthFunction = async (request, response, next) => {
                 }
                 catch (refreshError) {
                     return response.status(403).json({
-                        status: 'error',
-                        message: 'Refresh Token Expired. Please login again.',
+                        status: "error",
+                        message: "Refresh Token Expired. Please login again.",
                     });
                 }
                 if (!userDetails) {
                     return response.status(403).json({
-                        status: 'error',
-                        message: 'User not found, please login again or contact admin',
+                        status: "error",
+                        message: "User not found, please login again or contact admin",
                     });
                 }
                 if (userDetails?.isBlocked) {
                     return response.status(403).json({
-                        status: 'error',
-                        message: 'Account blocked, please contact admin',
+                        status: "error",
+                        message: "Account blocked, please contact admin",
                     });
                 }
                 const compareRefreshTokens = refreshToken === userDetails?.refreshToken;
                 if (compareRefreshTokens === false) {
                     return response.status(403).json({
-                        status: 'error',
-                        message: 'Please login again.',
+                        status: "error",
+                        message: "Please login again.",
                     });
                 }
                 const tokenPayload = {
-                    id: refreshVerifiedUser.id,
+                    userId: refreshVerifiedUser.userId,
                     email: refreshVerifiedUser.email,
-                    role: refreshVerifiedUser.role
+                    role: refreshVerifiedUser.role,
                 };
-                const newAccessToken = utilities_1.helpersUtilities.generateToken(tokenPayload, '2h');
-                const newRefreshToken = utilities_1.helpersUtilities.generateToken(tokenPayload, '30d');
-                response.setHeader('x-access-token', newAccessToken);
+                const accessTokenExpiry = refreshVerifiedUser.stayLoggedIn
+                    ? "30d"
+                    : "2h";
+                const newAccessToken = utilities_1.helpersUtilities.generateToken(tokenPayload, accessTokenExpiry);
+                const newRefreshToken = utilities_1.helpersUtilities.generateToken(tokenPayload, "30d");
+                response.setHeader("x-access-token", newAccessToken);
                 await users_entities_1.default.update({
-                    refreshToken: newRefreshToken
+                    refreshToken: newRefreshToken,
                 }, {
-                    where: { id: refreshVerifiedUser.id }
+                    where: { id: refreshVerifiedUser.id },
                 });
                 request.user = refreshVerifiedUser;
                 return next();
             }
             return response.status(403).json({
-                status: 'error',
+                status: "error",
                 message: `Login Again, Invalid Token: ${error.message}`,
             });
         }
@@ -123,7 +150,7 @@ const generalAuthFunction = async (request, response, next) => {
     }
     catch (error) {
         return response.status(500).json({
-            status: 'error',
+            status: "error",
             message: `Internal Server Error: ${error.message}`,
         });
     }
@@ -135,15 +162,15 @@ function rolePermit(roles) {
         const { userId } = request.user;
         if (!userRole || !userId) {
             return response.status(403).json({
-                status: 'error',
-                message: 'User Not Authorized. Please login again',
+                status: "error",
+                message: "User Not Authorized. Please login again",
             });
         }
         const isAuthorized = roles.includes(userRole);
         if (!isAuthorized) {
             return response.status(401).json({
-                status: 'error',
-                message: 'Not Permitted For Action',
+                status: "error",
+                message: "Not Permitted For Action",
             });
         }
         next();

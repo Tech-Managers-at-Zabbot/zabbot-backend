@@ -3,15 +3,19 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createCourseWithLessonsController = exports.removeUserCourseController = exports.getCourseWithLessonsController = exports.getUserCompletedCoursesController = exports.updateUserCourseController = exports.addUserCourseController = exports.getUserCourseController = exports.getUserCoursesController = exports.deleteCourseController = exports.updateCourseController = exports.addCourseController = exports.getCourseByTitleController = exports.getCourseController = exports.getCoursesController = void 0;
+exports.updateCourseImageController = exports.createCourseWithLessonsController = exports.removeUserCourseController = exports.getCourseWithLessonsController = exports.getUserCompletedCoursesController = exports.updateUserCourseController = exports.addUserCourseController = exports.getUserCourseController = exports.getUserCoursesController = exports.deleteCourseController = exports.updateCourseController = exports.addCourseController = exports.getCourseByTitleController = exports.getCourseController = exports.getCoursesController = void 0;
 const course_service_1 = __importDefault(require("../services/lessonServices/course.service"));
 const user_course_service_1 = __importDefault(require("../services/lessonServices/user-course.service"));
 const utilities_1 = require("../../../shared/utilities");
 // Controller to get all courses
 exports.getCoursesController = utilities_1.errorUtilities.withControllerErrorHandling(async (req, res) => {
     const { languageId } = req.params;
-    const { isActive } = req.query;
-    const courses = await course_service_1.default.getCoursesForLanguage(languageId, isActive);
+    const { isActive, isAdmin } = req.query;
+    const courses = await course_service_1.default.getCoursesForLanguage({
+        languageId,
+        isActive,
+        isAdmin,
+    });
     return utilities_1.responseUtilities.responseHandler(res, courses.message, courses.statusCode, courses.data);
 });
 // Controller to get a single course
@@ -109,4 +113,14 @@ exports.createCourseWithLessonsController = utilities_1.errorUtilities.withContr
     const { languageId } = req.params;
     const course = await course_service_1.default.createCourseWithLessons(courseData, lessons, languageId);
     return utilities_1.responseUtilities.responseHandler(res, course.message, course.statusCode, course.data);
+});
+exports.updateCourseImageController = utilities_1.errorUtilities.withControllerErrorHandling(async (request, response) => {
+    const { mediaType } = request.body;
+    const { courseId } = request.params;
+    const files = request.files;
+    if (!files || files.length === 0 || !mediaType) {
+        return utilities_1.responseUtilities.responseHandler(response, "No file uploaded", 401);
+    }
+    const uploadStatus = await course_service_1.default.updateCourseImageService(courseId, mediaType, files);
+    return utilities_1.responseUtilities.responseHandler(response, uploadStatus.message, uploadStatus.statusCode, uploadStatus.data);
 });

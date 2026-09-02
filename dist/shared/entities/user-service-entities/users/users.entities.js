@@ -22,6 +22,8 @@ class Users extends sequelize_1.Model {
     refreshToken;
     country;
     phoneNumber;
+    noOfSubscriptions;
+    stripeCustomerId;
     deletedAt;
     profilePicture;
     bio;
@@ -34,6 +36,10 @@ class Users extends sequelize_1.Model {
     lastPasswordChangeAt;
     twoFactorEnabled;
     securityQuestions;
+    currentStreak;
+    longestStreak;
+    lastStreakDate;
+    badges;
 }
 Users.init({
     id: {
@@ -96,6 +102,15 @@ Users.init({
         type: sequelize_1.DataTypes.STRING,
         allowNull: true,
     },
+    noOfSubscriptions: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: 0
+    },
+    stripeCustomerId: {
+        type: sequelize_1.DataTypes.STRING,
+        allowNull: true,
+    },
     deletedAt: {
         type: sequelize_1.DataTypes.DATE,
         allowNull: true,
@@ -144,6 +159,25 @@ Users.init({
     securityQuestions: {
         type: sequelize_1.DataTypes.JSON,
         allowNull: true,
+    },
+    currentStreak: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+    },
+    longestStreak: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
+    },
+    lastStreakDate: {
+        type: sequelize_1.DataTypes.DATE,
+        allowNull: true,
+    },
+    badges: {
+        type: sequelize_1.DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
     },
     registerMethod: {
         type: sequelize_1.DataTypes.ENUM(...Object.values(user_service_types_1.RegisterMethods)),

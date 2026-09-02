@@ -20,6 +20,8 @@ dotenvFlow.config({
 // });
 
 import "./cronJob-services/lessonServiceJobs";
+import notificationCron from "./cronJob-services/sendNotificationsJobs";
+import lifetimeTrialChargeCron from "./cronJob-services/lifetimeTrialChargeJobs";
 import express from "express";
 import { createProxyMiddleware, Options } from "http-proxy-middleware";
 import { spawn, ChildProcess } from "child_process";
@@ -101,6 +103,15 @@ const services: ServiceConfig[] = [
         __dirname,
         "../pronunciation-feedback-service/dist/app.js"
       ),
+    },
+  },
+    {
+    name: "payment-service",
+    path: "/api/v1/payments",
+    port: 3008,
+    entryPoint: {
+      dev: path.resolve(__dirname, "./payment-service/src/app.ts"),
+      prod: path.resolve(__dirname, "../payment-service/dist/app.js"),
     },
   },
 ];
@@ -307,6 +318,8 @@ process.on("SIGINT", () => shutdown(0));
 async function init() {
   await startServices();
   await syncDatabases();
+  notificationCron.startNotificationCron()
+  lifetimeTrialChargeCron.startLifetimeTrialChargeCron()
 }
 
 init();

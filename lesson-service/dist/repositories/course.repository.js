@@ -7,13 +7,21 @@ const utilities_1 = require("../../../shared/utilities");
 const course_1 = __importDefault(require("../../../shared/entities/lesson-service-entities/course/course"));
 // import LanguageContents from "../entities/language-content";
 const courseRepositories = {
-    getCourses: async (isActive = true, languageId) => {
+    getCourses: async ({ isActive, languageId, isAdmin, }) => {
         try {
-            const where = {
-                isActive,
-                languageId
-            };
-            const courses = await course_1.default.findAll({ where: where });
+            const where = { languageId };
+            const isAdminFlag = String(isAdmin).toLowerCase() === "true";
+            const hasValidIsActive = typeof isActive === "boolean" ||
+                (typeof isActive === "string" &&
+                    (isActive.toLowerCase() === "true" ||
+                        isActive.toLowerCase() === "false"));
+            if (!isAdminFlag && hasValidIsActive) {
+                where.isActive = String(isActive).toLowerCase() === "true";
+            }
+            const courses = await course_1.default.findAll({
+                where,
+                order: [["orderNumber", "ASC"]],
+            });
             return courses;
         }
         catch (error) {
@@ -24,10 +32,10 @@ const courseRepositories = {
         try {
             const course = await course_1.default.findOne({
                 where: {
-                    id
+                    id,
                 },
                 raw: true,
-                attributes: projections ? projections : undefined
+                attributes: projections ? projections : undefined,
             });
             return course;
         }
@@ -39,7 +47,7 @@ const courseRepositories = {
         try {
             const course = await course_1.default.findOne({
                 where: { languageId },
-                raw: true
+                raw: true,
             });
             return course;
         }
@@ -66,24 +74,34 @@ const courseRepositories = {
             throw utilities_1.errorUtilities.createError(`Error Adding course: ${error.message}`, 500);
         }
     },
-    updateCourse: async (courseData, transaction) => {
+    updateCourse: async (id, courseData, transaction) => {
         try {
-            // Update the course
-            await courseData.update(courseData, { transaction });
-            return courseData;
+            if (!id) {
+                throw utilities_1.errorUtilities.createError("Course id is required", 400);
+            }
+            const [rowsUpdated, [updatedRecord]] = await course_1.default.update(courseData, {
+                where: {
+                    id,
+                },
+                returning: true,
+            });
+            if (rowsUpdated === 0) {
+                throw utilities_1.errorUtilities.createError("No course updated", 400);
+            }
+            return updatedRecord;
         }
         catch (error) {
             throw utilities_1.errorUtilities.createError(`Error Updating course: ${error.message}`, 500);
         }
     },
-    deleteCourse: async (id) => {
+    deleteCourse: async (id, transaction) => {
         try {
-            await course_1.default.destroy({ where: { id } });
+            await course_1.default.destroy({ where: { id }, transaction });
             return { message: "Course deleted successfully" };
         }
         catch (error) {
             throw utilities_1.errorUtilities.createError(`Error Deleting course: ${error.message}`, 500);
         }
-    }
+    },
 };
 exports.default = courseRepositories;

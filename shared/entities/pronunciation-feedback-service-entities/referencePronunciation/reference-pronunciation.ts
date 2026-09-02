@@ -8,7 +8,7 @@ class ReferencePronunciation
 {
   public id!: string;
   public word!: string;
-public englishWord!: string;
+  public englishWord!: string;
   public yorubaWord!: string;
   public femaleVoice!: string;
   public maleVoice!: string;
@@ -26,7 +26,7 @@ ReferencePronunciation.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-     yorubaWord: {
+    yorubaWord: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -38,7 +38,7 @@ ReferencePronunciation.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-     tone: {
+    tone: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -48,7 +48,7 @@ ReferencePronunciation.init(
     modelName: "ReferencePronunciation",
     tableName: "reference_pronunciation",
     timestamps: true,
-  }
+  },
 );
 
 export default ReferencePronunciation;

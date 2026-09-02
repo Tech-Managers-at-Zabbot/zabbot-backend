@@ -9,10 +9,18 @@ const uuid_1 = require("uuid");
 const statusCodes_responses_1 = require("../../../../shared/statusCodes/statusCodes.responses");
 const content_repository_1 = __importDefault(require("../../repositories/content.repository"));
 const lesson_repository_1 = __importDefault(require("../../repositories/lesson.repository"));
+const quiz_repository_1 = __importDefault(require("../../repositories/quiz.repository"));
+const user_course_repository_1 = __importDefault(require("../../repositories/user-course.repository"));
 const responses_1 = require("../../responses/responses");
-const getCoursesForLanguage = utilities_1.errorUtilities.withServiceErrorHandling(async (languageId, isActive) => {
+const api_1 = require("../../../../shared/cloudinary/api");
+const databases_1 = require("../../../../config/databases");
+const getCoursesForLanguage = utilities_1.errorUtilities.withServiceErrorHandling(async ({ languageId, isActive, isAdmin, }) => {
     // const payload = { isActive, languageId };
-    const courses = await course_repository_1.default.getCourses(isActive, languageId);
+    const courses = await course_repository_1.default.getCourses({
+        isActive,
+        languageId,
+        isAdmin,
+    });
     if (!courses) {
         throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.COURSES_NOT_FETCHED, statusCodes_responses_1.StatusCodes.NotFound);
     }
@@ -43,19 +51,32 @@ const addCourse = utilities_1.errorUtilities.withServiceErrorHandling(async (cou
 const updateCourse = utilities_1.errorUtilities.withServiceErrorHandling(async (id, courseData) => {
     const course = await course_repository_1.default.getCourse(id);
     if (!course) {
-        throw utilities_1.errorUtilities.createError(`Course not found`, 404);
+        throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.COURSE_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
     }
-    // Update the course with new data
-    Object.assign(course, courseData);
-    const updatedCourse = await course_repository_1.default.updateCourse(course);
-    return updatedCourse;
+    const updatedCourse = await course_repository_1.default.updateCourse(id, courseData);
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.CourseResponses.PROCESS_SUCCESSFUL, updatedCourse);
 });
 const deleteCourse = utilities_1.errorUtilities.withServiceErrorHandling(async (id) => {
-    await course_repository_1.default.deleteCourse(id);
-    return { message: "Course deleted successfully" };
+    const course = await course_repository_1.default.getCourse(id);
+    if (!course) {
+        throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.COURSE_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
+    }
+    await databases_1.users_service_db.transaction(async (transaction) => {
+        const lessons = await lesson_repository_1.default.getLessonsOnly(id, transaction);
+        const lessonIds = lessons.map((lesson) => lesson.id);
+        if (lessonIds.length > 0) {
+            await content_repository_1.default.deleteContentsByLessonIds(lessonIds, transaction);
+        }
+        await quiz_repository_1.default.deleteQuizzesByCourseId(id, transaction);
+        await user_course_repository_1.default.deleteUserCoursesByCourseId(id, transaction);
+        await lesson_repository_1.default.deleteLessonsByCourseId(id, transaction);
+        await course_repository_1.default.deleteCourse(id, transaction);
+    });
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, responses_1.CourseResponses.PROCESS_SUCCESSFUL, null);
 });
 const getCourseWithLessonsService = utilities_1.errorUtilities.withServiceErrorHandling(async (languageId) => {
     const course = await course_repository_1.default.getCourseWithLanguageId(languageId);
+    console.log("course", course);
     if (!course) {
         throw utilities_1.errorUtilities.createError(responses_1.CourseResponses.COURSE_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
     }
@@ -69,6 +90,7 @@ const createCourseWithLessons = utilities_1.errorUtilities.withServiceErrorHandl
         title: courseData.title,
         description: courseData.description,
         level: courseData.level,
+        orderNumber: courseData.orderNumber ?? 0,
         estimatedDuration: courseData.estimatedDuration,
         thumbnailImage: courseData.thumbnailImage,
         id: (0, uuid_1.v4)(),
@@ -76,7 +98,7 @@ const createCourseWithLessons = utilities_1.errorUtilities.withServiceErrorHandl
         languageId,
         createdAt: new Date(),
         totalLessons: lessons?.length || 0,
-        totalContents: lessons?.reduce((total, lesson) => total + (lesson.contents?.length || 0), 0) || 0
+        totalContents: lessons?.reduce((total, lesson) => total + (lesson.contents?.length || 0), 0) || 0,
     };
     const newCourse = await course_repository_1.default.addCourse(newCourseData);
     if (lessons && lessons.length > 0) {
@@ -93,7 +115,7 @@ const createCourseWithLessons = utilities_1.errorUtilities.withServiceErrorHandl
                 outcomes: lesson.outcomes,
                 objectives: lesson.objectives,
                 estimatedDuration: lesson.estimatedTime || 0,
-                headLineTag: lesson.headlineTag
+                headLineTag: lesson.headlineTag,
             };
             const createdLesson = await lesson_repository_1.default.addLesson(newLessonData);
             if (contents && contents.length > 0) {
@@ -108,11 +130,12 @@ const createCourseWithLessons = utilities_1.errorUtilities.withServiceErrorHandl
                         sourceType: contentData.sourceType,
                         customText: contentData.customText,
                         ededunPhrases: contentData.ededunPhrases,
-                        createdAt: new Date()
+                        createdAt: new Date(),
                     };
                     const createdContent = await content_repository_1.default.createContent(newContentData);
                     // Create content files
-                    if (contentData.contentFiles && contentData.contentFiles.length > 0) {
+                    if (contentData.contentFiles &&
+                        contentData.contentFiles.length > 0) {
                         for (const fileData of contentData.contentFiles) {
                             const contentFileData = {
                                 id: (0, uuid_1.v4)(),
@@ -120,7 +143,7 @@ const createCourseWithLessons = utilities_1.errorUtilities.withServiceErrorHandl
                                 contentType: fileData.contentType,
                                 filePath: fileData.filePath,
                                 description: fileData.description || null,
-                                createdAt: new Date()
+                                createdAt: new Date(),
                             };
                             await content_repository_1.default.createContentFile(contentFileData);
                         }
@@ -131,6 +154,25 @@ const createCourseWithLessons = utilities_1.errorUtilities.withServiceErrorHandl
     }
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.Created, "Course created successfully with lessons", newCourse);
 });
+const updateCourseImageService = utilities_1.errorUtilities.withServiceErrorHandling(async (courseId, mediaType, files) => {
+    const category = "course-images";
+    const uploadCourseImage = await (0, api_1.uploadFile)(category, mediaType, files);
+    if (uploadCourseImage.status === "invalid") {
+        throw utilities_1.errorUtilities.createError(uploadCourseImage.message, statusCodes_responses_1.StatusCodes.BadRequest);
+    }
+    else if (uploadCourseImage.status === "error") {
+        throw utilities_1.errorUtilities.createError(uploadCourseImage.message, statusCodes_responses_1.StatusCodes.InternalServerError);
+    }
+    const successfulUploads = uploadCourseImage.data.successful;
+    const updateData = {
+        thumbnailImage: successfulUploads[0].secure_url,
+    };
+    const updateImage = course_repository_1.default.updateCourse(courseId, updateData);
+    if (!updateImage) {
+        throw utilities_1.errorUtilities.createError("Unable to update course", statusCodes_responses_1.StatusCodes.BadRequest);
+    }
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, "Course updated successfully", updateImage);
+});
 exports.default = {
     getCoursesForLanguage,
     getCourse,
@@ -140,4 +182,5 @@ exports.default = {
     deleteCourse,
     createCourseWithLessons,
     getCourseWithLessonsService,
+    updateCourseImageService,
 };

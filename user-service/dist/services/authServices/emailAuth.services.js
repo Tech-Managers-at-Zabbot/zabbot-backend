@@ -16,6 +16,12 @@ const users_repositories_2 = __importDefault(require("../../repositories/userRep
 const otp_repositories_1 = __importDefault(require("../../repositories/otpRepositories/otp.repositories"));
 const config_1 = __importDefault(require("../../../../config/config"));
 const user_service_types_1 = require("../../../../shared/databaseTypes/user-service-types");
+// import UserLeaderboard from "../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities";
+const leaderboard_entities_1 = __importDefault(require("../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities"));
+const user_lesson_1 = __importDefault(require("../../../../shared/entities/lesson-service-entities/userLesson/user-lesson"));
+const lesson_1 = __importDefault(require("../../../../shared/entities/lesson-service-entities/lesson/lesson"));
+const userNotification_repositories_1 = __importDefault(require("../../../../shared/repositories/userNotification.repositories"));
+const userNotificationSettings_entities_1 = require("../../../../shared/entities/user-service-entities/userNotificationSettings/userNotificationSettings.entities");
 const registerUserService = utilities_1.errorUtilities.withServiceErrorHandling(async (registerPayload) => {
     const { firstName, lastName, email, password, role, timeZone } = registerPayload;
     const userExists = await users_repositories_1.default.getOne({ email: email }, [
@@ -36,14 +42,49 @@ const registerUserService = utilities_1.errorUtilities.withServiceErrorHandling(
         isActive: true,
         isBlocked: false,
         timeZone,
+        noOfSubscriptions: 0,
         isFirstTimeLogin: true,
         role: role ?? user_service_types_1.UserRoles.USER,
         registerMethod: user_service_types_1.RegisterMethods.EMAIL,
     };
     const newUser = await users_repositories_1.default.create(createUserPayload);
+    const now = new Date();
+    const dayStart = new Date(now);
+    dayStart.setHours(0, 0, 0, 0);
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+    const createLeaderBoard = await leaderboard_entities_1.default.create({
+        id: (0, uuid_1.v4)(),
+        userId: createUserPayload.id,
+        username: `${createUserPayload.firstName} ${createUserPayload.lastName}`,
+        dailyScore: 0,
+        weeklyScore: 0,
+        allTimeScore: 0,
+        quizzesCompleted: 0,
+        quizzesCorrect: 0,
+        dailyWordsListened: 0,
+        weekStartDate: weekStart,
+        dayStartDate: dayStart,
+        lastUpdated: now,
+        lastUpdatedDate: dayStart,
+        lastUpdatedWeek: weekStart,
+    });
     if (!newUser) {
         throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.PROCESS_UNSSUCCESSFUL, statusCodes_responses_1.StatusCodes.InternalServerError);
     }
+    await userNotification_repositories_1.default.create({
+        id: (0, uuid_1.v4)(),
+        userId: createUserPayload.id,
+        frequency: userNotificationSettings_entities_1.NotificationFrequency.NEVER,
+        lastNotificationDate: now,
+        nextNotificationDate: null,
+        sentTemplates: [],
+        dailyReminders: false,
+        weeklyReminders: false,
+        biWeeklyReminders: false,
+        noNotificationsAndReminders: false,
+    });
     if (createUserPayload.role === user_service_types_1.UserRoles.USER) {
         const otp = index_1.helperFunctions.generateOtp();
         const hashedOtp = await index_1.helperFunctions.hashPassword(otp);
@@ -231,6 +272,7 @@ const loginUserService = utilities_1.errorUtilities.withServiceErrorHandling(asy
             userId: user.id,
             email: user.email,
             role: user.role,
+            stayLoggedIn: Boolean(stayLoggedIn),
         },
         expires: "60d",
     };
@@ -240,10 +282,22 @@ const loginUserService = utilities_1.errorUtilities.withServiceErrorHandling(asy
         id: user.id,
     }, {
         refreshToken,
-        timeZone
+        timeZone,
     });
+    let userSub;
+    try {
+        userSub = await axios_1.default.get(`${config_1.default.PAYMENT_SERVICE_ROUTE}/subscription-plans/user-subscription`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        });
+    }
+    catch (error) {
+        console.error(`Error fetching user Sub: ${error.message}`);
+    }
     const userDetails = await users_repositories_1.default.extractUserDetails(user);
     userDetails.languageId = config_1.default.YORUBA_LANGUAGE_ID;
+    userDetails.userSubscription = userSub?.data?.data;
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, general_responses_1.GeneralResponses.SUCCESSFUL_LOGIN, { token: accessToken, user: userDetails });
 });
 const passwordResetRequestService = utilities_1.errorUtilities.withServiceErrorHandling(async (email) => {
@@ -317,7 +371,7 @@ const passwordResetRequestService = utilities_1.errorUtilities.withServiceErrorH
 const resetPasswordService = utilities_1.errorUtilities.withServiceErrorHandling(async (resetPayload) => {
     const { token, newPassword, confirmNewPassword } = resetPayload;
     if (newPassword !== confirmNewPassword) {
-        throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.MISMATCHED_PASSEORD, statusCodes_responses_1.StatusCodes.BadRequest);
+        throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.MISMATCHED_PASSWORD, statusCodes_responses_1.StatusCodes.BadRequest);
     }
     const tokenValidation = index_1.helperFunctions.validateToken(token);
     const { userId } = tokenValidation;
@@ -367,6 +421,62 @@ const resetPasswordService = utilities_1.errorUtilities.withServiceErrorHandling
     });
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, general_responses_1.GeneralResponses.SUCCESSFUL_PASSWORD_RESET, { email: user.email });
 });
+const changePasswordService = utilities_1.errorUtilities.withServiceErrorHandling(async (userId, currentPassword, newPassword, confirmNewPassword) => {
+    if (newPassword !== confirmNewPassword) {
+        throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.MISMATCHED_PASSWORD, statusCodes_responses_1.StatusCodes.BadRequest);
+    }
+    const user = await users_repositories_1.default.getOne({ id: userId }, [
+        "id",
+        "email",
+        "password",
+        "firstName",
+    ]);
+    if (!user) {
+        throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.USER_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
+    }
+    const isCurrentPasswordValid = await index_1.helperFunctions.comparePasswords(currentPassword, user.password);
+    if (!isCurrentPasswordValid) {
+        throw utilities_1.errorUtilities.createError("The current password you entered is incorrect", statusCodes_responses_1.StatusCodes.Unauthorized);
+    }
+    const hashedNewPassword = await index_1.helperFunctions.hashPassword(newPassword);
+    const updatedUser = await users_repositories_1.default.updateOne({ id: userId }, { password: hashedNewPassword });
+    if (!updatedUser) {
+        throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.FAILED_PASSWORD_CHANGE, statusCodes_responses_1.StatusCodes.InternalServerError);
+    }
+    const emailData = {
+        email: user.email,
+        firstName: user.firstName,
+    };
+    const emailPayload = {
+        url: `${config_1.default.NOTIFICATION_SERVICE_ROUTE}/auth-notification/password-change-success`,
+        emailData,
+    };
+    index_1.endpointCallsUtilities
+        .processEmailsInBackground(emailPayload)
+        .catch((error) => {
+        console.error(`Background email processing failed for ${user.email}:`, error.message);
+    });
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, general_responses_1.GeneralResponses.SUCCESSFUL_PASSWORD_CHANGE, { email: user.email });
+});
+const editUserNamesService = utilities_1.errorUtilities.withServiceErrorHandling(async (updateData, userId) => {
+    const updatedUser = await users_repositories_1.default.updateOne({ id: userId }, updateData);
+    if (!updatedUser) {
+        throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.PROCESS_UNSSUCCESSFUL, statusCodes_responses_1.StatusCodes.InternalServerError);
+    }
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, general_responses_1.GeneralResponses.PROCESS_SUCCESSFUL);
+});
+const getSingleUserDetailsService = utilities_1.errorUtilities.withServiceErrorHandling(async (userId) => {
+    const [getUser, completedLessonsCount, totalLessonsCount] = await Promise.all([
+        users_repositories_2.default.getOne({ id: userId }),
+        user_lesson_1.default.count({ where: { userId, isCompleted: true } }),
+        lesson_1.default.count(),
+    ]);
+    if (!getUser) {
+        throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.USER_NOT_FOUND, statusCodes_responses_1.StatusCodes.NotFound);
+    }
+    const newUser = await users_repositories_2.default.extractUserDetails(getUser);
+    return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, general_responses_1.GeneralResponses.PROCESS_SUCCESSFUL, { ...newUser, completedLessonsCount, totalLessonsCount });
+});
 exports.default = {
     registerUserService,
     verifyUserAccountService,
@@ -374,4 +484,7 @@ exports.default = {
     loginUserService,
     passwordResetRequestService,
     resetPasswordService,
+    changePasswordService,
+    editUserNamesService,
+    getSingleUserDetailsService,
 };

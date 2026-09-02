@@ -118,6 +118,7 @@ const userRepositories = {
         verifiedAt: userData.verifiedAt,
         registerMethod: userData.registerMethod,
         country: userData.country,
+        noOfSubscriptions: userData.noOfSubscriptions,
         phoneNumber: userData.phoneNumber,
         deletedAt: userData.deletedAt,
         profilePicture: userData.profilePicture,
@@ -130,6 +131,10 @@ const userRepositories = {
         lastPasswordChangeAt: userData.lastPasswordChangeAt,
         twoFactorEnabled: userData.twoFactorEnabled,
         securityQuestions: userData.securityQuestions,
+        currentStreak: userData.currentStreak,
+        longestStreak: userData.longestStreak,
+        lastStreakDate: userData.lastStreakDate,
+        badges: userData.badges,
       };
     } catch (error: any) {
       throw new Error(`Error fetching User(s): ${error.message}`);

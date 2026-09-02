@@ -25,6 +25,8 @@ export interface UserAttributes {
     verifiedAt: Date;
     country?: string;
     phoneNumber?: string;
+    noOfSubscriptions?: number;
+    stripeCustomerId?: string;
     deletedAt?: Date;
     profilePicture?: string;
     bio?: string;
@@ -58,6 +60,10 @@ export interface UserAttributes {
         question: string;
         answer: string;
     }[];
+    currentStreak?: number;
+    longestStreak?: number;
+    lastStreakDate?: Date;
+    badges?: number;
 }
 export declare enum OtpNotificationType {
     EMAIL = "email",
