@@ -14,20 +14,34 @@ const services = [
   "./payment-service",
 ];
 
+const installEnv = {
+  ...process.env,
+  NPM_CONFIG_PRODUCTION: "false",
+  NPM_CONFIG_OMIT: "",
+};
+
 function installDependencies(service: string) {
   const servicePath = path.join(__dirname, service);
   const packageJsonPath = path.join(servicePath, "package.json");
 
   if (fs.existsSync(packageJsonPath)) {
     console.log(`📦 Installing dependencies for ${service}...`);
-    execSync("npm install", { cwd: servicePath, stdio: "inherit" });
+    execSync("npm install --include=dev", {
+      cwd: servicePath,
+      stdio: "inherit",
+      env: installEnv,
+    });
   } else {
     console.warn(`⚠️  Skipping ${service}: No package.json found`);
   }
 }
 
 console.log("🔧 Installing root dependencies...");
-execSync("npm install", { cwd: __dirname, stdio: "inherit" });
+execSync("npm install --include=dev", {
+  cwd: __dirname,
+  stdio: "inherit",
+  env: installEnv,
+});
 
 services.forEach(installDependencies);
 
