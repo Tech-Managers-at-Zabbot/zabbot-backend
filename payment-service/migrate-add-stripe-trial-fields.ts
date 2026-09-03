@@ -2,11 +2,17 @@ import { QueryTypes, Sequelize } from "sequelize";
 import dotenv from "dotenv";
 
 dotenv.config({ path: "../.env" });
+dotenv.config();
 
-const USERS_SERVICE_DB = process.env.USERS_SERVICE_DEV_DB!;
+const USERS_SERVICE_DB =
+  process.env.USERS_SERVICE_DB ||
+  process.env.USERS_SERVICE_PRODUCTION_DB ||
+  process.env.USERS_SERVICE_DEV_DB;
 
 if (!USERS_SERVICE_DB) {
-  console.error("USERS_SERVICE_DEV_DB environment variable is not set");
+  console.error(
+    "No users database URL found. Set USERS_SERVICE_DB, USERS_SERVICE_PRODUCTION_DB, or USERS_SERVICE_DEV_DB."
+  );
   process.exit(1);
 }
 
