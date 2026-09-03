@@ -26,6 +26,12 @@ const TRIAL_PERIOD_DAYS = 7;
 
 const createCheckoutSession = errorUtilities.withServiceErrorHandling(
   async (subscriptionType: string, userId: string, useremail: string) => {
+    console.log(
+      "Checkout session service called with:",
+      subscriptionType,
+      userId,
+      useremail,
+    );
     const plan = await subscriptionPlanRepositories.getOne({
       planType: subscriptionType,
     });
@@ -62,6 +68,11 @@ const createCheckoutSession = errorUtilities.withServiceErrorHandling(
       currency: plan.currency,
       ...(existingCustomerId ? { customer: existingCustomerId } : {}),
     };
+
+    console.log(
+      "Subscription found, preparing checkout session with params:",
+      sessionParams,
+    );
 
     switch (subscriptionType) {
       case PaymentOptions.MONTHLY_SUBSCRIPTION:
