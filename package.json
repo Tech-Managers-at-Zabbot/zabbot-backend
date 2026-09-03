@@ -10,6 +10,7 @@
     "dev": "cross-env NODE_ENV=development nodemon --exec",
     "dev:start": "cross-env NODE_ENV=dev:start node dist/main-server.js",
     "install:all": "ts-node installAll.ts",
+    "migrate:stripe-trial-fields": "ts-node payment-service/migrate-add-stripe-trial-fields.ts",
     "flyway:local": "flyway -configFiles=flyway.conf,flyway-local.conf",
     "flyway:online": "flyway -configFiles=flyway.conf,flyway-online.conf",
     "migrate:local": "flyway -configFiles=flyway.conf,flyway-local.conf migrate",

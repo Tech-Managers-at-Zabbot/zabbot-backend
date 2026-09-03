@@ -17,18 +17,31 @@ const services = [
     "./pronunciation-feedback-service",
     "./payment-service",
 ];
+const installEnv = {
+    ...process.env,
+    NPM_CONFIG_PRODUCTION: "false",
+    NPM_CONFIG_OMIT: "",
+};
 function installDependencies(service) {
     const servicePath = path_1.default.join(__dirname, service);
     const packageJsonPath = path_1.default.join(servicePath, "package.json");
     if (fs_1.default.existsSync(packageJsonPath)) {
         console.log(`📦 Installing dependencies for ${service}...`);
-        (0, child_process_1.execSync)("npm install", { cwd: servicePath, stdio: "inherit" });
+        (0, child_process_1.execSync)("npm install --include=dev", {
+            cwd: servicePath,
+            stdio: "inherit",
+            env: installEnv,
+        });
     }
     else {
         console.warn(`⚠️  Skipping ${service}: No package.json found`);
     }
 }
 console.log("🔧 Installing root dependencies...");
-(0, child_process_1.execSync)("npm install", { cwd: __dirname, stdio: "inherit" });
+(0, child_process_1.execSync)("npm install --include=dev", {
+    cwd: __dirname,
+    stdio: "inherit",
+    env: installEnv,
+});
 services.forEach(installDependencies);
 console.log("✅ All dependencies installed.");
