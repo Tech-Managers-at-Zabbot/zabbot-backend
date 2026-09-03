@@ -108,6 +108,10 @@ const createCheckoutSession = errorUtilities.withServiceErrorHandling(
     sessionParams.mode = paymentMode;
 
     try {
+      console.log(
+        "Creating Stripe checkout session with params:",
+        sessionParams,
+      );
       const session = await stripe.checkout.sessions.create(sessionParams);
       const transactionData = {
         id: v4(),
