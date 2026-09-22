@@ -762,6 +762,10 @@ const editUserNamesService = errorUtilities.withServiceErrorHandling(
       { id: userId },
       updateData,
     );
+    await UserLeaderboard.update(
+      { username: `${updateData.firstName} ${updateData.lastName}` },
+      { where: { userId } },
+    );
 
     if (!updatedUser) {
       throw errorUtilities.createError(
@@ -779,11 +783,12 @@ const editUserNamesService = errorUtilities.withServiceErrorHandling(
 
 const getSingleUserDetailsService = errorUtilities.withServiceErrorHandling(
   async (userId: string) => {
-    const [getUser, completedLessonsCount, totalLessonsCount] = await Promise.all([
-      userRepositories.getOne({ id: userId }),
-      UserLessons.count({ where: { userId, isCompleted: true } }),
-      Lessons.count(),
-    ]);
+    const [getUser, completedLessonsCount, totalLessonsCount] =
+      await Promise.all([
+        userRepositories.getOne({ id: userId }),
+        UserLessons.count({ where: { userId, isCompleted: true } }),
+        Lessons.count(),
+      ]);
 
     if (!getUser) {
       throw errorUtilities.createError(

@@ -14,6 +14,7 @@ import {
 import { CloudinaryService } from "../../../../shared/cloudinary/server";
 import UserLessons from "../../../../shared/entities/lesson-service-entities/userLesson/user-lesson";
 import Lessons from "../../../../shared/entities/lesson-service-entities/lesson/lesson";
+import UserLeaderboard from "../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities";
 
 const getSingleUserService = errorUtilities.withServiceErrorHandling(
   async (userId: string, projection?: string[]) => {
@@ -55,6 +56,12 @@ const updateSingleUserService = errorUtilities.withServiceErrorHandling(
       },
       updateData,
     );
+    if (updateData.firstName || updateData.lastName) {
+      await UserLeaderboard.update(
+        { username: `${updateData.firstName} ${updateData.lastName}` },
+        { where: { userId } },
+      );
+    }
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       GeneralResponses.PROCESS_SUCCESSFUL,
