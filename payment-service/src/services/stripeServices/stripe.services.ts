@@ -26,12 +26,6 @@ const TRIAL_PERIOD_DAYS = 7;
 
 const createCheckoutSession = errorUtilities.withServiceErrorHandling(
   async (subscriptionType: string, userId: string, useremail: string) => {
-    console.log(
-      "Checkout session service called with:",
-      subscriptionType,
-      userId,
-      useremail,
-    );
     const plan = await subscriptionPlanRepositories.getOne({
       planType: subscriptionType,
     });
@@ -68,11 +62,6 @@ const createCheckoutSession = errorUtilities.withServiceErrorHandling(
       currency: plan.currency,
       ...(existingCustomerId ? { customer: existingCustomerId } : {}),
     };
-
-    console.log(
-      "Subscription found, preparing checkout session with params:",
-      sessionParams,
-    );
 
     switch (subscriptionType) {
       case PaymentOptions.MONTHLY_SUBSCRIPTION:
@@ -119,10 +108,6 @@ const createCheckoutSession = errorUtilities.withServiceErrorHandling(
     sessionParams.mode = paymentMode;
 
     try {
-      console.log(
-        "Creating Stripe checkout session with params:",
-        sessionParams,
-      );
       const session = await stripe.checkout.sessions.create(sessionParams);
       const transactionData = {
         id: v4(),
