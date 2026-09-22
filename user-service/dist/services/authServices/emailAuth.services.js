@@ -460,6 +460,7 @@ const changePasswordService = utilities_1.errorUtilities.withServiceErrorHandlin
 });
 const editUserNamesService = utilities_1.errorUtilities.withServiceErrorHandling(async (updateData, userId) => {
     const updatedUser = await users_repositories_1.default.updateOne({ id: userId }, updateData);
+    await leaderboard_entities_1.default.update({ username: `${updateData.firstName} ${updateData.lastName}` }, { where: { userId } });
     if (!updatedUser) {
         throw utilities_1.errorUtilities.createError(general_responses_1.GeneralResponses.PROCESS_UNSSUCCESSFUL, statusCodes_responses_1.StatusCodes.InternalServerError);
     }
