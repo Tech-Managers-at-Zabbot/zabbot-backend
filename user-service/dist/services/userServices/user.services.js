@@ -10,6 +10,7 @@ const statusCodes_responses_1 = require("../../../../shared/statusCodes/statusCo
 const general_responses_1 = require("../../responses/generalResponses/general.responses");
 const user_lesson_1 = __importDefault(require("../../../../shared/entities/lesson-service-entities/userLesson/user-lesson"));
 const lesson_1 = __importDefault(require("../../../../shared/entities/lesson-service-entities/lesson/lesson"));
+const leaderboard_entities_1 = __importDefault(require("../../../../shared/entities/user-service-entities/leaderboard/leaderboard.entities"));
 const getSingleUserService = utilities_1.errorUtilities.withServiceErrorHandling(async (userId, projection) => {
     const [user, completedLessonsCount, totalLessonsCount] = await Promise.all([
         users_repositories_1.default.getOne({ id: userId }, projection),
@@ -29,6 +30,9 @@ const updateSingleUserService = utilities_1.errorUtilities.withServiceErrorHandl
     const userUpdate = await users_repositories_1.default.updateOne({
         id: userId,
     }, updateData);
+    if (updateData.firstName || updateData.lastName) {
+        await leaderboard_entities_1.default.update({ username: `${updateData.firstName} ${updateData.lastName}` }, { where: { userId } });
+    }
     return utilities_1.responseUtilities.handleServicesResponse(statusCodes_responses_1.StatusCodes.OK, general_responses_1.GeneralResponses.PROCESS_SUCCESSFUL, userUpdate);
 });
 //WRITE A MIGRATION TO STORE PROFILE IMAGE PUBLIC IDs IN DATABASE FOR EASY DELETION

@@ -17,7 +17,6 @@ const createCheckoutSessionController =
     async (request: JwtPayload, response: Response) => {
       const { subscriptionType } = request.body;
       const { userId } = request.user;
-      console.log("Starting checkout session processs", subscriptionType, userId);
       const serviceResponse = await stripeServices.createCheckoutSession(
         subscriptionType,
         userId,
