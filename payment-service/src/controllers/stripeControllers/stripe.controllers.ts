@@ -54,7 +54,7 @@ const stripeWebhookController = errorUtilities.withControllerErrorHandling(
       );
     }
 
-    // console.log("Event type:", event.type);
+    console.log("Event type:", event.type);
 
     switch (event.type) {
       // Initial payment

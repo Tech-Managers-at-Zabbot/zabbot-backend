@@ -61,11 +61,26 @@ const createOrUpdateUserSubscription = errorUtilities.withServiceErrorHandling(
       return;
     }
 
-    // Check if user has ANY active subscription (regardless of plan)
+    // Guard against duplicate active subscriptions caused by retries or duplicate
+    // webhook events. If an active subscription exists for a different Stripe
+    // subscription, we should not create a second active record.
     const anyActiveSubscription = await userSubscriptionRepositories.getOne({
       userId: transaction.userId,
       status: SubscriptionStatus.ACTIVE,
     });
+
+    if (
+      anyActiveSubscription &&
+      (!gatewaySubscriptionId ||
+        anyActiveSubscription.gatewaySubscriptionId !== gatewaySubscriptionId)
+    ) {
+      console.warn(
+        `Skipping duplicate active subscription creation for user ${transaction.userId}. ` +
+          `Existing subscription: ${anyActiveSubscription.id}, gateway: ${anyActiveSubscription.gatewaySubscriptionId || "n/a"}, ` +
+          `incoming gateway: ${gatewaySubscriptionId || "n/a"}`,
+      );
+      return;
+    }
 
     // Check if user is changing plans
     const isDifferentPlan =

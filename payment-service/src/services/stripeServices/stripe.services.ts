@@ -43,6 +43,18 @@ const createCheckoutSession = errorUtilities.withServiceErrorHandling(
       throw errorUtilities.createError("User not found", StatusCodes.NotFound);
     }
 
+    const activeSubscription = await userSubscriptionRepositories.getOne({
+      userId,
+      status: SubscriptionStatus.ACTIVE,
+    });
+
+    if (activeSubscription) {
+      throw errorUtilities.createError(
+        "User already has an active subscription. Please cancel or wait for it to expire before starting another one.",
+        StatusCodes.Conflict,
+      );
+    }
+
     const isFirstTimeSubscriber = Number(user.noOfSubscriptions || 0) === 0;
     const existingCustomerId = user.stripeCustomerId || undefined;
 
@@ -287,6 +299,18 @@ const handleInvoicePaymentSucceeded = errorUtilities.withServiceErrorHandling(
   async (invoice: any) => {
     console.log("Processing invoice.payment_succeeded:", invoice.id);
 
+    const existingTransaction = await transactionsRepositories.getOne({
+      gatewayTransactionId: invoice.id,
+      paymentGateway: PaymentGateway.STRIPE,
+    });
+
+    if (existingTransaction) {
+      console.log(
+        `Skipping already-processed invoice.payment_succeeded event: ${invoice.id}`,
+      );
+      return;
+    }
+
     // Skip if this is the first invoice (already handled by checkout.session.completed)
     if (invoice.billing_reason === "subscription_create") {
       console.log(
@@ -374,6 +398,16 @@ const handleCheckoutSessionCompleted = errorUtilities.withServiceErrorHandling(
 
     if (!transaction) {
       console.warn(`Transaction not found for checkout session: ${session.id}`);
+      return;
+    }
+
+    if (
+      transaction.status === TransactionStatus.SUCCESS ||
+      transaction.status === TransactionStatus.TRIALING
+    ) {
+      console.log(
+        `Skipping already-processed checkout.session.completed event: ${session.id}`,
+      );
       return;
     }
 
@@ -540,6 +574,18 @@ const handleCheckoutSessionCompleted = errorUtilities.withServiceErrorHandling(
 const handleInvoicePaymentFailed = errorUtilities.withServiceErrorHandling(
   async (invoice: any) => {
     console.log("Processing invoice.payment_failed:", invoice.id);
+
+    const existingTransaction = await transactionsRepositories.getOne({
+      gatewayTransactionId: invoice.id,
+      paymentGateway: PaymentGateway.STRIPE,
+    });
+
+    if (existingTransaction) {
+      console.log(
+        `Skipping already-processed invoice.payment_failed event: ${invoice.id}`,
+      );
+      return;
+    }
 
     const subscriptionId = invoice.subscription;
 
