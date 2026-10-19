@@ -13,16 +13,16 @@ const app = express();
 
 app.disable("x-powered-by");
 
-app.post(
-  "/payment-services/stripe/webhook",
-  express.raw({ type: "application/json" }),
-  stripeControllers.stripeWebhookController
-);
+// app.post(
+//   "/payment-services/stripe/webhook",
+//   express.raw({ type: "application/json" }),
+//   stripeControllers.stripeWebhookController
+// );
 
 app.post(
   "/payment-services/paypal/webhook",
   express.json(),
-  paypalControllers.paypalWebhookController
+  paypalControllers.paypalWebhookController,
 );
 
 // Middlewares
@@ -40,7 +40,7 @@ app.use("/payment-services", routes);
 // Health check endpoint
 app.get("/", (req, res) => {
   res.send(
-    "Payment Service is running. Please refer to the documentation for usage details."
+    "Payment Service is running. Please refer to the documentation for usage details.",
   );
 });
 

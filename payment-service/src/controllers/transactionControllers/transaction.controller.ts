@@ -88,40 +88,41 @@ import { JwtPayload } from "jsonwebtoken";
 const createTransactionController = errorUtilities.withControllerErrorHandling(
   async (request: JwtPayload, response: Response) => {
     const { userId } = request.user;
-    console.log('testing', userId, request.body)
+    console.log("testing", userId, request.body);
     const { amount, planType, status } = request.body;
     const transaction = await transactionServices.createTranscationService(
       amount,
       userId,
       planType,
-      status
+      status,
     );
 
     return responseUtilities.responseHandler(
       response,
       transaction.message,
       transaction.statusCode,
-      transaction.data
+      transaction.data,
     );
-  }
+  },
 );
 
+const getUserTransactionsController =
+  errorUtilities.withControllerErrorHandling(
+    async (request: JwtPayload, response: Response) => {
+      const { userId } = request.user;
+      const userTransactions =
+        await transactionServices.getUserTransactionsService(userId);
 
-const getUserTransactionsController = errorUtilities.withControllerErrorHandling(
-  async (request: JwtPayload, response: Response) => {
-    const { userId } = request.user;
-    const userTransactions = await transactionServices.getUserTransactionsService(userId)
-
-    return responseUtilities.responseHandler(
-      response,
-      userTransactions.message,
-      userTransactions.statusCode,
-      userTransactions.data
-    );
-  }
-);
+      return responseUtilities.responseHandler(
+        response,
+        userTransactions.message,
+        userTransactions.statusCode,
+        userTransactions.data,
+      );
+    },
+  );
 
 export default {
   createTransactionController,
-  getUserTransactionsController
+  getUserTransactionsController,
 };
