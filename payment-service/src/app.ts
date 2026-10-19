@@ -13,11 +13,11 @@ const app = express();
 
 app.disable("x-powered-by");
 
-// app.post(
-//   "/payment-services/stripe/webhook",
-//   express.raw({ type: "application/json" }),
-//   stripeControllers.stripeWebhookController
-// );
+app.post(
+  "/payment-services/stripe/webhook",
+  express.raw({ type: "application/json" }),
+  stripeControllers.stripeWebhookController,
+);
 
 app.post(
   "/payment-services/paypal/webhook",
