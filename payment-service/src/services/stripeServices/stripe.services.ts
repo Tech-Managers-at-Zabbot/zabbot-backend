@@ -319,9 +319,20 @@ const handleInvoicePaymentSucceeded = errorUtilities.withServiceErrorHandling(
       return;
     }
 
-    // This handles subscription renewals
-    const subscriptionId = invoice.subscription;
+    // This handles subscription renewals. Stripe can expose the subscription ID in
+    // nested invoice fields depending on the invoice shape, so we resolve it safely.
+    const subscriptionId =
+      invoice.subscription ??
+      invoice.parent?.subscription_details?.subscription ??
+      invoice.lines?.data?.[0]?.parent?.subscription_item_details?.subscription;
     const customerId = invoice.customer;
+
+    if (!subscriptionId) {
+      console.warn(
+        `Skipping invoice.payment_succeeded for invoice ${invoice.id}: missing subscription id in payload`,
+      );
+      return;
+    }
 
     // Find the user's existing subscription by Stripe subscription ID
     const userSubscription = await userSubscriptionRepositories.getOne({
