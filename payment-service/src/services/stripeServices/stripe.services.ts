@@ -351,6 +351,12 @@ const handleInvoicePaymentSucceeded = errorUtilities.withServiceErrorHandling(
       id: userSubscription.planId,
     })) as unknown as any;
 
+    const paidAtUnix =
+      invoice.status_updated_at ??
+      invoice.status_transitions?.paid_at ??
+      invoice.effective_at ??
+      Math.floor(Date.now() / 1000);
+
     const transactionData = {
       id: v4(),
       userId: userSubscription.userId,
@@ -364,7 +370,7 @@ const handleInvoicePaymentSucceeded = errorUtilities.withServiceErrorHandling(
       status: TransactionStatus.SUCCESS,
       planType: plan.planType,
       planId: userSubscription.planId,
-      paidAt: new Date(invoice.status_updated_at * 1000),
+      paidAt: new Date(paidAtUnix * 1000),
       paymentMethod: "card",
       description: `${plan.planType} subscription renewal`,
       metadata: {
@@ -373,6 +379,7 @@ const handleInvoicePaymentSucceeded = errorUtilities.withServiceErrorHandling(
         stripePaymentIntentId: invoice.payment_intent,
         billingReason: invoice.billing_reason,
         invoiceUrl: invoice.hosted_invoice_url,
+        paidAtUnix,
       },
     };
 
