@@ -99,6 +99,7 @@ const createCheckoutSession = errorUtilities.withServiceErrorHandling(
     }
 
     if (paymentMode === "setup") {
+      sessionParams.payment_method_types = ["card"];
       // Setup mode only collects/saves a payment method - no line items, no charge.
       initialTransactionStatus = TransactionStatus.TRIALING;
     } else {
