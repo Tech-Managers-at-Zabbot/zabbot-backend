@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import { randomUUID } from "crypto";
 import { QueryTypes } from "sequelize";
+import { yorubaSystemPrompt } from "./yorubaPrompt";
 import { users_service_db } from "../../../../config/databases";
 import { generalAuthFunction } from "../../../../shared/middleware/authorization.middleware";
 
@@ -51,58 +52,6 @@ router.get("/usage", async (req: Request, res: Response): Promise<void> => {
   } catch (error) {
     console.error("Failed to retrieve chat daily usage:", error);
     res.status(500).json({ error: "Unable to retrieve chat usage" });
-  }
-});
-
-// Atomically claim one daily allowance slot. This route is not called by the
-// frontend yet. The chat sender must invoke it before contacting OpenAI.
-// A failed or interrupted OpenAI call needs an authorized server-side
-// reconciliation path before this feature can replace the browser counter.
-router.post("/usage/claim", async (req: Request, res: Response): Promise<void> => {
-  const userId = getAuthenticatedUserId(req);
-  if (!userId) {
-    res.status(401).json({ error: "Authentication required" });
-    return;
-  }
-
-  try {
-    const records = await users_service_db.query<{ used_count: number }>(
-      `INSERT INTO public.chat_daily_usage
-         (user_id, usage_date, used_count, created_at, updated_at)
-       VALUES (:userId, (NOW() AT TIME ZONE 'UTC')::date, 1, NOW(), NOW())
-       ON CONFLICT (user_id, usage_date) DO UPDATE
-       SET used_count = chat_daily_usage.used_count + 1,
-           updated_at = NOW()
-       WHERE chat_daily_usage.used_count < :dailyLimit
-       RETURNING used_count`,
-      {
-        replacements: { userId, dailyLimit: DAILY_LIMIT },
-        type: QueryTypes.SELECT,
-      }
-    );
-
-    res.setHeader("Cache-Control", "no-store");
-    if (records.length === 0) {
-      res.status(429).json({
-        error: "Daily chat limit reached",
-        used: DAILY_LIMIT,
-        remaining: 0,
-        limit: DAILY_LIMIT,
-        resetTimezone: "UTC",
-      });
-      return;
-    }
-
-    const used = Number(records[0].used_count);
-    res.json({
-      used,
-      remaining: Math.max(0, DAILY_LIMIT - used),
-      limit: DAILY_LIMIT,
-      resetTimezone: "UTC",
-    });
-  } catch (error) {
-    console.error("Failed to claim chat usage:", error);
-    res.status(500).json({ error: "Unable to claim chat usage" });
   }
 });
 
@@ -293,6 +242,170 @@ router.delete("/conversations/:conversationId", async (req: Request, res: Respon
   } catch (error) {
     console.error("Failed to delete chat conversation:", error);
     res.status(500).json({ error: "Unable to delete conversation" });
+  }
+});
+
+// The only billable chat path: verify ownership, atomically reserve quota,
+// call OpenAI from the server, persist the exchange, or refund failed attempts.
+// Never let the browser claim or refund usage independently.
+router.post("/conversations/:conversationId/send", async (req: Request, res: Response): Promise<void> => {
+  const userId = getAuthenticatedUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+
+  const conversationId = req.params.conversationId;
+  const message: unknown = req.body?.message;
+  if (!isUuid(conversationId) || typeof message !== "string" ||
+      message.trim().length === 0 || message.length > 4000) {
+    res.status(400).json({ error: "Valid conversation ID and a message of at most 4000 characters are required" });
+    return;
+  }
+
+  if (!process.env.OPENAI_API_KEY) {
+    res.status(503).json({ error: "Chat service is not configured" });
+    return;
+  }
+
+  let reservedDate: string | null = null;
+  let completed = false;
+  try {
+    const owned = await users_service_db.query<{ id: string }>(
+      `SELECT id FROM public.chat_conversations
+        WHERE id = :conversationId AND user_id = :userId`,
+      { replacements: { conversationId, userId }, type: QueryTypes.SELECT }
+    );
+    if (owned.length === 0) {
+      res.status(404).json({ error: "Conversation not found" });
+      return;
+    }
+
+    // A single PostgreSQL upsert serializes concurrent claims via row locking.
+    // The limit check occurs inside the update, not in a separate SELECT.
+    const reservation = await users_service_db.query<{
+      usage_date: string;
+      used_count: number;
+    }>(
+      `INSERT INTO public.chat_daily_usage
+         (user_id, usage_date, used_count, created_at, updated_at)
+       VALUES (:userId, (NOW() AT TIME ZONE 'UTC')::date, 1, NOW(), NOW())
+       ON CONFLICT (user_id, usage_date) DO UPDATE
+          SET used_count = chat_daily_usage.used_count + 1,
+              updated_at = NOW()
+        WHERE chat_daily_usage.used_count < :dailyLimit
+       RETURNING usage_date::text AS usage_date, used_count`,
+      {
+        replacements: { userId, dailyLimit: DAILY_LIMIT },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    if (!reservation.length) {
+      res.status(429).json({
+        error: "Daily chat limit reached",
+        used: DAILY_LIMIT,
+        remaining: 0,
+        limit: DAILY_LIMIT,
+        resetTimezone: "UTC",
+      });
+      return;
+    }
+    reservedDate = reservation[0].usage_date;
+
+    const upstream = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        messages: [
+          { role: "system", content: yorubaSystemPrompt },
+          { role: "user", content: message.trim() },
+        ],
+      }),
+      signal: AbortSignal.timeout(60000),
+    });
+
+    if (!upstream.ok) {
+      console.error("Chat provider request failed:", upstream.status);
+      throw new Error("Chat provider unavailable");
+    }
+    const responseData: any = await upstream.json();
+    const reply = responseData?.choices?.[0]?.message?.content;
+    if (typeof reply !== "string" || !reply.trim()) {
+      throw new Error("Chat provider returned an empty reply");
+    }
+
+    await users_service_db.transaction(async (transaction) => {
+      // Ownership is checked again inside the write, including cases where a
+      // conversation was deleted while OpenAI was responding.
+      const ownedForWrite = await users_service_db.query<{ id: string }>(
+        `SELECT id FROM public.chat_conversations
+          WHERE id = :conversationId AND user_id = :userId FOR UPDATE`,
+        {
+          replacements: { conversationId, userId },
+          type: QueryTypes.SELECT,
+          transaction,
+        }
+      );
+      if (ownedForWrite.length === 0) {
+        throw new Error("Conversation was deleted while sending");
+      }
+
+      await users_service_db.query(
+        `INSERT INTO public.chat_messages (id, conversation_id, role, content)
+         VALUES (:userMessageId, :conversationId, 'user', :message),
+                (:assistantMessageId, :conversationId, 'assistant', :reply)`,
+        {
+          replacements: {
+            userMessageId: randomUUID(),
+            assistantMessageId: randomUUID(),
+            conversationId,
+            message: message.trim(),
+            reply,
+          },
+          transaction,
+        }
+      );
+      await users_service_db.query(
+        `UPDATE public.chat_conversations SET updated_at = NOW()
+          WHERE id = :conversationId AND user_id = :userId`,
+        { replacements: { conversationId, userId }, transaction }
+      );
+    });
+
+    completed = true;
+    const used = Number(reservation[0].used_count);
+    res.setHeader("Cache-Control", "no-store");
+    res.json({
+      reply,
+      used,
+      remaining: Math.max(0, DAILY_LIMIT - used),
+      limit: DAILY_LIMIT,
+      resetTimezone: "UTC",
+    });
+  } catch (error) {
+    console.error("Failed to send chat message:", error);
+    res.status(502).json({ error: "Unable to complete chat message. Please try again." });
+  } finally {
+    // Use the date from the reservation so a request crossing midnight does
+    // not accidentally refund a different day's allowance.
+    if (reservedDate && !completed) {
+      try {
+        await users_service_db.query(
+          `UPDATE public.chat_daily_usage
+              SET used_count = GREATEST(0, used_count - 1),
+                  updated_at = NOW()
+            WHERE user_id = :userId AND usage_date = CAST(:reservedDate AS date)`,
+          { replacements: { userId, reservedDate } }
+        );
+      } catch (refundError) {
+        console.error("Failed to refund incomplete chat request:", refundError);
+      }
+    }
   }
 });
 
