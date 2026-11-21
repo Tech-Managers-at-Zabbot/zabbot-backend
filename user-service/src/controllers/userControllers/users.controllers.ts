@@ -7,25 +7,49 @@ import { Request, Response } from "express";
 import { helpersUtilities } from "../../../../shared/utilities";
 import { JwtPayload } from "jsonwebtoken";
 
+// Only deliberately approved profile fields may leave this endpoint.
+// In particular, never expose passwords, JWT/refresh tokens, OAuth tokens,
+// security questions, or customer/payment identifiers via query projections.
+const safeProfileFields = [
+  "id", "firstName", "lastName", "email", "role",
+  "isVerified", "isActive", "isBlocked", "profilePicture",
+  "country", "timeZone", "currentStreak", "longestStreak",
+  "lastStreakDate", "badges", "noOfSubscriptions",
+];
+
 const getSingleUser = errorUtilities.withControllerErrorHandling(
   async (request: Request, response: Response) => {
-    let { projection } = request.query;
     const { userId } = request.params;
+    const authenticated = (request as Request & {
+      user?: { userId?: string; role?: string };
+    }).user;
 
-    if (projection) {
-      projection = helpersUtilities.parseStringified(projection);
+    if (!authenticated?.userId) {
+      return response.status(401).json({
+        status: "error",
+        message: "Authentication required",
+      });
     }
+
+    if (authenticated.userId !== userId && authenticated.role !== "admin") {
+      return response.status(403).json({
+        status: "error",
+        message: "Not authorized to access this profile",
+      });
+    }
+
+    // Disallow arbitrary caller-controlled Sequelize attribute lists.
     const userDetails = await userServices.getSingleUserService(
       userId,
-      projection
+      safeProfileFields,
     );
     return responseUtilities.responseHandler(
       response,
       userDetails.message,
       userDetails.statusCode,
-      userDetails.data
+      userDetails.data,
     );
-  }
+  },
 );
 
 const getAllUsersCount = errorUtilities.withControllerErrorHandling(
