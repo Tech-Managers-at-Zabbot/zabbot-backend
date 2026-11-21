@@ -54,13 +54,15 @@ const registerUserService = errorUtilities.withServiceErrorHandling(
       lastName: lastName,
       email: email,
       password: newPassword,
-      isVerified: role && role === UserRoles.ADMIN ? true : false,
+      //isVerified: role && role === UserRoles.ADMIN ? true : false,
+      isVerified: false,
       isActive: true,
       isBlocked: false,
       timeZone,
       noOfSubscriptions: 0,
       isFirstTimeLogin: true,
-      role: role ?? UserRoles.USER,
+      //role: role ?? UserRoles.USER,
+      role: UserRoles.USER,
       registerMethod: RegisterMethods.EMAIL,
     };
 
@@ -156,10 +158,11 @@ const registerUserService = errorUtilities.withServiceErrorHandling(
 
     return responseUtilities.handleServicesResponse(
       StatusCodes.Created,
-      role && role === UserRoles.ADMIN
-        ? GeneralResponses.ADMIN_REGISTRATION_SUCCESSFUL
-        : GeneralResponses.USER_REGSTRATION_SUCCESSFUL,
-      createUserPayload.email,
+      //role && role === UserRoles.ADMIN
+       // ? GeneralResponses.ADMIN_REGISTRATION_SUCCESSFUL
+        //: GeneralResponses.USER_REGSTRATION_SUCCESSFUL,
+    GeneralResponses.USER_REGSTRATION_SUCCESSFUL,
+    createUserPayload.email,
     );
   },
 );
