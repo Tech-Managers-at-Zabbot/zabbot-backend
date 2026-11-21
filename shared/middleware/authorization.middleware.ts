@@ -168,10 +168,16 @@ export const generalAuthFunction = async (
         });
 
         // Rotate only this account's stored refresh token.
-        await Users.update(
+        const [updatedCount] = await Users.update(
           { refreshToken: newRefreshToken },
           { where: { id: userDetails.id, refreshToken } },
         );
+        if (updatedCount !== 1) {
+          return response.status(403).json({
+            status: "error",
+            message: "Session changed. Please login again.",
+          });
+        }
         response.setHeader("x-access-token", newAccessToken);
         request.user = tokenPayload;
 
