@@ -1,6 +1,5 @@
 import { Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { helpersUtilities } from "../utilities";
 import Users from "../entities/user-service-entities/users/users.entities";
 import config from "../../config/config";
 
@@ -32,7 +31,7 @@ export const generalAuthFunction = async (
 
     try {
       verifiedUser = jwt.verify(authorizationToken, `${config.APP_JWT_SECRET}`);
-      const decodedToken: any = jwt.decode(authorizationToken);
+      const decodedToken: any = verifiedUser;
       const projection = [
         "refreshToken",
         "isVerified",
@@ -56,7 +55,7 @@ export const generalAuthFunction = async (
         });
       }
 
-      if (userDetails?.isBlocked) {
+      if (!userDetails.isActive || userDetails.isBlocked) {
         return response.status(403).json({
           status: "error",
           message: "Account blocked, please contact admin",
@@ -69,6 +68,7 @@ export const generalAuthFunction = async (
           message: "Please login again.",
         });
       }
+      verifiedUser = { ...verifiedUser, role: userDetails.role };
     } catch (error: any) {
       if (error.message === "jwt expired") {
         const decodedToken: any = jwt.decode(authorizationToken);
@@ -131,9 +131,22 @@ export const generalAuthFunction = async (
           });
         }
 
-        const compareRefreshTokens = refreshToken === userDetails?.refreshToken;
+        // A valid refresh JWT must identify the account of the expired access JWT.
+        if (refreshVerifiedUser.userId !== decodedToken.userId) {
+          return response.status(403).json({
+            status: "error",
+            message: "Invalid refresh token",
+          });
+        }
 
-        if (compareRefreshTokens === false) {
+        if (!userDetails.isActive || !userDetails.isVerified) {
+          return response.status(403).json({
+            status: "error",
+            message: "Account is not active or verified",
+          });
+        }
+
+        if (!refreshToken) {
           return response.status(403).json({
             status: "error",
             message: "Please login again.",
@@ -141,36 +154,26 @@ export const generalAuthFunction = async (
         }
 
         const tokenPayload = {
-          userId: refreshVerifiedUser.userId,
+          userId: userDetails.id,
           email: refreshVerifiedUser.email,
-          role: refreshVerifiedUser.role,
+          role: userDetails.role,
         };
 
-        const accessTokenExpiry = refreshVerifiedUser.stayLoggedIn
-          ? "30d"
-          : "2h";
-        const newAccessToken = helpersUtilities.generateToken(
-          tokenPayload,
-          accessTokenExpiry,
-        );
+        // Match the existing login service token format (flat JWT claims).
+        const newAccessToken = jwt.sign(tokenPayload, String(config.APP_JWT_SECRET), {
+          expiresIn: "2h",
+        });
+        const newRefreshToken = jwt.sign(tokenPayload, String(config.APP_JWT_SECRET), {
+          expiresIn: "30d",
+        });
 
-        const newRefreshToken = helpersUtilities.generateToken(
-          tokenPayload,
-          "30d",
-        );
-
-        response.setHeader("x-access-token", newAccessToken);
-
+        // Rotate only this account's stored refresh token.
         await Users.update(
-          {
-            refreshToken: newRefreshToken,
-          },
-          {
-            where: { id: refreshVerifiedUser.id },
-          },
+          { refreshToken: newRefreshToken },
+          { where: { id: userDetails.id, refreshToken } },
         );
-
-        request.user = refreshVerifiedUser;
+        response.setHeader("x-access-token", newAccessToken);
+        request.user = tokenPayload;
 
         return next();
       }
