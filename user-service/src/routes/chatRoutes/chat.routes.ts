@@ -1,4 +1,5 @@
 import express, { Request, Response } from "express";
+import { randomUUID } from "crypto";
 import { QueryTypes } from "sequelize";
 import { users_service_db } from "../../../../config/databases";
 import { generalAuthFunction } from "../../../../shared/middleware/authorization.middleware";
@@ -15,7 +16,7 @@ const getAuthenticatedUserId = (req: Request): string | null => {
   return typeof userId === "string" && userId.length > 0 ? userId : null;
 };
 
-// These endpoints read only from STAGING's existing chat tables.
+// All endpoints require a verified subscriber JWT.
 // Authentication is verified by the shared backend middleware; the
 // subscriber ID is never taken from query parameters or request bodies.
 router.use(generalAuthFunction as any);
@@ -134,6 +135,164 @@ router.get("/conversations", async (req: Request, res: Response): Promise<void> 
   } catch (error) {
     console.error("Failed to retrieve chat conversations:", error);
     res.status(500).json({ error: "Unable to retrieve conversations" });
+  }
+});
+
+
+const isUuid = (value: unknown): value is string =>
+  typeof value === "string" &&
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+
+// Create an empty conversation owned by the verified subscriber.
+router.post("/conversations", async (req: Request, res: Response): Promise<void> => {
+  const userId = getAuthenticatedUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+  const title = req.body?.title === undefined ? "New Chat" : req.body.title;
+  if (typeof title !== "string" || title.trim().length === 0 || title.trim().length > 255) {
+    res.status(400).json({ error: "Title must be between 1 and 255 characters" });
+    return;
+  }
+
+  try {
+    const records = await users_service_db.query<{
+      id: string;
+      title: string;
+      created_at: string;
+      updated_at: string;
+    }>(
+      `INSERT INTO public.chat_conversations (id, user_id, title)
+       VALUES (:id, :userId, :title)
+       RETURNING id, title, created_at, updated_at`,
+      {
+        replacements: { id: randomUUID(), userId, title: title.trim() },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    res.setHeader("Cache-Control", "no-store");
+    res.status(201).json({ conversation: records[0] });
+  } catch (error) {
+    console.error("Failed to create chat conversation:", error);
+    res.status(500).json({ error: "Unable to create conversation" });
+  }
+});
+
+// Read messages only when the conversation belongs to the verified user.
+router.get("/conversations/:conversationId/messages", async (req: Request, res: Response): Promise<void> => {
+  const userId = getAuthenticatedUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+  const conversationId = req.params.conversationId;
+  if (!isUuid(conversationId)) {
+    res.status(400).json({ error: "Invalid conversation ID" });
+    return;
+  }
+
+  try {
+    const owned = await users_service_db.query<{ id: string }>(
+      `SELECT id FROM public.chat_conversations
+        WHERE id = :conversationId AND user_id = :userId`,
+      { replacements: { conversationId, userId }, type: QueryTypes.SELECT }
+    );
+    if (owned.length === 0) {
+      res.status(404).json({ error: "Conversation not found" });
+      return;
+    }
+
+    const messages = await users_service_db.query<{
+      id: string;
+      role: string;
+      content: string;
+      created_at: string;
+    }>(
+      `SELECT id, role, content, created_at FROM public.chat_messages
+        WHERE conversation_id = :conversationId
+        ORDER BY created_at ASC, id ASC
+        LIMIT 500`,
+      { replacements: { conversationId }, type: QueryTypes.SELECT }
+    );
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ messages });
+  } catch (error) {
+    console.error("Failed to retrieve chat messages:", error);
+    res.status(500).json({ error: "Unable to retrieve messages" });
+  }
+});
+
+// Rename only the authenticated subscriber's conversation.
+router.patch("/conversations/:conversationId", async (req: Request, res: Response): Promise<void> => {
+  const userId = getAuthenticatedUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+  const conversationId = req.params.conversationId;
+  const title = req.body?.title;
+  if (!isUuid(conversationId) || typeof title !== "string" ||
+      title.trim().length === 0 || title.trim().length > 255) {
+    res.status(400).json({ error: "Valid conversation ID and title are required" });
+    return;
+  }
+
+  try {
+    const records = await users_service_db.query<{
+      id: string;
+      title: string;
+      updated_at: string;
+    }>(
+      `UPDATE public.chat_conversations SET title = :title, updated_at = NOW()
+        WHERE id = :conversationId AND user_id = :userId
+        RETURNING id, title, updated_at`,
+      {
+        replacements: { conversationId, userId, title: title.trim() },
+        type: QueryTypes.SELECT,
+      }
+    );
+    if (records.length === 0) {
+      res.status(404).json({ error: "Conversation not found" });
+      return;
+    }
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ conversation: records[0] });
+  } catch (error) {
+    console.error("Failed to rename chat conversation:", error);
+    res.status(500).json({ error: "Unable to rename conversation" });
+  }
+});
+
+// Deleting the conversation cascades to its messages via the database FK.
+router.delete("/conversations/:conversationId", async (req: Request, res: Response): Promise<void> => {
+  const userId = getAuthenticatedUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
+  const conversationId = req.params.conversationId;
+  if (!isUuid(conversationId)) {
+    res.status(400).json({ error: "Invalid conversation ID" });
+    return;
+  }
+
+  try {
+    const records = await users_service_db.query<{ id: string }>(
+      `DELETE FROM public.chat_conversations
+        WHERE id = :conversationId AND user_id = :userId
+        RETURNING id`,
+      { replacements: { conversationId, userId }, type: QueryTypes.SELECT }
+    );
+    if (records.length === 0) {
+      res.status(404).json({ error: "Conversation not found" });
+      return;
+    }
+    res.status(204).end();
+  } catch (error) {
+    console.error("Failed to delete chat conversation:", error);
+    res.status(500).json({ error: "Unable to delete conversation" });
   }
 });
 
