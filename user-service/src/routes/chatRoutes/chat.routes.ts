@@ -20,10 +20,11 @@ const getAuthenticatedUserId = (req: Request): string | null => {
 // subscriber ID is never taken from query parameters or request bodies.
 router.use(generalAuthFunction as any);
 
-router.get("/usage", async (req: Request, res: Response) => {
+router.get("/usage", async (req: Request, res: Response): Promise<void> => {
   const userId = getAuthenticatedUserId(req);
   if (!userId) {
-    return res.status(401).json({ error: "Authentication required" });
+    res.status(401).json({ error: "Authentication required" });
+    return;
   }
 
   try {
@@ -40,7 +41,7 @@ router.get("/usage", async (req: Request, res: Response) => {
 
     const usedCount = Number(records[0]?.used_count ?? 0);
     res.setHeader("Cache-Control", "no-store");
-    return res.json({
+    res.json({
       used: usedCount,
       remaining: Math.max(0, DAILY_LIMIT - usedCount),
       limit: DAILY_LIMIT,
@@ -48,14 +49,15 @@ router.get("/usage", async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error("Failed to retrieve chat daily usage:", error);
-    return res.status(500).json({ error: "Unable to retrieve chat usage" });
+    res.status(500).json({ error: "Unable to retrieve chat usage" });
   }
 });
 
-router.get("/conversations", async (req: Request, res: Response) => {
+router.get("/conversations", async (req: Request, res: Response): Promise<void> => {
   const userId = getAuthenticatedUserId(req);
   if (!userId) {
-    return res.status(401).json({ error: "Authentication required" });
+    res.status(401).json({ error: "Authentication required" });
+    return;
   }
 
   try {
@@ -76,10 +78,10 @@ router.get("/conversations", async (req: Request, res: Response) => {
     );
 
     res.setHeader("Cache-Control", "no-store");
-    return res.json({ conversations });
+    res.json({ conversations });
   } catch (error) {
     console.error("Failed to retrieve chat conversations:", error);
-    return res.status(500).json({ error: "Unable to retrieve conversations" });
+    res.status(500).json({ error: "Unable to retrieve conversations" });
   }
 });
 
