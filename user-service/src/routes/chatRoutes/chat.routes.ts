@@ -161,7 +161,9 @@ router.get("/conversations/:conversationId/messages", async (req: Request, res: 
     }>(
       `SELECT id, role, content, created_at FROM public.chat_messages
         WHERE conversation_id = :conversationId
-        ORDER BY created_at ASC, id ASC
+        ORDER BY created_at ASC,
+                 CASE WHEN role = 'user' THEN 0 ELSE 1 END ASC,
+                 id ASC
         LIMIT 500`,
       { replacements: { conversationId }, type: QueryTypes.SELECT }
     );
