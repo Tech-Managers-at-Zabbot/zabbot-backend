@@ -309,9 +309,9 @@ const handleInvoicePaymentSucceeded = errorUtilities.withServiceErrorHandling(
     // Reuse its existing gateway-unique transaction ID rather than skipping
     // success forever or attempting a duplicate insert.
     if (existingTransaction &&
-        existingTransaction.status !== TransactionStatus.FAILED &&
-        existingTransaction.status !== TransactionStatus.PENDING) {
-      console.log(`Already processed successful invoice: ${invoice.id}`);
+        [TransactionStatus.REFUNDED, TransactionStatus.CANCELLED].includes(existingTransaction.status)) {
+      // A replayed payment-success event must not reinstate reversed access.
+      console.warn(`Ignoring previously reversed invoice: ${invoice.id}`);
       return;
     }
 
@@ -392,6 +392,15 @@ const handleInvoicePaymentSucceeded = errorUtilities.withServiceErrorHandling(
       },
     };
 
+    const periodEndUnix = invoice.lines?.data?.[0]?.period?.end;
+    if (!periodEndUnix || !Number.isFinite(Number(periodEndUnix))) {
+      throw errorUtilities.createError(
+        "Paid renewal is missing a verified billing period end",
+        StatusCodes.BadRequest,
+      );
+    }
+    const periodEnd = new Date(Number(periodEndUnix) * 1000);
+
     const transaction = existingTransaction
       ? await transactionsRepositories.updateOne(
           { id: existingTransaction.id },
@@ -402,14 +411,6 @@ const handleInvoicePaymentSucceeded = errorUtilities.withServiceErrorHandling(
     // Recover the exact existing Stripe subscription after a successful
     // renewal/retry. Do not create another subscription row and do not
     // move its start date forward on every webhook delivery.
-    const periodEndUnix = invoice.lines?.data?.[0]?.period?.end;
-    if (!periodEndUnix || !Number.isFinite(Number(periodEndUnix))) {
-      throw errorUtilities.createError(
-        "Paid renewal is missing a verified billing period end",
-        StatusCodes.BadRequest,
-      );
-    }
-    const periodEnd = new Date(Number(periodEndUnix) * 1000);
     await userSubscriptionRepositories.updateOne(
       { id: userSubscription.id },
       {
