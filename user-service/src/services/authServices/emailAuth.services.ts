@@ -485,7 +485,7 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       GeneralResponses.SUCCESSFUL_LOGIN,
-      { token: accessToken, user: userDetails },
+      { token: accessToken, refreshToken, user: userDetails },
     );
   },
 );
