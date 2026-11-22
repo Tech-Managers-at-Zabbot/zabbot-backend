@@ -62,7 +62,7 @@ function mockedRequire(request: string, parent: any, original: any) {
   if (request.endsWith("/content/content")) return fakeModel(fakeContents);
   if (/\/controllers(?:\/|$)/.test(request) && parentFile.includes("/src/routes/")) {
     return new Proxy({ __esModule: true }, {
-      get: (_obj, prop) => prop === "__esModule" ? true : mockControllers[prop],
+      get: (_obj, prop) => prop === "__esModule" ? true : (prop === "quizController" || prop === "flashcardController") ? mockControllers : mockControllers[prop],
     });
   }
   if (request.endsWith("/validations") && parentFile.includes("/src/routes/")) {
