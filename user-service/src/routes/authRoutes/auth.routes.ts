@@ -7,6 +7,7 @@ import { generalAuthFunction } from "../../../../shared/middleware/authorization
 import Users from "../../../../shared/entities/user-service-entities/users/users.entities";
 import jwt from "jsonwebtoken";
 import { randomUUID, createHash, timingSafeEqual } from "crypto";
+import { loginLimiter, verifyOtpLimiter, resendOtpLimiter, passwordResetRequestLimiter } from "../../middleware/authRateLimit.middleware";
 
 const router = express.Router();
 
@@ -95,18 +96,21 @@ router.post(
   joiValidations.inputValidator(joiValidations.userRegisterSchemaViaEmail),
   emailAuthControllers.userRegistrationController
 );
-router.post("/verify-user", emailAuthControllers.verifyUserAccountController);
+router.post("/verify-user", verifyOtpLimiter, emailAuthControllers.verifyUserAccountController);
 router.post(
   "/resend-verification-otp",
+  resendOtpLimiter,
   emailAuthControllers.resendVerificationOtpController
 );
 router.post(
   "/login",
+  loginLimiter,
   joiValidations.inputValidator(joiValidations.loginUserSchema),
   emailAuthControllers.userLoginController
 );
 router.post(
   "/reset-password-request",
+  passwordResetRequestLimiter,
   joiValidations.inputValidator(joiValidations.resendVerificationLinkSchema),
   emailAuthControllers.userPasswordResetRequestController
 );
