@@ -26,7 +26,13 @@ function installDependencies(service: string) {
 
   if (fs.existsSync(packageJsonPath)) {
     console.log(`📦 Installing dependencies for ${service}...`);
-    execSync("npm install --include=dev", {
+    // ONNX Runtime's installer downloads optional CUDA binaries by default.
+    // STAGING uses CPU inference; skip only that optional download to prevent
+    // network timeouts without removing the native CPU runtime.
+    const command = service === "./pronunciation-feedback-service"
+      ? "npm install --include=dev --onnxruntime-node-install=skip"
+      : "npm install --include=dev";
+    execSync(command, {
       cwd: servicePath,
       stdio: "inherit",
       env: installEnv,
