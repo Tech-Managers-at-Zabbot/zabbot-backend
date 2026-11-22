@@ -66,8 +66,11 @@ export const fetchEdedunLanguageBatches = async (wordArr: Record<string, any>[])
     }
 }
 
-export const fetchSingleUser = async (userId:string, projection?:string[]) => {
+export const fetchSingleUser = async (userId:string, projection?:string[], authorization?:string) => {
     try{
+        if (!authorization?.startsWith('Bearer ')) {
+            return { success: false, statusCode: 401, data: null, message: 'Authenticated user context required' };
+        }
          const params = new URLSearchParams();
 
         if (projection) {
@@ -77,7 +80,7 @@ export const fetchSingleUser = async (userId:string, projection?:string[]) => {
         const queryString = params.toString();
         const url = `http://localhost:3004/users/single-user/${userId}${queryString ? '?' + queryString : ''}`;
 
-        const response = await axios.get(url);
+        const response = await axios.get(url, { headers: { Authorization: authorization } });
 
         return {
             success: true,
