@@ -11,7 +11,7 @@ import {
   getPronunciationController,
   getPronunciationsController,
 } from "../controllers/userPronunciation.controller";
-import { generalAuthFunction } from "../../../shared/middleware/authorization.middleware";
+import { generalAuthFunction, rolePermit } from "../../../shared/middleware/authorization.middleware";
 import fs from "fs/promises";
 import { requirePronunciationEntitlement } from "../../../shared/subscription-gating/requirePronunciationEntitlement";
 
@@ -55,10 +55,10 @@ router.post(
   comparePronunciation
 );
 // @ts-ignore
-router.post("/reference", addRefPronunciationController);
+router.post("/reference", generalAuthFunction, rolePermit(["admin"]), addRefPronunciationController);
 // @ts-ignore
-router.get("/user/recordings", getPronunciationsController);
+router.get("/user/recordings", generalAuthFunction, getPronunciationsController);
 // @ts-ignore
-router.get("/user/:id", getPronunciationController);
+router.get("/user/:id", generalAuthFunction, getPronunciationController);
 
 export default router;
