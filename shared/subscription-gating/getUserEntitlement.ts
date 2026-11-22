@@ -60,6 +60,7 @@ export async function getUserEntitlement(
   const subscriptionData: EntitlementSubscription[] = subscriptions.map(s => ({
     id: s.id,
     planId: s.planId,
+    gatewaySubscriptionId: s.gatewaySubscriptionId ?? null,
     status: s.status,
     startDate: s.startDate,
     endDate: s.endDate ?? null,
@@ -72,6 +73,10 @@ export async function getUserEntitlement(
       planId: t.planId as string,
       status: t.status,
       subscriptionId: t.gatewaySubscriptionId ?? null,
+      transactionId: t.id,
+      paidAt: t.paidAt ?? null,
+      refundedAt: t.refundedAt ?? null,
+      revoked: t.refundedAt != null || t.metadata?.disputed === true || t.metadata?.entitlementRevoked === true,
     }));
 
   return decideSubscriptionEntitlement(
