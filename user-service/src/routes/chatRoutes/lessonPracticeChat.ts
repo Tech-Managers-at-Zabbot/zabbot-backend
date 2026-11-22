@@ -67,8 +67,8 @@ export async function lessonPracticeChat(req: Request, res: Response): Promise<v
       return;
     }
     const normalized = (value: string) =>
-      value.normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase().trim();
-    const wordParts = normalized(word).split(/\\s+/).filter(part => part.length > 1);
+      value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    const wordParts = normalized(word).split(/\s+/).filter(part => part.length > 1);
     const input = normalized(message);
     if (!wordParts.some(part => input.includes(part))) {
       res.status(400).json({ code: "MESSAGE_MUST_REFERENCE_LESSON_WORD" });
