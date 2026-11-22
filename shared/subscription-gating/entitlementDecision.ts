@@ -42,6 +42,8 @@ export interface EntitlementPaymentEvidence {
   subscriptionId?: string | null;
   transactionId?: string | null;
   paidAt?: Date | string | null;
+  /** Verified Stripe period end recorded on the paid invoice/checkout. */
+  billingPeriodEnd?: Date | string | null;
   refundedAt?: Date | string | null;
   /** Explicitly verified revocation originating from refund/dispute processing. */
   revoked?: boolean;
@@ -102,11 +104,12 @@ export function decideSubscriptionEntitlement(
       }
       return p.subscriptionId === sub.gatewaySubscriptionId;
     });
-    // A refund or chargeback recorded for this specific subscription revokes it.
-    // This does NOT replace proper provider event reconciliation.
-    if (scopedPayments.some(p => p.revoked === true || p.status === "refunded")) continue;
-
+    // Lifetime ownership is tied to one exact transaction: its reversal
+    // permanently revokes that entitlement. For recurring plans, only the
+    // current billing period matters; old refunded invoices must not revoke a
+    // later, independently paid renewal.
     if (planType === "lifetime") {
+      if (scopedPayments.some(p => p.revoked === true || p.status === "refunded")) continue;
       // A pending or active trial must NOT be mistaken for paid lifetime access.
       if (sub.status !== "active") continue;
       const trialEnds = time(sub.trialEndsAt);
@@ -147,9 +150,16 @@ export function decideSubscriptionEntitlement(
       trialEnds !== null &&
       trialEnds > current &&
       scopedPayments.some(p => p.status === "trialing");
-    const paidAllowed = scopedPayments.some(
-      p => p.status === "success" && (time(p.paidAt) ?? 0) <= current,
-    );
+    const paidAllowed = scopedPayments.some(p => {
+      if (p.status !== "success" || p.revoked === true) return false;
+      const paid = time(p.paidAt);
+      const billedThrough = time(p.billingPeriodEnd);
+      // Require the exact active period: no historical invoice can validate
+      // an unrelated future renewal, even on the same Stripe subscription.
+      return paid !== null && paid <= current &&
+        billedThrough !== null && billedThrough > current &&
+        Math.abs(billedThrough - end) < 60_000;
+    });
     if (!trialAllowed && !paidAllowed) continue;
 
     // Cancelling means Stripe is scheduled to cancel at period end.
