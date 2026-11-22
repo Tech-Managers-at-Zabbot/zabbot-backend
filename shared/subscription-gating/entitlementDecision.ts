@@ -27,6 +27,7 @@ export type StoredSubscriptionStatus =
 export interface EntitlementSubscription {
   id: string;
   planId: string;
+  gatewaySubscriptionId?: string | null;
   status: StoredSubscriptionStatus;
   startDate: Date | string;
   endDate?: Date | string | null;
@@ -39,6 +40,11 @@ export interface EntitlementPaymentEvidence {
     "failed" | "refunded" | "cancelled";
   /** Optional gateway identifier; evidence must belong to current user. */
   subscriptionId?: string | null;
+  transactionId?: string | null;
+  paidAt?: Date | string | null;
+  refundedAt?: Date | string | null;
+  /** Explicitly verified revocation originating from refund/dispute processing. */
+  revoked?: boolean;
 }
 
 export type EntitlementReason =
@@ -77,6 +83,7 @@ export function decideSubscriptionEntitlement(
   if (!Number.isFinite(current)) return NO_ACCESS;
 
   // Prefer permanent, then recurring, then temporary trial access.
+  // Never use another subscription’s historical success as evidence.
   let recurring: EntitlementDecision | null = null;
   let lifetimeTrial: EntitlementDecision | null = null;
 
@@ -87,6 +94,18 @@ export function decideSubscriptionEntitlement(
     const start = time(sub.startDate);
     if (start === null || start > current) continue;
 
+    const scopedPayments = payments.filter(p => {
+      if (p.planId !== sub.planId) return false;
+      if (!sub.gatewaySubscriptionId) return false;
+      if (sub.gatewaySubscriptionId.startsWith("lifetime:")) {
+        return p.transactionId === sub.gatewaySubscriptionId.slice("lifetime:".length);
+      }
+      return p.subscriptionId === sub.gatewaySubscriptionId;
+    });
+    // A refund or chargeback recorded for this specific subscription revokes it.
+    // This does NOT replace proper provider event reconciliation.
+    if (scopedPayments.some(p => p.revoked === true || p.status === "refunded")) continue;
+
     if (planType === "lifetime") {
       // A pending or active trial must NOT be mistaken for paid lifetime access.
       if (sub.status !== "active") continue;
@@ -94,7 +113,7 @@ export function decideSubscriptionEntitlement(
       if (trialEnds !== null) {
         if (
           trialEnds > current &&
-          payments.some(p => p.planId === sub.planId && p.status === "trialing")
+          scopedPayments.some(p => p.status === "trialing")
         ) {
           lifetimeTrial = {
             hasAccess: true,
@@ -104,7 +123,7 @@ export function decideSubscriptionEntitlement(
           };
         }
       } else if (
-        payments.some(p => p.planId === sub.planId && p.status === "success")
+        scopedPayments.some(p => p.status === "success")
       ) {
         return {
           hasAccess: true,
@@ -128,8 +147,8 @@ export function decideSubscriptionEntitlement(
       trialEnds !== null &&
       trialEnds > current &&
       payments.some(p => p.planId === sub.planId && p.status === "trialing");
-    const paidAllowed = payments.some(
-      p => p.planId === sub.planId && p.status === "success",
+    const paidAllowed = scopedPayments.some(
+      p => p.status === "success" && (time(p.paidAt) ?? 0) <= current,
     );
     if (!trialAllowed && !paidAllowed) continue;
 
