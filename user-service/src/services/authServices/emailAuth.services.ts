@@ -364,6 +364,17 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
       );
     }
 
+    // Do not send verification emails to an unverified account until the
+    // requester has demonstrated knowledge of that account's password.
+    const isPasswordValid = typeof user.password === "string" &&
+      await helperFunctions.comparePasswords(password, user.password);
+    if (!isPasswordValid) {
+      throw errorUtilities.createError(
+        GeneralResponses.INVALID_CREDENTIALS,
+        StatusCodes.Unauthorized,
+      );
+    }
+
     if (!user.isVerified) {
       const unverified_message = SpecialCodeMessage.UNVERIFIED_ACCOUNT;
 
@@ -416,18 +427,6 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
         GeneralResponses.UNVERIFIED_ACCOUNT,
         StatusCodes.Forbidden,
         codeDetails,
-      );
-    }
-
-    const isPasswordValid = await helperFunctions.comparePasswords(
-      password,
-      user.password,
-    );
-
-    if (!isPasswordValid) {
-      throw errorUtilities.createError(
-        GeneralResponses.INVALID_CREDENTIALS,
-        StatusCodes.Unauthorized,
       );
     }
 
