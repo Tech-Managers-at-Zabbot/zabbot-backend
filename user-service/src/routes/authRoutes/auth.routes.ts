@@ -154,7 +154,7 @@ router.post("/google/exchange", async (request: Request, response: Response) => 
   const stored = user?.accessToken?.split(":");
   if (!user || !user.isActive || user.isBlocked || !user.isVerified ||
       !user.refreshToken || stored?.length !== 2 ||
-      !/^\\d+$/.test(stored[1]) || Number(stored[1]) <= Date.now()) {
+      !/^\d+$/.test(stored[1]) || Number(stored[1]) <= Date.now()) {
     return response.status(401).json({ message: "Exchange code expired or invalid" });
   }
   const expectedHash = Buffer.from(stored[0], "hex");
