@@ -17,6 +17,8 @@ import config from '../../config/config';
 const app = express();
 
 app.disable("x-powered-by");
+// Only the local backend gateway may supply forwarded client addresses.
+app.set("trust proxy", "loopback");
 
 // Middlewares
 app.use(helmet());
