@@ -9,6 +9,7 @@ import { stripe } from "../../config/stripe.config";
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
 import transactionService from "../../services/transactionServices/transaction.services";
 import Stripe from "stripe";
+import { reconcileStripePaymentReversal } from "../../services/stripeServices/reversalReconciliation";
 import { JwtPayload } from "jsonwebtoken";
 import config from "../../../../config/config";
 
@@ -79,6 +80,11 @@ const stripeWebhookController = errorUtilities.withControllerErrorHandling(
 
       case "invoice.upcoming":
         await stripeServices.handleUpcomingInvoice(event.data.object);
+        break;
+
+      case "charge.refunded":
+      case "charge.dispute.created":
+        await reconcileStripePaymentReversal(event);
         break;
 
       default:
