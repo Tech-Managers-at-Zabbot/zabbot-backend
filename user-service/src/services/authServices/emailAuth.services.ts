@@ -16,6 +16,8 @@ import { OtpResponses } from "../../responses/otpResponses/otp.responses";
 import userRepositories from "../../repositories/userRepositories/users.repositories";
 import otpRepositories from "../../repositories/otpRepositories/otp.repositories";
 import config from "../../../../config/config";
+import Users from "../../../../shared/entities/user-service-entities/users/users.entities";
+import { createHash, randomUUID } from "crypto";
 import {
   UserAttributes,
   UserRoles,
@@ -531,10 +533,27 @@ const passwordResetRequestService = errorUtilities.withServiceErrorHandling(
         userId: user.id,
         email: user.email,
         role: user.role,
+        purpose: "password-reset",
+        jti: randomUUID(),
       },
       expires: "10min",
     };
     const token = helperFunctions.generateToken(tokenData);
+
+    // Retain only a digest, not the emailed bearer token. The existing
+    // accessToken column also stores short-lived Google exchange codes; each
+    // flow uses its own prefix/format and issuance replaces prior pending codes.
+    const resetDigest = createHash("sha256").update(token).digest("hex");
+    const [stored] = await Users.update(
+      { accessToken: `reset:${resetDigest}` },
+      { where: { id: user.id } },
+    );
+    if (stored !== 1) {
+      throw errorUtilities.createError(
+        GeneralResponses.FAILED_PASSWORD_RESET,
+        StatusCodes.InternalServerError,
+      );
+    }
 
     const emailData = {
       email: user.email,
@@ -600,8 +619,8 @@ const resetPasswordService = errorUtilities.withServiceErrorHandling(
       );
     }
     const tokenValidation = helperFunctions.validateToken(token);
-    const { userId } = tokenValidation as { userId: string };
-    if (!userId) {
+    const { userId, purpose } = tokenValidation as { userId: string; purpose?: string };
+    if (!userId || purpose !== "password-reset") {
       console.error(
         "ERROR====> PASSWORD RESET ERROR: Invalid token: Missing user ID",
       );
@@ -619,6 +638,7 @@ const resetPasswordService = errorUtilities.withServiceErrorHandling(
       "isActive",
       "isBlocked",
       "firstName",
+      "accessToken",
     ]);
     if (!user) {
       throw errorUtilities.createError(
@@ -645,15 +665,31 @@ const resetPasswordService = errorUtilities.withServiceErrorHandling(
         StatusCodes.Forbidden,
       );
     }
-    const hashedPassword = await helperFunctions.hashPassword(newPassword);
-    const updatedUser = await usersRepositories.updateOne(
-      { id: userId },
-      { password: hashedPassword },
-    );
-    if (!updatedUser) {
+    const resetDigest = createHash("sha256").update(token).digest("hex");
+    const expectedResetToken = `reset:${resetDigest}`;
+    if (user.accessToken !== expectedResetToken) {
       throw errorUtilities.createError(
-        GeneralResponses.FAILED_PASSWORD_RESET,
-        StatusCodes.InternalServerError,
+        GeneralResponses.INVALID_TOKEN,
+        StatusCodes.BadRequest,
+      );
+    }
+
+    const hashedPassword = await helperFunctions.hashPassword(newPassword);
+    // Conditional update makes the reset single-use, even under concurrent
+    // requests. Also revoke the server-side session after a password change.
+    const [updated] = await Users.update(
+      {
+        password: hashedPassword,
+        accessToken: "",
+        refreshToken: "",
+        lastPasswordChangeAt: new Date(),
+      },
+      { where: { id: userId, accessToken: expectedResetToken } },
+    );
+    if (updated !== 1) {
+      throw errorUtilities.createError(
+        GeneralResponses.INVALID_TOKEN,
+        StatusCodes.BadRequest,
       );
     }
     const emailData = {
