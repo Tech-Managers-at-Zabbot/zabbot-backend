@@ -72,14 +72,14 @@ export function limitAuthRequests(config: Limit) {
 
 const WINDOW = 15 * 60 * 1000;
 export const loginLimiter = limitAuthRequests({
-  scope: "login", windowMs: WINDOW, perAccount: 12, perIp: 300,
+  scope: "login", windowMs: WINDOW, perAccount: 12, perIp: 3000,
 });
 export const verifyOtpLimiter = limitAuthRequests({
-  scope: "verify-otp", windowMs: WINDOW, perAccount: 12, perIp: 300,
+  scope: "verify-otp", windowMs: WINDOW, perAccount: 12, perIp: 3000,
 });
 export const resendOtpLimiter = limitAuthRequests({
-  scope: "resend-otp", windowMs: WINDOW, perAccount: 3, perIp: 120,
+  scope: "resend-otp", windowMs: WINDOW, perAccount: 3, perIp: 1200,
 });
 export const passwordResetRequestLimiter = limitAuthRequests({
-  scope: "reset-request", windowMs: WINDOW, perAccount: 4, perIp: 120,
+  scope: "reset-request", windowMs: WINDOW, perAccount: 4, perIp: 1200,
 });
