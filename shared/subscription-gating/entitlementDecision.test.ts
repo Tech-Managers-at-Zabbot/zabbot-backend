@@ -11,6 +11,7 @@ const plans = { monthly: "monthly", yearly: "annual", life: "lifetime" } as cons
 const base = (overrides: Partial<EntitlementSubscription> = {}): EntitlementSubscription => ({
   id: "sub-1",
   planId: "monthly",
+  gatewaySubscriptionId: "sub_stripe_001",
   status: "active",
   startDate: "2026-11-01T00:00:00.000Z",
   endDate: "2026-12-01T00:00:00.000Z",
@@ -19,7 +20,7 @@ const base = (overrides: Partial<EntitlementSubscription> = {}): EntitlementSubs
 const payment = (
   status: EntitlementPaymentEvidence["status"],
   planId: string = "life",
-): EntitlementPaymentEvidence => ({ planId, status });
+): EntitlementPaymentEvidence => ({ planId, status, subscriptionId: planId === "life" ? null : "sub_stripe_001", transactionId: planId === "life" ? "tx_life_001" : null, paidAt: "2026-11-15T00:00:00.000Z" });
 
 test("no subscription denies premium access", () => {
   assert.equal(decideSubscriptionEntitlement([], plans, [], now).hasAccess, false);
@@ -73,7 +74,7 @@ test("failed and immediately cancelled subscriptions deny access", () => {
 
 test("lifetime setup trial needs valid trial date and trialing payment", () => {
   const trial = base({
-    planId: "life", endDate: null,
+    planId: "life", gatewaySubscriptionId: "lifetime:tx_life_001", endDate: null,
     trialEndsAt: "2026-11-25T00:00:00.000Z",
   });
   const valid = decideSubscriptionEntitlement([trial], plans, [payment("trialing")], now);
@@ -113,4 +114,32 @@ test("future-dated subscriptions do not grant early access", () => {
     ).hasAccess,
     false,
   );
+});
+
+test("a payment from another subscription on same plan never grants access", () => {
+  const unrelated = { ...payment("success", "monthly"), subscriptionId: "sub_other" };
+  assert.equal(decideSubscriptionEntitlement([base()], plans, [unrelated], now).hasAccess, false);
+});
+
+test("lifetime paid transaction must match exact transaction ID", () => {
+  const lifetime = base({ planId: "life", gatewaySubscriptionId: "lifetime:tx_life_001", endDate: null });
+  assert.equal(decideSubscriptionEntitlement([lifetime], plans, [{
+    ...payment("success"), transactionId: "tx_other",
+  }], now).hasAccess, false);
+});
+
+test("refund or dispute revokes the matching lifetime entitlement", () => {
+  const lifetime = base({ planId: "life", gatewaySubscriptionId: "lifetime:tx_life_001", endDate: null });
+  assert.equal(decideSubscriptionEntitlement([lifetime], plans, [
+    { ...payment("success"), revoked: true },
+  ], now).hasAccess, false);
+  assert.equal(decideSubscriptionEntitlement([lifetime], plans, [
+    payment("success"), { ...payment("refunded") },
+  ], now).hasAccess, false);
+});
+
+test("a missing gateway link fails closed for legacy subscriptions", () => {
+  assert.equal(decideSubscriptionEntitlement([base({ gatewaySubscriptionId: null })], plans, [
+    payment("success", "monthly"),
+  ], now).hasAccess, false);
 });
