@@ -66,12 +66,27 @@ router.post("/refresh-session", async (request: Request, response: Response) => 
 });
 
 /** Revoke the current session when the user signs out. */
-router.post("/logout-session", generalAuthFunction, async (request: Request, response: Response) => {
+router.post("/logout-session", async (request: Request, response: Response) => {
   response.setHeader("Cache-Control", "no-store");
-  const userId = (request as Request & { user?: { userId?: string } }).user?.userId;
-  if (!userId) return response.status(401).json({ message: "Unauthorized" });
-  await Users.update({ refreshToken: null }, { where: { id: userId } });
-  return response.status(200).json({ message: "Logged out" });
+  const refreshToken = request.body?.refreshToken;
+  if (typeof refreshToken !== "string" || refreshToken.length > 4096) {
+    return response.status(401).json({ message: "Refresh token required" });
+  }
+  try {
+    const claims = jwt.verify(refreshToken, String(config.APP_JWT_SECRET), {
+      algorithms: ["HS256"],
+    });
+    if (typeof claims === "string" || typeof claims.userId !== "string") {
+      return response.status(401).json({ message: "Invalid session" });
+    }
+    const [count] = await Users.update({ refreshToken: null }, {
+      where: { id: claims.userId, refreshToken },
+    });
+    if (count !== 1) return response.status(401).json({ message: "Session already ended" });
+    return response.status(200).json({ message: "Logged out" });
+  } catch {
+    return response.status(401).json({ message: "Invalid or expired session" });
+  }
 });
 
 router.post(
