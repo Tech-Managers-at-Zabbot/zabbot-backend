@@ -53,8 +53,10 @@ const createOrUpdateUserSubscription = errorUtilities.withServiceErrorHandling(
       : null;
 
     const gatewaySubscriptionId =
-      latestTransaction?.gatewaySubscriptionId ??
-      transaction?.gatewaySubscriptionId;
+      plan.planType === PlanType.LIFETIME
+        ? `lifetime:${transaction.id}`
+        : (latestTransaction?.gatewaySubscriptionId ??
+           transaction?.gatewaySubscriptionId);
 
     if (!user) {
       console.warn(`User not found: ${userId}`);
