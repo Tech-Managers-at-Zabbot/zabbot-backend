@@ -6,7 +6,7 @@ import config from "../../../../config/config";
 import { generalAuthFunction } from "../../../../shared/middleware/authorization.middleware";
 import Users from "../../../../shared/entities/user-service-entities/users/users.entities";
 import jwt from "jsonwebtoken";
-import { randomUUID } from "crypto";
+import { randomUUID, createHash, timingSafeEqual } from "crypto";
 
 const router = express.Router();
 
@@ -133,6 +133,58 @@ router.get(
   generalAuthFunction,
   emailAuthControllers.getSingleUserDetailsController
 );
+
+/**
+ * Exchanges a Google OAuth one-time code for an authenticated session.
+ * Codes are hashed at rest and expire after 60 seconds. Reuse is rejected.
+ */
+router.post("/google/exchange", async (request: Request, response: Response) => {
+  response.setHeader("Cache-Control", "no-store");
+  const code = request.body?.code;
+  if (typeof code !== "string" || code.length > 160) {
+    return response.status(401).json({ message: "Invalid exchange code" });
+  }
+  const segments = code.split(".");
+  if (segments.length !== 2 ||
+      !/^[0-9a-fA-F-]{36}$/.test(segments[0]) ||
+      !/^[0-9a-f]{64}$/.test(segments[1])) {
+    return response.status(401).json({ message: "Invalid exchange code" });
+  }
+  const user = await Users.findByPk(segments[0]);
+  const stored = user?.accessToken?.split(":");
+  if (!user || !user.isActive || user.isBlocked || !user.isVerified ||
+      !user.refreshToken || stored?.length !== 2 ||
+      !/^\\d+$/.test(stored[1]) || Number(stored[1]) <= Date.now()) {
+    return response.status(401).json({ message: "Exchange code expired or invalid" });
+  }
+  const expectedHash = Buffer.from(stored[0], "hex");
+  const presentedHash = createHash("sha256").update(code).digest();
+  if (expectedHash.length !== presentedHash.length ||
+      !timingSafeEqual(expectedHash, presentedHash)) {
+    return response.status(401).json({ message: "Invalid exchange code" });
+  }
+  // Atomic use-once redemption.
+  const [redeemed] = await Users.update(
+    { accessToken: null },
+    { where: { id: user.id, accessToken: user.accessToken } },
+  );
+  if (redeemed !== 1) return response.status(401).json({ message: "Exchange code already used" });
+
+  const jwtPayload = { userId: user.id, email: user.email, role: user.role };
+  const token = jwt.sign(jwtPayload, String(config.APP_JWT_SECRET), {
+    expiresIn: "2h", algorithm: "HS256",
+  });
+  return response.json({
+    token,
+    refreshToken: user.refreshToken,
+    user: {
+      id: user.id, firstName: user.firstName, lastName: user.lastName,
+      email: user.email, role: user.role, profilePicture: user.profilePicture,
+      isVerified: user.isVerified, isFirstTimeLogin: user.isFirstTimeLogin,
+      languageId: config.YORUBA_LANGUAGE_ID,
+    },
+  });
+});
 
 // Google Registration Route
 router.get(
