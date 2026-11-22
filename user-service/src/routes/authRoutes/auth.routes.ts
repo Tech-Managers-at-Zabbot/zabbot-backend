@@ -14,11 +14,11 @@ const router = express.Router();
  * Refresh only with a separately presented refresh credential.
  * Access JWTs, including expired ones, are never accepted as refresh proof.
  */
-router.post("/refresh-session", async (request: Request, response: Response) => {
+router.post("/refresh-session", async (request: Request, response: Response): Promise<void> => {
   response.setHeader("Cache-Control", "no-store");
   const refreshToken = request.body?.refreshToken;
   if (typeof refreshToken !== "string" || refreshToken.length > 4096) {
-    return response.status(401).json({ message: "Refresh token required" });
+    return void response.status(401).json({ message: "Refresh token required" });
   }
 
   try {
@@ -26,7 +26,7 @@ router.post("/refresh-session", async (request: Request, response: Response) => 
       algorithms: ["HS256"],
     });
     if (typeof claims === "string" || typeof claims.userId !== "string") {
-      return response.status(401).json({ message: "Invalid refresh token" });
+      return void response.status(401).json({ message: "Invalid refresh token" });
     }
 
     const user = await Users.findByPk(claims.userId, {
@@ -34,7 +34,7 @@ router.post("/refresh-session", async (request: Request, response: Response) => 
     });
     if (!user || !user.isActive || user.isBlocked || !user.isVerified ||
         user.refreshToken !== refreshToken) {
-      return response.status(401).json({ message: "Session expired. Please log in again" });
+      return void response.status(401).json({ message: "Session expired. Please log in again" });
     }
 
     const payload = { userId: user.id, email: user.email, role: user.role };
@@ -53,40 +53,40 @@ router.post("/refresh-session", async (request: Request, response: Response) => 
       { where: { id: user.id, refreshToken } },
     );
     if (updated !== 1) {
-      return response.status(401).json({ message: "Session already rotated. Please log in again" });
+      return void response.status(401).json({ message: "Session already rotated. Please log in again" });
     }
 
-    return response.status(200).json({
+    return void response.status(200).json({
       token: accessToken,
       refreshToken: nextRefreshToken,
       stayLoggedIn: claims.stayLoggedIn === true,
     });
   } catch {
-    return response.status(401).json({ message: "Invalid or expired refresh token" });
+    return void response.status(401).json({ message: "Invalid or expired refresh token" });
   }
 });
 
 /** Revoke the current session when the user signs out. */
-router.post("/logout-session", async (request: Request, response: Response) => {
+router.post("/logout-session", async (request: Request, response: Response): Promise<void> => {
   response.setHeader("Cache-Control", "no-store");
   const refreshToken = request.body?.refreshToken;
   if (typeof refreshToken !== "string" || refreshToken.length > 4096) {
-    return response.status(401).json({ message: "Refresh token required" });
+    return void response.status(401).json({ message: "Refresh token required" });
   }
   try {
     const claims = jwt.verify(refreshToken, String(config.APP_JWT_SECRET), {
       algorithms: ["HS256"],
     });
     if (typeof claims === "string" || typeof claims.userId !== "string") {
-      return response.status(401).json({ message: "Invalid session" });
+      return void response.status(401).json({ message: "Invalid session" });
     }
     const [count] = await Users.update({ refreshToken: "" }, {
       where: { id: claims.userId, refreshToken },
     });
-    if (count !== 1) return response.status(401).json({ message: "Session already ended" });
-    return response.status(200).json({ message: "Logged out" });
+    if (count !== 1) return void response.status(401).json({ message: "Session already ended" });
+    return void response.status(200).json({ message: "Logged out" });
   } catch {
-    return response.status(401).json({ message: "Invalid or expired session" });
+    return void response.status(401).json({ message: "Invalid or expired session" });
   }
 });
 
@@ -139,43 +139,43 @@ router.get(
  * Exchanges a Google OAuth one-time code for an authenticated session.
  * Codes are hashed at rest and expire after 60 seconds. Reuse is rejected.
  */
-router.post("/google/exchange", async (request: Request, response: Response) => {
+router.post("/google/exchange", async (request: Request, response: Response): Promise<void> => {
   response.setHeader("Cache-Control", "no-store");
   const code = request.body?.code;
   if (typeof code !== "string" || code.length > 160) {
-    return response.status(401).json({ message: "Invalid exchange code" });
+    return void response.status(401).json({ message: "Invalid exchange code" });
   }
   const segments = code.split(".");
   if (segments.length !== 2 ||
       !/^[0-9a-fA-F-]{36}$/.test(segments[0]) ||
       !/^[0-9a-f]{64}$/.test(segments[1])) {
-    return response.status(401).json({ message: "Invalid exchange code" });
+    return void response.status(401).json({ message: "Invalid exchange code" });
   }
   const user = await Users.findByPk(segments[0]);
   const stored = user?.accessToken?.split(":");
   if (!user || !user.isActive || user.isBlocked || !user.isVerified ||
       !user.refreshToken || stored?.length !== 2 ||
       !/^\d+$/.test(stored[1]) || Number(stored[1]) <= Date.now()) {
-    return response.status(401).json({ message: "Exchange code expired or invalid" });
+    return void response.status(401).json({ message: "Exchange code expired or invalid" });
   }
   const expectedHash = Buffer.from(stored[0], "hex");
   const presentedHash = createHash("sha256").update(code).digest();
   if (expectedHash.length !== presentedHash.length ||
       !timingSafeEqual(expectedHash, presentedHash)) {
-    return response.status(401).json({ message: "Invalid exchange code" });
+    return void response.status(401).json({ message: "Invalid exchange code" });
   }
   // Atomic use-once redemption.
   const [redeemed] = await Users.update(
     { accessToken: "" },
     { where: { id: user.id, accessToken: user.accessToken } },
   );
-  if (redeemed !== 1) return response.status(401).json({ message: "Exchange code already used" });
+  if (redeemed !== 1) return void response.status(401).json({ message: "Exchange code already used" });
 
   const jwtPayload = { userId: user.id, email: user.email, role: user.role };
   const token = jwt.sign(jwtPayload, String(config.APP_JWT_SECRET), {
     expiresIn: "2h", algorithm: "HS256",
   });
-  return response.json({
+  return void response.json({
     token,
     refreshToken: user.refreshToken,
     user: {
