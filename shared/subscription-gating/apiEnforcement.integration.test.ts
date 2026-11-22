@@ -28,6 +28,11 @@ const fakeContents: Record<string, any> = {
   "premium-content": { id: "premium-content", lessonId: paidLesson },
   "disabled-content": { id: "disabled-content", lessonId: "disabled-parent-lesson" },
 };
+const fakeAudioFiles: Record<string, any> = {
+  "free-audio": { id: "free-audio", contentId: "free-content", contentType: "audio", filePath: "https://test.invalid/free.mp3" },
+  "premium-audio": { id: "premium-audio", contentId: "premium-content", contentType: "audio", filePath: "https://test.invalid/premium.mp3" },
+  "disabled-audio": { id: "disabled-audio", contentId: "disabled-content", contentType: "audio", filePath: "https://test.invalid/disabled.mp3" },
+};
 
 const fakeModel = (records: Record<string, any>) => ({
   __esModule: true,
@@ -60,6 +65,7 @@ function mockedRequire(request: string, parent: any, original: any) {
   if (request.endsWith("/lesson/lesson")) return fakeModel(fakeLessons);
   if (request.endsWith("/course/course")) return fakeModel(fakeJourneys);
   if (request.endsWith("/content/content")) return fakeModel(fakeContents);
+  if (request.endsWith("/contentFile/content-file")) return fakeModel(fakeAudioFiles);
   if (/\/controllers(?:\/|$)/.test(request) && parentFile.includes("/src/routes/")) {
     return new Proxy({ __esModule: true }, {
       get: (_obj, prop) => prop === "__esModule" ? true : (prop === "quizController" || prop === "flashcardController") ? mockControllers : mockControllers[prop],
@@ -136,6 +142,7 @@ test("real Phase 2 lesson, content, quiz and flashcard routes enforce HTTP decis
       ["/flashcards", "../../lesson-service/src/routes/flashcard.route"],
       ["/user-lesson", "../../lesson-service/src/routes/userLesson.route"],
       ["/courses", "../../lesson-service/src/routes/course.route"],
+      ["/pronunciation", "../../pronunciation-feedback-service/src/routes/pronunciationFeedback.routes"],
     ];
     const app = express();
     app.use(express.json());
@@ -178,6 +185,14 @@ test("real Phase 2 lesson, content, quiz and flashcard routes enforce HTTP decis
       assertDenied(await request(origin, "/courses/update-user-course/" + premiumJourney, "paid", "PUT", { lastLessonId: "missing" }), 404, "CURRICULUM_NOT_FOUND");
       assertDenied(await request(origin, "/courses/update-user-course/disabled-journey", "paid", "PUT", { lastLessonId: "disabled-parent-lesson" }), 403, "CURRICULUM_UNAVAILABLE");
       assertDenied(await request(origin, "/courses/update-user-course/" + premiumJourney, "paid", "PUT", {}), 400, "LESSON_ID_REQUIRED");
+      // Pronunciation feedback is protected by the actual route and DB-linked audio guard.
+      assertAllowed(await request(origin, "/pronunciation/free-audio/feedback", "free", "POST", { isInLesson: "true" }));
+      assertDenied(await request(origin, "/pronunciation/premium-audio/feedback", "free", "POST", { isInLesson: "true" }), 403, "SUBSCRIPTION_REQUIRED");
+      assertAllowed(await request(origin, "/pronunciation/premium-audio/feedback", "paid", "POST", { isInLesson: "true" }));
+      assertDenied(await request(origin, "/pronunciation/disabled-audio/feedback", "paid", "POST", { isInLesson: "true" }), 403, "CURRICULUM_UNAVAILABLE");
+      assertDenied(await request(origin, "/pronunciation/not-real/feedback", "paid", "POST", { isInLesson: "true" }), 400, "INVALID_LESSON_AUDIO");
+      assertDenied(await request(origin, "/pronunciation/premium-audio/feedback", "free", "POST", {}), 403, "SUBSCRIPTION_REQUIRED");
+      assertAllowed(await request(origin, "/pronunciation/premium-audio/feedback", "paid", "POST", {}));
       assert.ok(calls > 0, "server entitlement resolver was invoked");
     } finally {
       await new Promise<void>((resolve, reject) => server.close(e => e ? reject(e) : resolve()));
