@@ -39,10 +39,26 @@ const getLessonsForLanguage = errorUtilities.withServiceErrorHandling(
         StatusCodes.NotFound,
       );
     }
+    // Expose the parent Journey's ADMIN status so Step tiles can apply the
+    // admin-disabled overlay even when an individual lesson remains active.
+    // This only adds curriculum metadata; it does not authorize content.
+    const courseIds = Array.from(
+      new Set(getLanguageLessons.map((lesson: any) => lesson.courseId)),
+    );
+    const courses = await Promise.all(
+      courseIds.map((id: string) => courseRepositories.getCourse(id)),
+    );
+    const courseById = new Map(
+      courses.filter(Boolean).map((course: any) => [course.id, course]),
+    );
+    const lessonsWithCourseAvailability = getLanguageLessons.map((lesson: any) => ({
+      ...lesson,
+      course: courseById.get(lesson.courseId) || null,
+    }));
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       CourseResponses.PROCESS_SUCCESSFUL,
-      getLanguageLessons,
+      lessonsWithCourseAvailability,
     );
   },
 );
