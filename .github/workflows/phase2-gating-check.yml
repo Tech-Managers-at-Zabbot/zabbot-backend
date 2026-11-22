@@ -46,4 +46,4 @@ jobs:
             echo "::endgroup::"
           done
       - name: Run pure entitlement policy unit tests
-        run: node --import ts-node/register --test shared/subscription-gating/entitlementDecision.test.ts
+        run: npx ts-node shared/subscription-gating/entitlementDecision.test.ts
