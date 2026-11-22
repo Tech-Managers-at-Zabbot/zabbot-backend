@@ -4,9 +4,9 @@ import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
 import { v4 } from "uuid";
 import { UserPronunciationAttributes } from "../../../shared/databaseTypes/pronunciation-feedback-types";
 
-const getPronunciations = errorUtilities.withServiceErrorHandling(async () => {
+const getPronunciations = errorUtilities.withServiceErrorHandling(async (userId: string | undefined) => {
   const pronunciations =
-    await userPronunciationRepositories.getPronunciations();
+    await userPronunciationRepositories.getPronunciations(userId);
   return responseUtilities.handleServicesResponse(
     StatusCodes.OK,
     "success",
@@ -15,9 +15,9 @@ const getPronunciations = errorUtilities.withServiceErrorHandling(async () => {
 });
 
 const getPronunciation = errorUtilities.withServiceErrorHandling(
-  async (id: string) => {
+  async (id: string, userId: string | undefined) => {
     const pronunciation = await userPronunciationRepositories.getPronunciation(
-      id
+      id, userId
     );
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,

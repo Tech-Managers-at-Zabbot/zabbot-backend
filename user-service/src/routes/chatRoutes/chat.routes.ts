@@ -2,8 +2,10 @@ import express, { Request, Response } from "express";
 import { randomUUID } from "crypto";
 import { QueryTypes } from "sequelize";
 import { yorubaSystemPrompt } from "./yorubaPrompt";
+import { lessonPracticeChat } from "./lessonPracticeChat";
 import { users_service_db } from "../../../../config/databases";
 import { generalAuthFunction } from "../../../../shared/middleware/authorization.middleware";
+import { requirePremiumEntitlement } from "../../../../shared/subscription-gating/requirePremiumEntitlement";
 
 const router = express.Router();
 const DAILY_LIMIT = 30;
@@ -21,6 +23,15 @@ const getAuthenticatedUserId = (req: Request): string | null => {
 // Authentication is verified by the shared backend middleware; the
 // subscriber ID is never taken from query parameters or request bodies.
 router.use(generalAuthFunction as any);
+// Creation and AI generation are premium actions. History/usage reads remain
+// available to let users view existing conversations after expiry.
+// Never enable globally until all Phase 2 API paths and UI have been tested.
+const enforceChat = process.env.ZABBOT_SUBSCRIPTION_GATING_ENFORCE === "true";
+
+// Dedicated lesson practice uses DB-verified content context and the same quota.
+// Always require authentication and daily usage quota for lesson AI. The
+// subscription entitlement restriction inside the handler is flag-controlled.
+router.post("/lesson-practice", lessonPracticeChat);
 
 router.get("/usage", async (req: Request, res: Response): Promise<void> => {
   const userId = getAuthenticatedUserId(req);
@@ -93,7 +104,7 @@ const isUuid = (value: unknown): value is string =>
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 
 // Create an empty conversation owned by the verified subscriber.
-router.post("/conversations", async (req: Request, res: Response): Promise<void> => {
+router.post("/conversations", ...(enforceChat ? [requirePremiumEntitlement] : []), async (req: Request, res: Response): Promise<void> => {
   const userId = getAuthenticatedUserId(req);
   if (!userId) {
     res.status(401).json({ error: "Authentication required" });
@@ -250,7 +261,7 @@ router.delete("/conversations/:conversationId", async (req: Request, res: Respon
 // The only billable chat path: verify ownership, atomically reserve quota,
 // call OpenAI from the server, persist the exchange, or refund failed attempts.
 // Never let the browser claim or refund usage independently.
-router.post("/conversations/:conversationId/send", async (req: Request, res: Response): Promise<void> => {
+router.post("/conversations/:conversationId/send", ...(enforceChat ? [requirePremiumEntitlement] : []), async (req: Request, res: Response): Promise<void> => {
   const userId = getAuthenticatedUserId(req);
   if (!userId) {
     res.status(401).json({ error: "Authentication required" });

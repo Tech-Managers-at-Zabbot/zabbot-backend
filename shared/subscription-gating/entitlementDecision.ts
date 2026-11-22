@@ -1,0 +1,181 @@
+/**
+ * Phase 2 subscription entitlement policy.
+ *
+ * Pure calculation only: DOES NOT alter records or enforce access on routes.
+ * Caller must load all of the user's subscription rows, associated plan types,
+ * and payment evidence from trusted server-side database records.
+ *
+ * Never rely on "active" status alone for lifetime access: Zabbot creates an
+ * active lifetime subscription before collecting the delayed trial payment.
+ *
+ * During a lifetime trial we require both an unexpired trialEndsAt and a
+ * matching TRIALING transaction. A completed lifetime purchase requires a
+ * successful payment transaction for that plan, and no active trial marker.
+ * Further reconciliation of refunds/disputes belongs in the billing audit
+ * before enabling enforcement.
+ */
+
+export type SubscriptionPlanKind = "monthly" | "annual" | "lifetime";
+export type StoredSubscriptionStatus =
+  | "active"
+  | "cancelling"
+  | "cancelled"
+  | "expired"
+  | "paused"
+  | "failed";
+
+export interface EntitlementSubscription {
+  id: string;
+  planId: string;
+  gatewaySubscriptionId?: string | null;
+  status: StoredSubscriptionStatus;
+  startDate: Date | string;
+  endDate?: Date | string | null;
+  trialEndsAt?: Date | string | null;
+}
+
+export interface EntitlementPaymentEvidence {
+  planId: string | null;
+  status: "success" | "trialing" | "pending" | "processing" |
+    "failed" | "refunded" | "cancelled";
+  /** Optional gateway identifier; evidence must belong to current user. */
+  subscriptionId?: string | null;
+  transactionId?: string | null;
+  paidAt?: Date | string | null;
+  /** Verified Stripe period end recorded on the paid invoice/checkout. */
+  billingPeriodEnd?: Date | string | null;
+  refundedAt?: Date | string | null;
+  /** Explicitly verified revocation originating from refund/dispute processing. */
+  revoked?: boolean;
+}
+
+export type EntitlementReason =
+  | "lifetime_paid"
+  | "lifetime_trial"
+  | "recurring_period"
+  | "no_entitlement";
+
+export interface EntitlementDecision {
+  hasAccess: boolean;
+  reason: EntitlementReason;
+  planType: SubscriptionPlanKind | null;
+  accessUntil: string | null;
+}
+
+const NO_ACCESS: EntitlementDecision = {
+  hasAccess: false,
+  reason: "no_entitlement",
+  planType: null,
+  accessUntil: null,
+};
+
+function time(value: Date | string | null | undefined): number | null {
+  if (!value) return null;
+  const ms = new Date(value).getTime();
+  return Number.isFinite(ms) ? ms : null;
+}
+
+export function decideSubscriptionEntitlement(
+  subscriptions: ReadonlyArray<EntitlementSubscription>,
+  planTypeById: Readonly<Record<string, SubscriptionPlanKind>>,
+  payments: ReadonlyArray<EntitlementPaymentEvidence>,
+  now: Date = new Date(),
+): EntitlementDecision {
+  const current = now.getTime();
+  if (!Number.isFinite(current)) return NO_ACCESS;
+
+  // Prefer permanent, then recurring, then temporary trial access.
+  // Never use another subscription’s historical success as evidence.
+  let recurring: EntitlementDecision | null = null;
+  let lifetimeTrial: EntitlementDecision | null = null;
+
+  for (const sub of subscriptions) {
+    if (sub.status !== "active" && sub.status !== "cancelling") continue;
+    const planType = planTypeById[sub.planId];
+    if (!planType) continue;
+    const start = time(sub.startDate);
+    if (start === null || start > current) continue;
+
+    const scopedPayments = payments.filter(p => {
+      if (p.planId !== sub.planId) return false;
+      if (!sub.gatewaySubscriptionId) return false;
+      if (sub.gatewaySubscriptionId.startsWith("lifetime:")) {
+        return p.transactionId === sub.gatewaySubscriptionId.slice("lifetime:".length);
+      }
+      return p.subscriptionId === sub.gatewaySubscriptionId;
+    });
+    // Lifetime ownership is tied to one exact transaction: its reversal
+    // permanently revokes that entitlement. For recurring plans, only the
+    // current billing period matters; old refunded invoices must not revoke a
+    // later, independently paid renewal.
+    if (planType === "lifetime") {
+      if (scopedPayments.some(p => p.revoked === true || p.status === "refunded")) continue;
+      // A pending or active trial must NOT be mistaken for paid lifetime access.
+      if (sub.status !== "active") continue;
+      const trialEnds = time(sub.trialEndsAt);
+      if (trialEnds !== null) {
+        if (
+          trialEnds > current &&
+          scopedPayments.some(p => p.status === "trialing")
+        ) {
+          lifetimeTrial = {
+            hasAccess: true,
+            reason: "lifetime_trial",
+            planType,
+            accessUntil: new Date(trialEnds).toISOString(),
+          };
+        }
+      } else if (
+        scopedPayments.some(p => p.status === "success")
+      ) {
+        return {
+          hasAccess: true,
+          reason: "lifetime_paid",
+          planType,
+          accessUntil: null,
+        };
+      }
+      continue;
+    }
+
+    const end = time(sub.endDate);
+    if (end === null || end <= current) continue;
+
+    // Require trusted transaction evidence for recurring plans as well.
+    // Stripe grants the 7-day trial before charging, so TRIALING is valid
+    // only while the trial date is in the future. SUCCESS indicates a
+    // completed payment. Historical/legacy records need reconciliation.
+    const trialEnds = time(sub.trialEndsAt);
+    const trialAllowed =
+      trialEnds !== null &&
+      trialEnds > current &&
+      scopedPayments.some(p => p.status === "trialing");
+    const paidAllowed = scopedPayments.some(p => {
+      if (p.status !== "success" || p.revoked === true) return false;
+      const paid = time(p.paidAt);
+      const billedThrough = time(p.billingPeriodEnd);
+      // Require the exact active period: no historical invoice can validate
+      // an unrelated future renewal, even on the same Stripe subscription.
+      return paid !== null && paid <= current &&
+        billedThrough !== null && billedThrough > current &&
+        Math.abs(billedThrough - end) < 60_000;
+    });
+    if (!trialAllowed && !paidAllowed) continue;
+
+    // Cancelling means Stripe is scheduled to cancel at period end.
+    // Both active and cancelling are valid only inside the recorded period.
+    const candidate: EntitlementDecision = {
+      hasAccess: true,
+      reason: "recurring_period",
+      planType,
+      accessUntil: new Date(end).toISOString(),
+    };
+    if (
+      recurring === null ||
+      new Date(recurring.accessUntil as string).getTime() < end
+    ) {
+      recurring = candidate;
+    }
+  }
+  return recurring ?? lifetimeTrial ?? NO_ACCESS;
+}

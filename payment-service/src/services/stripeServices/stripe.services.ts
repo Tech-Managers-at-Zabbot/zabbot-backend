@@ -305,10 +305,13 @@ const handleInvoicePaymentSucceeded = errorUtilities.withServiceErrorHandling(
       paymentGateway: PaymentGateway.STRIPE,
     });
 
-    if (existingTransaction) {
-      console.log(
-        `Skipping already-processed invoice.payment_succeeded event: ${invoice.id}`,
-      );
+    // A failed invoice can later be paid by Stripe's retry mechanism.
+    // Reuse its existing gateway-unique transaction ID rather than skipping
+    // success forever or attempting a duplicate insert.
+    if (existingTransaction &&
+        [TransactionStatus.REFUNDED, TransactionStatus.CANCELLED].includes(existingTransaction.status)) {
+      // A replayed payment-success event must not reinstate reversed access.
+      console.warn(`Ignoring previously reversed invoice: ${invoice.id}`);
       return;
     }
 
@@ -338,12 +341,17 @@ const handleInvoicePaymentSucceeded = errorUtilities.withServiceErrorHandling(
     // Find the user's existing subscription by Stripe subscription ID
     const userSubscription = await userSubscriptionRepositories.getOne({
       gatewaySubscriptionId: subscriptionId,
-      status: SubscriptionStatus.ACTIVE,
     });
+    // A paid retry may recover a FAILED subscription. Do not silently
+    // resurrect intentionally cancelled or expired accounts.
+    if (userSubscription && ![SubscriptionStatus.ACTIVE, SubscriptionStatus.FAILED].includes(userSubscription.status)) {
+      console.warn(`Ignoring paid invoice for non-renewable subscription ${subscriptionId}`);
+      return;
+    }
 
     if (!userSubscription) {
       console.warn(
-        `Active subscription not found for Stripe subscription: ${subscriptionId}`,
+        `Eligible subscription not found for Stripe subscription: ${subscriptionId}`,
       );
       return;
     }
@@ -378,23 +386,43 @@ const handleInvoicePaymentSucceeded = errorUtilities.withServiceErrorHandling(
         stripeInvoiceId: invoice.id,
         stripeSubscriptionId: subscriptionId,
         stripePaymentIntentId: invoice.payment_intent,
+        stripePeriodEnd: invoice.lines?.data?.[0]?.period?.end
+          ? new Date(Number(invoice.lines.data[0].period.end) * 1000).toISOString()
+          : null,
         billingReason: invoice.billing_reason,
         invoiceUrl: invoice.hosted_invoice_url,
         paidAtUnix,
       },
     };
 
-    const transaction = await transactionsRepositories.create(transactionData);
+    const periodEndUnix = invoice.lines?.data?.[0]?.period?.end;
+    if (!periodEndUnix || !Number.isFinite(Number(periodEndUnix))) {
+      throw errorUtilities.createError(
+        "Paid renewal is missing a verified billing period end",
+        StatusCodes.BadRequest,
+      );
+    }
+    const periodEnd = new Date(Number(periodEndUnix) * 1000);
 
-    // Trial (if any) has now converted to a real paid period - trialEndsAt
-    // isn't passed here, so createOrUpdateUserSubscription clears it.
-    const periodEnd = invoice.lines?.data?.[0]?.period?.end
-      ? new Date(invoice.lines.data[0].period.end * 1000)
-      : null;
+    const transaction = existingTransaction
+      ? await transactionsRepositories.updateOne(
+          { id: existingTransaction.id },
+          { ...transactionData, id: existingTransaction.id },
+        )
+      : await transactionsRepositories.create(transactionData);
 
-    await userSubscriptionService.createOrUpdateUserSubscription(transaction, {
-      stripeDates: { periodEnd },
-    });
+    // Recover the exact existing Stripe subscription after a successful
+    // renewal/retry. Do not create another subscription row and do not
+    // move its start date forward on every webhook delivery.
+    await userSubscriptionRepositories.updateOne(
+      { id: userSubscription.id },
+      {
+        status: SubscriptionStatus.ACTIVE,
+        endDate: periodEnd,
+        renewalDate: periodEnd,
+        trialEndsAt: null,
+      },
+    );
 
     console.log(`Renewal payment succeeded for transaction: ${transaction.id}`);
 
@@ -528,6 +556,7 @@ const handleCheckoutSessionCompleted = errorUtilities.withServiceErrorHandling(
                 stripeSessionId: session.id,
                 stripePaymentIntentId: session.payment_intent,
                 stripeSubscriptionId: session.subscription,
+                stripePeriodEnd: periodEnd?.toISOString() ?? null,
               },
             },
       );
