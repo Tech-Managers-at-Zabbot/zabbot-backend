@@ -135,6 +135,7 @@ test("real Phase 2 lesson, content, quiz and flashcard routes enforce HTTP decis
       ["/quiz", "../../lesson-service/src/routes/quiz.route"],
       ["/flashcards", "../../lesson-service/src/routes/flashcard.route"],
       ["/user-lesson", "../../lesson-service/src/routes/userLesson.route"],
+      ["/courses", "../../lesson-service/src/routes/course.route"],
     ];
     const app = express();
     app.use(express.json());
@@ -169,6 +170,14 @@ test("real Phase 2 lesson, content, quiz and flashcard routes enforce HTTP decis
       assertAllowed(await request(origin, "/user-lesson/" + FREE_PREVIEW_LESSON_ID, "free", "PUT"));
       assertDenied(await request(origin, "/user-lesson/", "free", "POST", {lessonId:paidLesson}), 403, "SUBSCRIPTION_REQUIRED");
       assertAllowed(await request(origin, "/user-lesson/", "free", "POST", {lessonId:FREE_PREVIEW_LESSON_ID}));
+      assertDenied(await request(origin, "/courses/add-user-course/lang/" + premiumJourney, "free", "POST", { lastLessonId: paidLesson }), 403, "SUBSCRIPTION_REQUIRED");
+      assertAllowed(await request(origin, "/courses/add-user-course/lang/" + premiumJourney, "paid", "POST", { lastLessonId: paidLesson }));
+      assertAllowed(await request(origin, "/courses/add-user-course/lang/" + FREE_PREVIEW_JOURNEY_ID, "free", "POST", { lastLessonId: FREE_PREVIEW_LESSON_ID }));
+      assertDenied(await request(origin, "/courses/update-user-course/" + premiumJourney, "free", "PUT", { lastLessonId: paidLesson }), 403, "SUBSCRIPTION_REQUIRED");
+      assertAllowed(await request(origin, "/courses/update-user-course/" + premiumJourney, "paid", "PUT", { lastLessonId: paidLesson }));
+      assertDenied(await request(origin, "/courses/update-user-course/" + premiumJourney, "paid", "PUT", { lastLessonId: "missing" }), 404, "CURRICULUM_NOT_FOUND");
+      assertDenied(await request(origin, "/courses/update-user-course/disabled-journey", "paid", "PUT", { lastLessonId: "disabled-parent-lesson" }), 403, "CURRICULUM_UNAVAILABLE");
+      assertDenied(await request(origin, "/courses/update-user-course/" + premiumJourney, "paid", "PUT", {}), 400, "LESSON_ID_REQUIRED");
       assert.ok(calls > 0, "server entitlement resolver was invoked");
     } finally {
       await new Promise<void>((resolve, reject) => server.close(e => e ? reject(e) : resolve()));
