@@ -31,16 +31,24 @@ Only that lesson is free. Parent Journey is browsable only. ADMIN
 
 ## NOT YET COVERED — BLOCKS ENABLING FLAG
 
-1. `/api/chat` in Next.js directly invokes OpenAI and does not currently
-   validate a user or subscription. In-lesson Ọ̀rẹ́ uses this route. A
-   free-lesson exception cannot trust a client-supplied lesson ID; requires a
-   server-verified lesson/content context and bounded usage.
-2. Standalone Ọ̀rẹ́ routes in `user-service/src/routes/chatRoutes/chat.routes.ts`
-   need subscription checks for creation, messages, and AI generation while
-   preserving legitimate history access rules.
-3. Pronunciation feedback endpoint needs premium gating AND a validated
-   free-lesson exercise exception based on the referenced audio/content's
-   database association, NOT on client `isInLesson` or `isInLessonAudioId`.
+1. **BLOCKER:** `/api/chat` in Next.js directly invokes OpenAI without
+   authenticated subscription verification or the backend's 30-message daily
+   quota. In-lesson Ọ̀rẹ́ uses this route. A free-lesson exception cannot trust
+   a client-supplied lesson ID; requires a server-verified lesson/content context
+   and bounded usage BEFORE enforcement. Do not globally block the route
+   without preserving the approved free introductory exercise.
+2. **STAGED, NOT TESTED:** Standalone Ọ̀rẹ́ creation and message-send routes
+   now call `requirePremiumEntitlement` behind the default-off switch.
+   Conversation history reads remain accessible. Test quota, ownership and
+   payment transitions, plus direct API calls, before activation.
+3. **STAGED, NOT TESTED:** Pronunciation feedback now uses
+   `requirePronunciationEntitlement` behind the default-off switch. Its
+   free-preview exemption checks the posted reference ID against
+   `content_files -> contents -> lessons -> courses` using database state,
+   not client `isInLessonAudioId` or URL. Verify that the reference ID used
+   by the actual free-lesson UI corresponds to the content-file ID.
+   Because multipart upload is parsed before this check, assess file-size
+   limits, unauthorized disk writes and cleanup before activation.
 4. Audit user-course progress, user-lessons, quiz answer endpoints, alternate
    content-files, and media/public asset URLs for indirect access or progress
    mutations by unsubscribed users.
