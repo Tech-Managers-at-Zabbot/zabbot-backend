@@ -386,6 +386,9 @@ const handleInvoicePaymentSucceeded = errorUtilities.withServiceErrorHandling(
         stripeInvoiceId: invoice.id,
         stripeSubscriptionId: subscriptionId,
         stripePaymentIntentId: invoice.payment_intent,
+        stripePeriodEnd: invoice.lines?.data?.[0]?.period?.end
+          ? new Date(Number(invoice.lines.data[0].period.end) * 1000).toISOString()
+          : null,
         billingReason: invoice.billing_reason,
         invoiceUrl: invoice.hosted_invoice_url,
         paidAtUnix,
@@ -553,6 +556,7 @@ const handleCheckoutSessionCompleted = errorUtilities.withServiceErrorHandling(
                 stripeSessionId: session.id,
                 stripePaymentIntentId: session.payment_intent,
                 stripeSubscriptionId: session.subscription,
+                stripePeriodEnd: periodEnd?.toISOString() ?? null,
               },
             },
       );
