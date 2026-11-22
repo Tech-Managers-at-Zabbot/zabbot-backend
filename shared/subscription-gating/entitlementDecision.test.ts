@@ -91,7 +91,7 @@ test("lifetime setup trial needs valid trial date and trialing payment", () => {
 
 test("paid lifetime requires a success transaction and no active trial marker", () => {
   const purchased = base({
-    planId: "life", endDate: null, trialEndsAt: null,
+    planId: "life", gatewaySubscriptionId: "lifetime:tx_life_001", endDate: null, trialEndsAt: null,
   });
   assert.equal(
     decideSubscriptionEntitlement([purchased], plans, [payment("success")], now).reason,
