@@ -51,7 +51,8 @@ export async function lessonPracticeChat(req: Request, res: Response): Promise<v
       res.status(403).json({ code: "CURRICULUM_UNAVAILABLE" });
       return;
     }
-    if (!isFreePreviewLesson(lesson.id)) {
+    if (process.env.ZABBOT_SUBSCRIPTION_GATING_ENFORCE === "true" &&
+        !isFreePreviewLesson(lesson.id)) {
       const entitlement = await getUserEntitlement(userId);
       if (!entitlement.hasAccess) {
         res.status(403).json({ code: "SUBSCRIPTION_REQUIRED" });
