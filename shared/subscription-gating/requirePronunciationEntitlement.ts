@@ -28,7 +28,7 @@ export async function requirePronunciationEntitlement(
       const audioFile = await ContentFiles.findByPk(referenceId, { raw: true });
       if (audioFile && audioFile.contentType === "audio") {
         const content = await Contents.findByPk(audioFile.contentId, { raw: true });
-        if (content && isFreePreviewLesson(content.lessonId)) {
+        if (content) {
           const lesson = await Lessons.findByPk(content.lessonId, { raw: true });
           const course = lesson
             ? await Courses.findByPk(lesson.courseId, { raw: true })
@@ -37,8 +37,15 @@ export async function requirePronunciationEntitlement(
             res.status(403).json({ status: "error", code: "CURRICULUM_UNAVAILABLE" });
             return;
           }
-          next();
-          return;
+          // Replace the untrusted client URL with the DB-owned reference.
+          // The content file is the resource being authorized, never a
+          // browser-supplied isInLessonUrl.
+          req.body.isInLessonUrl = audioFile.filePath;
+          req.body.isInLessonAudioId = audioFile.id;
+          if (isFreePreviewLesson(lesson.id)) {
+            next();
+            return;
+          }
         }
       }
     }
