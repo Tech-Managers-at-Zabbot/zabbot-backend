@@ -65,9 +65,60 @@ Only that lesson is free. Parent Journey is browsable only. ADMIN
    answers for enforcement. Transaction rows keyed to shared plan IDs are not
    sufficient to settle refund/revocation sequences.
 7. Run TypeScript builds, unit tests, and staging integration/API bypass tests.
-   The tests are committed but have NOT been executed in CI.
+   The initial policy tests have run in CI; expanded integration tests remain outstanding.
 8. Review feature flag precedence and rollback. No staging or production
    deployment has been performed.
+
+
+## 2026-11-22 remediation commits (NOT deployed)
+
+- Exact entitlement transaction linkage: recurring uses Stripe gateway subscription ID;
+  new lifetime records use `lifetime:<transaction UUID>`. Legacy lifetime records
+  lacking that identifier fail closed and require reconciliation/backfill.
+- Signed Stripe `charge.refunded` (full refund) and `charge.dispute.created`
+  events attempt to revoke the *specific mapped* successful transaction.
+  Historical records lacking payment-intent metadata are NOT safely reconciled
+  and must be investigated. Partial refunds and dispute outcomes still require
+  an explicit policy and corresponding tests.
+- Paid renewal retries update the existing invoice transaction and restore the
+  matching FAILED subscription instead of creating duplicate subscription rows.
+- Delayed lifetime charge uses an atomic claim and Stripe idempotency key per
+  attempt. Stale PROCESSING attempts still need an operator recovery procedure.
+- ADMIN-only authorization for subscription plan creation and bulk Journey
+  creation. User lesson/Journey progress writes are protected behind the
+  default-off gating switch; Journey-progress deletion requires record ownership.
+- Pronunciation history now requires authentication and row-level ownership,
+  reference pronunciation creation requires ADMIN, and in-lesson audio URL is
+  overwritten from the database reference. Uploaded audio has a 10 MB limit and
+  error-response cleanup.
+- The unauthenticated direct-OpenAI Next.js chat route was removed. All lesson
+  chats proxy through authenticated, quota-limited backend practice, with the
+  paid-gating rule still default-OFF. Deploy backend before frontend in any
+  controlled staging test so this API is available.
+- Frontend tiles/entitlement network queries are now default-OFF behind
+  `NEXT_PUBLIC_ZABBOT_SUBSCRIPTION_GATING_ENFORCE=true`.
+- GitHub Actions compile/typecheck and initial policy tests have run, but
+  there is still NO end-to-end staging validation.
+
+## Remaining blockers
+
+1. Run `billing-reconciliation-audit.sql` READ ONLY against staging; investigate
+   missing gateway references, legacy paid lifetime rows, historical refunds,
+   disputed/partially refunded charges, and stale PROCESSING lifetime records.
+   Then reconcile against Stripe TEST MODE; never update a production customer
+   subscription by inference.
+2. Verify the event payload shape and payment-intent linkage for real checkout,
+   delayed lifetime, renewal, refund and dispute webhook events. Some historical
+   transactions may lack linkable metadata. Introduce an audited backfill plan.
+3. Unit/integration tests for signed webhook retries/reversals, overlapping
+   invoices, owner-scoped progress writes, direct API access and ADMIN overrides.
+4. Verify single-lesson quiz access and all approved free lesson embedded exercises.
+5. Test cross-environment flag coordination, rollback, invalidation after billing,
+   and ensure no other production-facing service uses an insecure legacy AI path.
+6. Audit media-serving URLs and any publicly accessible raw curriculum/media
+   assets that cannot be revoked by API entitlement middleware.
+7. Do not enable enforcement in staging or production until payment reconciliation
+   and denial tests are demonstrated. Neither draft PR may be merged yet.
 
 ## Failure modes
 
