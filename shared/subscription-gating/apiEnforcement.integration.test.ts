@@ -68,7 +68,7 @@ function mockedRequire(request: string, parent: any, original: any) {
   if (request.endsWith("/validations") && parentFile.includes("/src/routes/")) {
     return { JoiValidators: { inputValidator: () => (_req: any, _res: any, next: any) => next() }};
   }
-  return original.apply(parent, [request]);
+  return original.call(Module, request, parent, false);
 }
 
 function loadRoute(relativePath: string) {
