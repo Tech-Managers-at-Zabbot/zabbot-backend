@@ -55,7 +55,7 @@ export const generalAuthFunction = async (
         });
       }
 
-      if (!userDetails.isActive || userDetails.isBlocked) {
+      if (!userDetails.isActive || userDetails.isBlocked || !userDetails.isVerified) {
         return response.status(403).json({
           status: "error",
           message: "Account blocked, please contact admin",
@@ -70,123 +70,9 @@ export const generalAuthFunction = async (
       }
       verifiedUser = { ...verifiedUser, role: userDetails.role };
     } catch (error: any) {
-      if (error.message === "jwt expired") {
-        const decodedToken: any = jwt.decode(authorizationToken);
-
-        if (!decodedToken?.userId) {
-          return response.status(403).json({
-            status: "error",
-            message: "Invalid token",
-          });
-        }
-
-        const projection = [
-          "refreshToken",
-          "isVerified",
-          "isActive",
-          "isBlocked",
-          "role",
-          "accessToken",
-          "id",
-        ];
-
-        const userDetails = await Users.findOne({
-          where: { id: decodedToken?.userId },
-          attributes: projection,
-          raw: true,
-        });
-
-        if (!userDetails) {
-          return response.status(403).json({
-            status: "error",
-            message: "User not found, please login again or contact admin",
-          });
-        }
-        const refreshToken: any = userDetails?.refreshToken;
-
-        let refreshVerifiedUser: any;
-        try {
-          refreshVerifiedUser = jwt.verify(
-            refreshToken,
-            `${config.APP_JWT_SECRET}`,
-          );
-        } catch (refreshError: any) {
-          return response.status(403).json({
-            status: "error",
-            message: "Refresh Token Expired. Please login again.",
-          });
-        }
-
-        if (!userDetails) {
-          return response.status(403).json({
-            status: "error",
-            message: "User not found, please login again or contact admin",
-          });
-        }
-
-        if (userDetails?.isBlocked) {
-          return response.status(403).json({
-            status: "error",
-            message: "Account blocked, please contact admin",
-          });
-        }
-
-        // A valid refresh JWT must identify the account of the expired access JWT.
-        if (refreshVerifiedUser.userId !== decodedToken.userId) {
-          return response.status(403).json({
-            status: "error",
-            message: "Invalid refresh token",
-          });
-        }
-
-        if (!userDetails.isActive || !userDetails.isVerified) {
-          return response.status(403).json({
-            status: "error",
-            message: "Account is not active or verified",
-          });
-        }
-
-        if (!refreshToken) {
-          return response.status(403).json({
-            status: "error",
-            message: "Please login again.",
-          });
-        }
-
-        const tokenPayload = {
-          userId: userDetails.id,
-          email: refreshVerifiedUser.email,
-          role: userDetails.role,
-        };
-
-        // Match the existing login service token format (flat JWT claims).
-        const newAccessToken = jwt.sign(tokenPayload, String(config.APP_JWT_SECRET), {
-          expiresIn: "2h",
-        });
-        const newRefreshToken = jwt.sign(tokenPayload, String(config.APP_JWT_SECRET), {
-          expiresIn: "30d",
-        });
-
-        // Rotate only this account's stored refresh token.
-        const [updatedCount] = await Users.update(
-          { refreshToken: newRefreshToken },
-          { where: { id: userDetails.id, refreshToken } },
-        );
-        if (updatedCount !== 1) {
-          return response.status(403).json({
-            status: "error",
-            message: "Session changed. Please login again.",
-          });
-        }
-        response.setHeader("x-access-token", newAccessToken);
-        request.user = tokenPayload;
-
-        return next();
-      }
-
-      return response.status(403).json({
+      return response.status(401).json({
         status: "error",
-        message: `Login Again, Invalid Token: ${error.message}`,
+        message: error?.name === "TokenExpiredError" ? "Access token expired" : "Invalid access token",
       });
     }
 
