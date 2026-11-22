@@ -74,18 +74,26 @@ const getLessonsForCourse = errorUtilities.withServiceErrorHandling(
       );
     }
 
-    const getLessonsContents = await Promise.all(
-      getCourseLessons.map(async (lesson: Record<string, any>) => {
-        const contents = await contentRepositories.getLessonContents(
-          lesson?.id,
-        );
-        return {
+    // When gating is enabled, Journey browsing returns lesson metadata only.
+    // Never include paid lesson contents in a tile listing response.
+    // Access to an individual lesson's contents is checked separately.
+    const enforce = process.env.ZABBOT_SUBSCRIPTION_GATING_ENFORCE === "true";
+    const getLessonsContents = enforce
+      ? getCourseLessons.map((lesson: Record<string, any>) => ({
           course: course || null,
           ...lesson,
-          contents: contents || [],
-        };
-      }),
-    );
+          contents: [],
+        }))
+      : await Promise.all(
+          getCourseLessons.map(async (lesson: Record<string, any>) => {
+            const contents = await contentRepositories.getLessonContents(lesson?.id);
+            return {
+              course: course || null,
+              ...lesson,
+              contents: contents || [],
+            };
+          }),
+        );
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       CourseResponses.PROCESS_SUCCESSFUL,
