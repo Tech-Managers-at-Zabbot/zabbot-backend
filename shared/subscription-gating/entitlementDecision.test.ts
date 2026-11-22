@@ -20,7 +20,7 @@ const base = (overrides: Partial<EntitlementSubscription> = {}): EntitlementSubs
 const payment = (
   status: EntitlementPaymentEvidence["status"],
   planId: string = "life",
-): EntitlementPaymentEvidence => ({ planId, status, subscriptionId: planId === "life" ? null : "sub_stripe_001", transactionId: planId === "life" ? "tx_life_001" : null, paidAt: "2026-11-15T00:00:00.000Z" });
+): EntitlementPaymentEvidence => ({ planId, status, subscriptionId: planId === "life" ? null : "sub_stripe_001", transactionId: planId === "life" ? "tx_life_001" : null, paidAt: "2026-11-15T00:00:00.000Z", billingPeriodEnd: planId === "life" ? null : "2026-12-01T00:00:00.000Z" });
 
 test("no subscription denies premium access", () => {
   assert.equal(decideSubscriptionEntitlement([], plans, [], now).hasAccess, false);
@@ -142,4 +142,34 @@ test("a missing gateway link fails closed for legacy subscriptions", () => {
   assert.equal(decideSubscriptionEntitlement([base({ gatewaySubscriptionId: null })], plans, [
     payment("success", "monthly"),
   ], now).hasAccess, false);
+});
+
+test("recurring subscription ignores refunded old period if current period paid", () => {
+  const priorRefund = {
+    ...payment("refunded", "monthly"),
+    paidAt: "2026-10-01T00:00:00.000Z",
+    billingPeriodEnd: "2026-11-01T00:00:00.000Z",
+    refundedAt: "2026-11-03T00:00:00.000Z",
+  };
+  assert.equal(
+    decideSubscriptionEntitlement([base()], plans,
+      [priorRefund, payment("success", "monthly")], now).hasAccess,
+    true,
+  );
+});
+
+test("recurring subscription cannot reuse a prior period payment", () => {
+  const prior = {
+    ...payment("success", "monthly"),
+    billingPeriodEnd: "2026-11-01T00:00:00.000Z",
+  };
+  assert.equal(
+    decideSubscriptionEntitlement([base()], plans, [prior], now).hasAccess,
+    false,
+  );
+});
+
+test("refunded current invoice grants no recurring paid access", () => {
+  const reversed = { ...payment("refunded", "monthly"), revoked: true };
+  assert.equal(decideSubscriptionEntitlement([base()], plans, [reversed], now).hasAccess, false);
 });
