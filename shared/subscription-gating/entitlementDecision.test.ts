@@ -26,9 +26,26 @@ test("no subscription denies premium access", () => {
 });
 
 test("valid monthly period grants access", () => {
-  const result = decideSubscriptionEntitlement([base()], plans, [], now);
+  const result = decideSubscriptionEntitlement([base()], plans, [payment("success", "monthly")], now);
   assert.equal(result.hasAccess, true);
   assert.equal(result.reason, "recurring_period");
+});
+
+test("active recurring row without a paid or trialing transaction denies access", () => {
+  assert.equal(decideSubscriptionEntitlement([base()], plans, [], now).hasAccess, false);
+});
+
+test("current recurring trial grants access only with trial evidence", () => {
+  const currentTrial = base({ trialEndsAt: "2026-11-26T00:00:00.000Z" });
+  assert.equal(
+    decideSubscriptionEntitlement([currentTrial], plans, [payment("trialing", "monthly")], now).hasAccess,
+    true,
+  );
+  assert.equal(
+    decideSubscriptionEntitlement([base({ trialEndsAt: "2026-11-21T00:00:00.000Z" })], plans,
+      [payment("trialing", "monthly")], now).hasAccess,
+    false,
+  );
 });
 
 test("expired monthly period denies access even with active status", () => {
@@ -40,7 +57,7 @@ test("expired monthly period denies access even with active status", () => {
 
 test("period-end cancelling subscription retains access until end", () => {
   const result = decideSubscriptionEntitlement(
-    [base({ status: "cancelling" })], plans, [], now,
+    [base({ status: "cancelling" })], plans, [payment("success", "monthly")], now,
   );
   assert.equal(result.hasAccess, true);
 });
