@@ -75,6 +75,7 @@ export async function getUserEntitlement(
       subscriptionId: t.gatewaySubscriptionId ?? null,
       transactionId: t.id,
       paidAt: t.paidAt ?? null,
+      billingPeriodEnd: t.metadata?.stripePeriodEnd ?? null,
       refundedAt: t.refundedAt ?? null,
       revoked: t.refundedAt != null || t.metadata?.disputed === true || t.metadata?.entitlementRevoked === true,
     }));
