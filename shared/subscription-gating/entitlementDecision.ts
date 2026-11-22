@@ -118,6 +118,21 @@ export function decideSubscriptionEntitlement(
 
     const end = time(sub.endDate);
     if (end === null || end <= current) continue;
+
+    // Require trusted transaction evidence for recurring plans as well.
+    // Stripe grants the 7-day trial before charging, so TRIALING is valid
+    // only while the trial date is in the future. SUCCESS indicates a
+    // completed payment. Historical/legacy records need reconciliation.
+    const trialEnds = time(sub.trialEndsAt);
+    const trialAllowed =
+      trialEnds !== null &&
+      trialEnds > current &&
+      payments.some(p => p.planId === sub.planId && p.status === "trialing");
+    const paidAllowed = payments.some(
+      p => p.planId === sub.planId && p.status === "success",
+    );
+    if (!trialAllowed && !paidAllowed) continue;
+
     // Cancelling means Stripe is scheduled to cancel at period end.
     // Both active and cancelling are valid only inside the recorded period.
     const candidate: EntitlementDecision = {
