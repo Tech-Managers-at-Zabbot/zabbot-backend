@@ -6,6 +6,8 @@ import {
 } from "../../../shared/middleware/authorization.middleware";
 import { JoiValidators } from "../validations";
 
+import { requirePremiumEntitlement } from "../../../shared/subscription-gating/requirePremiumEntitlement";
+const enforce = process.env.ZABBOT_SUBSCRIPTION_GATING_ENFORCE === "true";
 const router = express.Router();
 
 router.post(
@@ -19,12 +21,14 @@ router.post(
 router.get(
   "/",
   generalAuthFunction,
+  ...(enforce ? [requirePremiumEntitlement] : []),
   flashcardController.getFlashcardsController,
 );
 
 router.get(
   "/:id",
   generalAuthFunction,
+  ...(enforce ? [requirePremiumEntitlement] : []),
   flashcardController.getFlashcardController,
 );
 

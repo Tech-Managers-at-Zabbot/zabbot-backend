@@ -143,7 +143,15 @@ const updateUserCourse = errorUtilities.withServiceErrorHandling(
       );
     }
 
-    Object.assign(userCourse, userCourseData);
+    // The browser cannot replace the owner, primary key, Journey, or language.
+    // Only explicit progress attributes may be written.
+    const allowed = ["lastLessonId", "lastContentId", "lastAccessed", "progress", "isCompleted"];
+    for (const key of allowed) {
+      if (Object.prototype.hasOwnProperty.call(userCourseData, key)) {
+        userCourse[key] = userCourseData[key];
+      }
+    }
+    userCourse.userId = userId;
     const updatedUserCourse = await userCourseRepositories.updateUserCourse(
       userCourse,
       userCourse.id,
@@ -159,8 +167,8 @@ const updateUserCourse = errorUtilities.withServiceErrorHandling(
 );
 
 const deleteUserCourse = errorUtilities.withServiceErrorHandling(
-  async (id: string) => {
-    await userCourseRepositories.deleteUserCourse(id);
+  async (id: string, userId: string) => {
+    await userCourseRepositories.deleteUserCourse(id, userId);
 
     return { message: "User course deleted successfully" };
   },

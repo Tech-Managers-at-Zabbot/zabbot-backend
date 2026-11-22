@@ -55,10 +55,14 @@ const processDueLifetimeCharges = async () => {
 const chargeTransaction = async (transaction: any) => {
   // Concurrency guard: claim the transaction before calling Stripe so an
   // overlapping run (or a slow prior run) can't charge it twice.
-  await transactionsRepositories.updateOne(
+  const claimed = await transactionsRepositories.updateMany(
     { id: transaction.id, status: TransactionStatus.TRIALING },
     { status: TransactionStatus.PROCESSING }
   );
+  if (claimed.affectedRows !== 1) {
+    // Another worker already claimed this charge.
+    return;
+  }
 
   try {
     const paymentIntent = await stripe.paymentIntents.create({
@@ -69,6 +73,9 @@ const chargeTransaction = async (transaction: any) => {
       off_session: true,
       confirm: true,
       description: "Lifetime plan trial conversion charge",
+    }, {
+      // Stable for this exact attempt, including after a process crash.
+      idempotencyKey: `lifetime-charge-${transaction.id}-${transaction.chargeAttempts || 0}`,
     });
 
     if (paymentIntent.status === "succeeded") {
@@ -108,7 +115,7 @@ const handleChargeSuccess = async (
 
   const userSubscription = await userSubscriptionRepositories.getOne({
     userId: transaction.userId,
-    planId: transaction.planId,
+    gatewaySubscriptionId: `lifetime:${transaction.id}`,
     status: SubscriptionStatus.ACTIVE,
   });
 

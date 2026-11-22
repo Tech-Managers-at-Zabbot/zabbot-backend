@@ -4,7 +4,10 @@ import { errorUtilities, responseUtilities } from "../../../shared/utilities";
 
 export const getPronunciationsController =
   errorUtilities.withControllerErrorHandling(async (req: Request, res) => {
-    const pronunciation = await pronunciationService.getPronunciations();
+    const user = (req as Request & { user?: { userId?: string; role?: string } }).user;
+    const pronunciation = await pronunciationService.getPronunciations(
+      user?.role === "admin" ? undefined : user?.userId,
+    );
 
     return responseUtilities.responseHandler(
       res,
@@ -17,7 +20,10 @@ export const getPronunciationsController =
 export const getPronunciationController =
   errorUtilities.withControllerErrorHandling(async (req: Request, res) => {
     const { id } = req.params;
-    const pronunciation = await pronunciationService.getPronunciation(id);
+    const user = (req as Request & { user?: { userId?: string; role?: string } }).user;
+    const pronunciation = await pronunciationService.getPronunciation(
+      id, user?.role === "admin" ? undefined : user?.userId,
+    );
     return responseUtilities.responseHandler(
       res,
       pronunciation.message,

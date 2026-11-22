@@ -24,6 +24,8 @@ import {
 } from "../controllers/course.controller";
 
 const upload = multer({ storage: multer.memoryStorage() });
+import { requireJourneyProgressEntitlement } from "../../../shared/subscription-gating/requireJourneyProgressEntitlement";
+const enforce = process.env.ZABBOT_SUBSCRIPTION_GATING_ENFORCE === "true";
 const router = express.Router();
 
 router.get("/:languageId", getCoursesController);
@@ -57,11 +59,13 @@ router.get(
 router.post(
   "/add-user-course/:languageId/:courseId",
   generalAuthFunction,
+  ...(enforce ? [requireJourneyProgressEntitlement] : []),
   addUserCourseController,
 );
 router.put(
   "/update-user-course/:courseId",
   generalAuthFunction,
+  ...(enforce ? [requireJourneyProgressEntitlement] : []),
   updateUserCourseController,
 );
 router.delete("/users/:id", generalAuthFunction, removeUserCourseController);
@@ -72,6 +76,8 @@ router.get(
 );
 router.post(
   "/course-with-lesson/:languageId",
+  generalAuthFunction,
+  rolePermit(["admin"]),
   createCourseWithLessonsController,
 );
 router.get(
