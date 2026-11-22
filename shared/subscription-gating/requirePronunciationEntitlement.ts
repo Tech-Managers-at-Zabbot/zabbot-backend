@@ -48,6 +48,10 @@ export async function requirePronunciationEntitlement(
           }
         }
       }
+      // A claimed in-lesson exercise must have a real DB-linked audio file.
+      // Paid access does not authorize choosing an arbitrary remote audio URL.
+      res.status(400).json({ status: "error", code: "INVALID_LESSON_AUDIO" });
+      return;
     }
     await requirePremiumEntitlement(req, res, next);
   } catch (error) {
