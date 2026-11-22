@@ -127,7 +127,7 @@ const getWordOfTheDayController = errorUtilities.withControllerErrorHandling(asy
 
     const { userId } = request.user
 
-    const getWord = await dailyWordsServices.getTodayWordService(languageId, userId)
+    const getWord = await dailyWordsServices.getTodayWordService(languageId, userId, request.headers.authorization)
 
     return responseUtilities.responseHandler(
         response,

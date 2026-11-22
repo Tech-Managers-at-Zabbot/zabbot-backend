@@ -6,7 +6,7 @@ import streakController from "../../controllers/userControllers/streak.controlle
 
 const router = express.Router();
 
-router.get("/single-user/:userId", usersControllers.getSingleUser);
+router.get("/single-user/:userId", generalAuthFunction, usersControllers.getSingleUser);
 router.get("/all-user-count", usersControllers.getAllUsersCount);
 router.post(
   "/log-streak",

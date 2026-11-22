@@ -63,7 +63,6 @@ const userRegisterSchemaViaEmail = Joi.object({
     "string.min": "Last Name must be at least 2 characters long",
   }),
 
-  role: Joi.string().trim().min(4).optional(),
   timeZone: Joi.string().optional(),
 });
 

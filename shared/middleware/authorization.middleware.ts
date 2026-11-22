@@ -1,6 +1,5 @@
 import { Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { helpersUtilities } from "../utilities";
 import Users from "../entities/user-service-entities/users/users.entities";
 import config from "../../config/config";
 
@@ -32,7 +31,7 @@ export const generalAuthFunction = async (
 
     try {
       verifiedUser = jwt.verify(authorizationToken, `${config.APP_JWT_SECRET}`);
-      const decodedToken: any = jwt.decode(authorizationToken);
+      const decodedToken: any = verifiedUser;
       const projection = [
         "refreshToken",
         "isVerified",
@@ -56,7 +55,7 @@ export const generalAuthFunction = async (
         });
       }
 
-      if (userDetails?.isBlocked) {
+      if (!userDetails.isActive || userDetails.isBlocked || !userDetails.isVerified) {
         return response.status(403).json({
           status: "error",
           message: "Account blocked, please contact admin",
@@ -69,115 +68,11 @@ export const generalAuthFunction = async (
           message: "Please login again.",
         });
       }
+      verifiedUser = { ...verifiedUser, role: userDetails.role };
     } catch (error: any) {
-      if (error.message === "jwt expired") {
-        const decodedToken: any = jwt.decode(authorizationToken);
-
-        if (!decodedToken?.userId) {
-          return response.status(403).json({
-            status: "error",
-            message: "Invalid token",
-          });
-        }
-
-        const projection = [
-          "refreshToken",
-          "isVerified",
-          "isActive",
-          "isBlocked",
-          "role",
-          "accessToken",
-          "id",
-        ];
-
-        const userDetails = await Users.findOne({
-          where: { id: decodedToken?.userId },
-          attributes: projection,
-          raw: true,
-        });
-
-        if (!userDetails) {
-          return response.status(403).json({
-            status: "error",
-            message: "User not found, please login again or contact admin",
-          });
-        }
-        const refreshToken: any = userDetails?.refreshToken;
-
-        let refreshVerifiedUser: any;
-        try {
-          refreshVerifiedUser = jwt.verify(
-            refreshToken,
-            `${config.APP_JWT_SECRET}`,
-          );
-        } catch (refreshError: any) {
-          return response.status(403).json({
-            status: "error",
-            message: "Refresh Token Expired. Please login again.",
-          });
-        }
-
-        if (!userDetails) {
-          return response.status(403).json({
-            status: "error",
-            message: "User not found, please login again or contact admin",
-          });
-        }
-
-        if (userDetails?.isBlocked) {
-          return response.status(403).json({
-            status: "error",
-            message: "Account blocked, please contact admin",
-          });
-        }
-
-        const compareRefreshTokens = refreshToken === userDetails?.refreshToken;
-
-        if (compareRefreshTokens === false) {
-          return response.status(403).json({
-            status: "error",
-            message: "Please login again.",
-          });
-        }
-
-        const tokenPayload = {
-          userId: refreshVerifiedUser.userId,
-          email: refreshVerifiedUser.email,
-          role: refreshVerifiedUser.role,
-        };
-
-        const accessTokenExpiry = refreshVerifiedUser.stayLoggedIn
-          ? "30d"
-          : "2h";
-        const newAccessToken = helpersUtilities.generateToken(
-          tokenPayload,
-          accessTokenExpiry,
-        );
-
-        const newRefreshToken = helpersUtilities.generateToken(
-          tokenPayload,
-          "30d",
-        );
-
-        response.setHeader("x-access-token", newAccessToken);
-
-        await Users.update(
-          {
-            refreshToken: newRefreshToken,
-          },
-          {
-            where: { id: refreshVerifiedUser.id },
-          },
-        );
-
-        request.user = refreshVerifiedUser;
-
-        return next();
-      }
-
-      return response.status(403).json({
+      return response.status(401).json({
         status: "error",
-        message: `Login Again, Invalid Token: ${error.message}`,
+        message: error?.name === "TokenExpiredError" ? "Access token expired" : "Invalid access token",
       });
     }
 

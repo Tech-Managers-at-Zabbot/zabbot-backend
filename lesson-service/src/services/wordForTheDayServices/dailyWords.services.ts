@@ -141,13 +141,14 @@ const createManyWordsForTheDayService = errorUtilities.withServiceErrorHandling(
 );
 
 const getTodayWordService = errorUtilities.withServiceErrorHandling(
-    async (languageId: string, userId?: string) => {
+    async (languageId: string, userId?: string, authorization?: string) => {
         let today;
 
         if (userId) {
 
-            const userDetails = await fetchSingleUser(userId, ["id", "email", "timeZone"])
+            const userDetails = await fetchSingleUser(userId, ["id", "email", "timeZone"], authorization)
 
+            if (!userDetails.success || !userDetails.data) throw new Error('Unable to retrieve authenticated user timezone');
             const user = userDetails.data
 
             const userTimezone = user.timeZone || 'UTC';
