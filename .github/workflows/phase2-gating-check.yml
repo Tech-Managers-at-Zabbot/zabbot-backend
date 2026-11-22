@@ -1,0 +1,49 @@
+name: Phase 2 subscription gating validation
+
+on:
+  pull_request:
+    paths:
+      - "shared/**"
+      - "config/**"
+      - "user-service/**"
+      - "lesson-service/**"
+      - "pronunciation-feedback-service/**"
+      - "payment-service/**"
+      - ".github/workflows/phase2-gating-check.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CI: "true"
+      ONNXRUNTIME_NODE_INSTALL: "skip"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install build dependencies without migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --include=dev
+          for dir in config shared user-service lesson-service payment-service pronunciation-feedback-service; do
+            echo "::group::Install $dir"
+            (cd "$dir" && npm ci --include=dev --onnxruntime-node-install=skip)
+            echo "::endgroup::"
+          done
+      - name: Type-check dependency projects
+        shell: bash
+        run: |
+          set -euo pipefail
+          for dir in config shared user-service lesson-service payment-service pronunciation-feedback-service; do
+            echo "::group::Build $dir"
+            (cd "$dir" && npm run build)
+            echo "::endgroup::"
+          done
+      - name: Run pure entitlement policy unit tests
+        run: npx ts-node shared/subscription-gating/entitlementDecision.test.ts

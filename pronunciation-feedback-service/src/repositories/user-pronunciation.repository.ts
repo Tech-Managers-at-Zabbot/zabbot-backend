@@ -3,9 +3,9 @@ import { errorUtilities } from "../../../shared/utilities";
 import UserPronunciation from "../../../shared/entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation";
 
 const userPronunciationRepositories = {
-  getPronunciation: async (id: string) => {
+  getPronunciation: async (id: string, userId?: string) => {
     try {
-      const pronunciation = await UserPronunciation.findByPk(id);
+      const pronunciation = await UserPronunciation.findOne({ where: userId ? { id, userId } : { id } });
 
       return pronunciation;
     } catch (error: any) {
@@ -16,9 +16,9 @@ const userPronunciationRepositories = {
     }
   },
 
-  getPronunciations: async () => {
+  getPronunciations: async (userId?: string) => {
     try {
-      const pronunciations = await UserPronunciation.findAll();
+      const pronunciations = await UserPronunciation.findAll({ where: userId ? { userId } : {} });
       return pronunciations;
     } catch (error: any) {
       throw errorUtilities.createError(

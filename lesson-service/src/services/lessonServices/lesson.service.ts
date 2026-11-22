@@ -39,10 +39,26 @@ const getLessonsForLanguage = errorUtilities.withServiceErrorHandling(
         StatusCodes.NotFound,
       );
     }
+    // Expose the parent Journey's ADMIN status so Step tiles can apply the
+    // admin-disabled overlay even when an individual lesson remains active.
+    // This only adds curriculum metadata; it does not authorize content.
+    const courseIds = Array.from(
+      new Set(getLanguageLessons.map((lesson: any) => lesson.courseId)),
+    );
+    const courses = await Promise.all(
+      courseIds.map((id: string) => courseRepositories.getCourse(id)),
+    );
+    const courseById = new Map(
+      courses.filter(Boolean).map((course: any) => [course.id, course]),
+    );
+    const lessonsWithCourseAvailability = getLanguageLessons.map((lesson: any) => ({
+      ...lesson,
+      course: courseById.get(lesson.courseId) || null,
+    }));
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       CourseResponses.PROCESS_SUCCESSFUL,
-      getLanguageLessons,
+      lessonsWithCourseAvailability,
     );
   },
 );
@@ -58,18 +74,26 @@ const getLessonsForCourse = errorUtilities.withServiceErrorHandling(
       );
     }
 
-    const getLessonsContents = await Promise.all(
-      getCourseLessons.map(async (lesson: Record<string, any>) => {
-        const contents = await contentRepositories.getLessonContents(
-          lesson?.id,
-        );
-        return {
+    // When gating is enabled, Journey browsing returns lesson metadata only.
+    // Never include paid lesson contents in a tile listing response.
+    // Access to an individual lesson's contents is checked separately.
+    const enforce = process.env.ZABBOT_SUBSCRIPTION_GATING_ENFORCE === "true";
+    const getLessonsContents = enforce
+      ? getCourseLessons.map((lesson: Record<string, any>) => ({
           course: course || null,
           ...lesson,
-          contents: contents || [],
-        };
-      }),
-    );
+          contents: [],
+        }))
+      : await Promise.all(
+          getCourseLessons.map(async (lesson: Record<string, any>) => {
+            const contents = await contentRepositories.getLessonContents(lesson?.id);
+            return {
+              course: course || null,
+              ...lesson,
+              contents: contents || [],
+            };
+          }),
+        );
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       CourseResponses.PROCESS_SUCCESSFUL,
