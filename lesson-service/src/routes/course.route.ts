@@ -72,6 +72,8 @@ router.get(
 );
 router.post(
   "/course-with-lesson/:languageId",
+  generalAuthFunction,
+  rolePermit(["admin"]),
   createCourseWithLessonsController,
 );
 router.get(
