@@ -146,7 +146,7 @@ export function decideSubscriptionEntitlement(
     const trialAllowed =
       trialEnds !== null &&
       trialEnds > current &&
-      payments.some(p => p.planId === sub.planId && p.status === "trialing");
+      scopedPayments.some(p => p.status === "trialing");
     const paidAllowed = scopedPayments.some(
       p => p.status === "success" && (time(p.paidAt) ?? 0) <= current,
     );
