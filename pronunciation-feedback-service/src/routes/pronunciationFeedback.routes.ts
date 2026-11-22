@@ -13,6 +13,7 @@ import {
 } from "../controllers/userPronunciation.controller";
 import { generalAuthFunction } from "../../../shared/middleware/authorization.middleware";
 import fs from "fs/promises";
+import { requirePronunciationEntitlement } from "../../../shared/subscription-gating/requirePronunciationEntitlement";
 
 const router = express.Router();
 
@@ -46,6 +47,11 @@ router.post(
   // @ts-ignore
   generalAuthFunction,
   upload.single("file"),
+  // The request body is multipart, therefore the DB-verified exception
+  // check must occur after multer populates req.body. The flag remains OFF.
+  ...(process.env.ZABBOT_SUBSCRIPTION_GATING_ENFORCE === "true"
+    ? [requirePronunciationEntitlement]
+    : []),
   comparePronunciation
 );
 // @ts-ignore
