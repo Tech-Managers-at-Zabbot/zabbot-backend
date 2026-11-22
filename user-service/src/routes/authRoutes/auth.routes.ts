@@ -39,7 +39,7 @@ router.post("/refresh-session", async (request: Request, response: Response) => 
 
     const payload = { userId: user.id, email: user.email, role: user.role };
     const accessToken = jwt.sign(payload, String(config.APP_JWT_SECRET), {
-      expiresIn: claims.stayLoggedIn ? "30d" : "2h",
+      expiresIn: "2h",
       algorithm: "HS256",
     });
     // Add a unique ID so every rotation invalidates the previous token.
