@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import { randomUUID } from "crypto";
 import { QueryTypes } from "sequelize";
 import { yorubaSystemPrompt } from "./yorubaPrompt";
+import { lessonPracticeChat } from "./lessonPracticeChat";
 import { users_service_db } from "../../../../config/databases";
 import { generalAuthFunction } from "../../../../shared/middleware/authorization.middleware";
 import { requirePremiumEntitlement } from "../../../../shared/subscription-gating/requirePremiumEntitlement";
@@ -26,6 +27,9 @@ router.use(generalAuthFunction as any);
 // available to let users view existing conversations after expiry.
 // Never enable globally until all Phase 2 API paths and UI have been tested.
 const enforceChat = process.env.ZABBOT_SUBSCRIPTION_GATING_ENFORCE === "true";
+
+// Dedicated lesson practice uses DB-verified content context and the same quota.
+if (enforceChat) router.post("/lesson-practice", lessonPracticeChat);
 
 router.get("/usage", async (req: Request, res: Response): Promise<void> => {
   const userId = getAuthenticatedUserId(req);
