@@ -435,7 +435,7 @@ const loginUserService = errorUtilities.withServiceErrorHandling(
         email: user.email,
         role: user.role,
       },
-      expires: stayLoggedIn ? "30d" : "2h",
+      expires: "2h",
     };
 
     const refreshTokenData = {
