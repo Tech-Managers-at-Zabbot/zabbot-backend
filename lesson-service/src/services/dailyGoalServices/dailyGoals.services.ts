@@ -12,8 +12,9 @@ import userDailyGoalRepositories from "../../repositories/userDailyGoals.reposit
 
 
 const getDailyGoalService = errorUtilities.withServiceErrorHandling(
-    async (userId: string, languageId: string) => {
-        const userData = await fetchSingleUser(userId, ["id", "email", "timeZone"])
+    async (userId: string, languageId: string, authorization?: string) => {
+        const userData = await fetchSingleUser(userId, ["id", "email", "timeZone"], authorization)
+        if (!userData.success || !userData.data) throw new Error('Unable to retrieve authenticated user timezone');
         const user = userData.data
         const userTimezone = user.timeZone || 'UTC';
 

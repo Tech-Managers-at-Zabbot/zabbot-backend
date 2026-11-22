@@ -8,7 +8,7 @@ const getUserDailyGoals = errorUtilities.withControllerErrorHandling(
     async (request: JwtPayload, response: Response) => {
         const { languageId } = request.params;
         const { userId } = request.user;
-        const dailyGoals = await dailyGoalsServices.getDailyGoalService(userId, languageId);
+        const dailyGoals = await dailyGoalsServices.getDailyGoalService(userId, languageId, request.headers.authorization);
         return responseUtilities.responseHandler(
             response,
             dailyGoals.message,
