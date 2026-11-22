@@ -156,9 +156,9 @@ const userCourseRepositories = {
     }
   },
 
-  deleteUserCourse: async (id: string) => {
+  deleteUserCourse: async (id: string, userId: string) => {
     try {
-      const userCourse = await UserCourses.findByPk(id);
+      const userCourse = await UserCourses.findOne({ where: { id, userId } });
       if (!userCourse) {
         throw errorUtilities.createError(`User course not found`, 404);
       }
