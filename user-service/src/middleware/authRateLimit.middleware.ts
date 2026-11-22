@@ -48,12 +48,14 @@ export function limitAuthRequests(config: Limit) {
       ? request.body.email.trim().toLowerCase().slice(0, MAX_EMAIL_LENGTH)
       : "";
     const origin = fingerprint(ip);
+    // Account throttling must be independent of gateway/client IP variation.
+    // IP requests are tracked separately using a generous shared-address limit.
     const account = email ? fingerprint(email) : "missing-email";
     const waitByIp = increment(
       `${config.scope}:ip:${origin}`, config.perIp, config.windowMs, now,
     );
     const waitByAccount = increment(
-      `${config.scope}:account:${origin}:${account}`,
+      `${config.scope}:account:${account}`,
       config.perAccount, config.windowMs, now,
     );
     const retryAt = Math.max(waitByIp, waitByAccount);
