@@ -669,7 +669,7 @@ const resetPasswordService = errorUtilities.withServiceErrorHandling(
     const expectedResetToken = `reset:${resetDigest}`;
     if (user.accessToken !== expectedResetToken) {
       throw errorUtilities.createError(
-        GeneralResponses.INVALID_TOKEN,
+        "This password reset link has already been used or is no longer valid. Please request a new link.",
         StatusCodes.BadRequest,
       );
     }
@@ -688,7 +688,7 @@ const resetPasswordService = errorUtilities.withServiceErrorHandling(
     );
     if (updated !== 1) {
       throw errorUtilities.createError(
-        GeneralResponses.INVALID_TOKEN,
+        "This password reset link has already been used or is no longer valid. Please request a new link.",
         StatusCodes.BadRequest,
       );
     }
