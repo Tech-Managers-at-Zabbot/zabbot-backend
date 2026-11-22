@@ -59,6 +59,7 @@ router.post("/refresh-session", async (request: Request, response: Response) => 
     return response.status(200).json({
       token: accessToken,
       refreshToken: nextRefreshToken,
+      stayLoggedIn: claims.stayLoggedIn === true,
     });
   } catch {
     return response.status(401).json({ message: "Invalid or expired refresh token" });
