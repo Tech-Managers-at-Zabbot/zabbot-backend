@@ -31,12 +31,18 @@ Only that lesson is free. Parent Journey is browsable only. ADMIN
 
 ## NOT YET COVERED — BLOCKS ENABLING FLAG
 
-1. **BLOCKER:** `/api/chat` in Next.js directly invokes OpenAI without
-   authenticated subscription verification or the backend's 30-message daily
-   quota. In-lesson Ọ̀rẹ́ uses this route. A free-lesson exception cannot trust
-   a client-supplied lesson ID; requires a server-verified lesson/content context
-   and bounded usage BEFORE enforcement. Do not globally block the route
-   without preserving the approved free introductory exercise.
+1. **STAGED, NOT TESTED:** In-lesson Ọ̀rẹ́ now has
+   `POST /users/chat/lesson-practice` behind the default-off backend switch.
+   The Next.js `/api/chat` route proxies to it when the frontend switch is
+   also enabled; it otherwise preserves the legacy direct-OpenAI behavior.
+   The modal now sends the database `contentId` and access token.
+   The backend resolves content -> lesson -> parent Journey, checks ADMIN
+   availability, free-preview or valid entitlement, validates lesson vocabulary,
+   and reserves the SAME atomic 30/day quota as standalone Ọ̀rẹ́.
+   **BLOCKER:** Test both flags together. If the frontend switch remains OFF,
+   the legacy direct-OpenAI endpoint still bypasses subscription and quota.
+   Confirm live/staging API URL and token flow, content wording, error states,
+   prompt scoping, rate limiting, and lesson usability before enabling either.
 2. **STAGED, NOT TESTED:** Standalone Ọ̀rẹ́ creation and message-send routes
    now call `requirePremiumEntitlement` behind the default-off switch.
    Conversation history reads remain accessible. Test quota, ownership and
