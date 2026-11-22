@@ -79,7 +79,7 @@ router.post("/logout-session", async (request: Request, response: Response) => {
     if (typeof claims === "string" || typeof claims.userId !== "string") {
       return response.status(401).json({ message: "Invalid session" });
     }
-    const [count] = await Users.update({ refreshToken: null }, {
+    const [count] = await Users.update({ refreshToken: "" }, {
       where: { id: claims.userId, refreshToken },
     });
     if (count !== 1) return response.status(401).json({ message: "Session already ended" });
@@ -165,7 +165,7 @@ router.post("/google/exchange", async (request: Request, response: Response) => 
   }
   // Atomic use-once redemption.
   const [redeemed] = await Users.update(
-    { accessToken: null },
+    { accessToken: "" },
     { where: { id: user.id, accessToken: user.accessToken } },
   );
   if (redeemed !== 1) return response.status(401).json({ message: "Exchange code already used" });
