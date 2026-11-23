@@ -20,9 +20,9 @@ jobs:
           node <<'NODE'
           const base = process.env.STAGING_BASE;
           const checks = [
-            ["entitlement", "/api/v1/payment-services/subscription-plans/entitlement"],
+            ["entitlement", "/api/v1/payments/payment-services/subscription-plans/entitlement"],
             ["user progress", "/api/v1/lessons/courses/user-course/563cf281-35d6-437a-a136-c0bf8c055b0e/1a64676a-f16e-4054-9d61-bef443f32339"],
-            ["premium lesson", "/api/v1/lessons/lessons/lesson-with-contents/2dfcd37e-364e-4490-a8ef-7e3b18caa6c6"]
+            ["free-preview lesson (anonymous authentication)", "/api/v1/lessons/lessons/lesson-with-contents/2dfcd37e-364e-4490-a8ef-7e3b18caa6c6"]
           ];
           (async () => {
             let failures = 0;
