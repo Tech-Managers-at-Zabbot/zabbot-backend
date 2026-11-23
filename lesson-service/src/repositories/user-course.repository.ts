@@ -46,7 +46,8 @@ const userCourseRepositories = {
     try {
       const where: any = {
         isActive: true,
-        lastLessonId:filter.lastLessonId,
+        // A user_courses row belongs to a learner + Journey, not a lesson.
+        // lastLessonId is the latest position, not part of its lookup key.
         userId: filter.userId,
         courseId: filter.courseId
       };
@@ -113,6 +114,8 @@ const userCourseRepositories = {
 
       return newUserCourse;
     } catch (error: any) {
+      // Preserve unique-constraint identity for idempotent concurrent creates.
+      if (error?.name === "SequelizeUniqueConstraintError") throw error;
       console.log('adding user course error', error)
       throw errorUtilities.createError(
         `Error Adding user course: ${error.message}`,
@@ -137,7 +140,7 @@ const userCourseRepositories = {
           where: {
             id: userCourseId,
             userId: userCourseData.userId,
-            lastLessonId: lessonId,
+            // lastLessonId can legitimately change when moving between lessons.
           },
           returning: true,
         }

@@ -69,17 +69,34 @@ const addUserCourse = errorUtilities.withServiceErrorHandling(
       lastLessonId: userCourseData.lastLessonId,
     });
 
-    // if (existingUserCourse) {
-    //   throw errorUtilities.createError(
-    //     CourseResponses.USER_ENROLLED_FOR_COURSE,
-    //     StatusCodes.BadRequest
-    //   );
-    // }
+    // The DB enforces one progress record per (userId, courseId).
+    // A different lastLessonId must never cause duplicate enrollment.
+    if (existingUserCourse) {
+      return responseUtilities.handleServicesResponse(
+        StatusCodes.OK, CourseResponses.PROCESS_SUCCESSFUL, existingUserCourse,
+      );
+    }
 
-    const newUserCourse = await userCourseRepositories.addUserCourse({
-      id: v4(),
-      ...userCourseData,
-    });
+    let newUserCourse;
+    try {
+      newUserCourse = await userCourseRepositories.addUserCourse({
+        id: v4(),
+        ...userCourseData,
+      });
+    } catch (error: any) {
+      // Another concurrent request may have created the same Journey record.
+      // Recover ONLY when that row actually exists for this same learner.
+      if (error?.name !== "SequelizeUniqueConstraintError" ||
+          error?.parent?.constraint !== "user_courses_user_id_course_id") throw error;
+      const raced = await userCourseRepositories.getUserCourse({
+        userId: userCourseData.userId,
+        courseId: userCourseData.courseId,
+        languageId: userCourseData.languageId,
+        lastLessonId: userCourseData.lastLessonId,
+      });
+      if (!raced) throw error;
+      newUserCourse = raced;
+    }
     return responseUtilities.handleServicesResponse(
       StatusCodes.OK,
       CourseResponses.PROCESS_SUCCESSFUL,
@@ -133,24 +150,23 @@ const updateUserCourse = errorUtilities.withServiceErrorHandling(
       );
     }
 
-    if (
-      userCourse.isCompleted //&& userCourse.progress === 100
-    ) {
-      return responseUtilities.handleServicesResponse(
-        StatusCodes.OK,
-        CourseResponses.PROCESS_SUCCESSFUL,
-        userCourse,
+    if ((lessonExists as any).courseId !== courseId) {
+      throw errorUtilities.createError(
+        CourseResponses.LESSON_NOT_FOUND, StatusCodes.NotFound,
       );
     }
 
     // The browser cannot replace the owner, primary key, Journey, or language.
     // Only explicit progress attributes may be written.
+    const wasCompleted = userCourse.isCompleted === true;
     const allowed = ["lastLessonId", "lastContentId", "lastAccessed", "progress", "isCompleted"];
     for (const key of allowed) {
       if (Object.prototype.hasOwnProperty.call(userCourseData, key)) {
         userCourse[key] = userCourseData[key];
       }
     }
+    // Never demote completed Journey state due to a later lesson visit.
+    if (wasCompleted) userCourse.isCompleted = true;
     userCourse.userId = userId;
     const updatedUserCourse = await userCourseRepositories.updateUserCourse(
       userCourse,
