@@ -1,0 +1,46 @@
+name: E6 STAGING anonymous API smoke (read-only)
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/e6-staging-anonymous-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  anonymous-read-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe anonymous STAGING routes (GET only; no credentials)
+        env:
+          STAGING_BASE: https://zabbot-backend-development-no68m.ondigitalocean.app
+        run: |
+          node <<'NODE'
+          const base = process.env.STAGING_BASE;
+          const checks = [
+            ["entitlement", "/api/v1/payment-services/subscription-plans/entitlement"],
+            ["user progress", "/api/v1/lessons/courses/user-course/563cf281-35d6-437a-a136-c0bf8c055b0e/1a64676a-f16e-4054-9d61-bef443f32339"],
+            ["premium lesson", "/api/v1/lessons/lessons/lesson-with-contents/2dfcd37e-364e-4490-a8ef-7e3b18caa6c6"]
+          ];
+          (async () => {
+            let failures = 0;
+            for (const [label, path] of checks) {
+              try {
+                const response = await fetch(base + path, {method:"GET", redirect:"manual", signal:AbortSignal.timeout(15000), headers:{"Accept":"application/json"}});
+                const status = response.status;
+                console.log(label + ": HTTP " + status);
+                if (![401,403].includes(status)) {
+                  console.error(label + ": expected HTTP 401/403 for unauthenticated request");
+                  failures++;
+                }
+                await response.body?.cancel();
+              } catch (error) {
+                console.error(label + ": request failed (" + error.name + ")");
+                failures++;
+              }
+            }
+            if (failures) process.exitCode = 1;
+          })().catch(() => {process.exitCode=1;});
+          NODE
