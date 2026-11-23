@@ -158,6 +158,7 @@ const updateUserCourse = errorUtilities.withServiceErrorHandling(
 
     // The browser cannot replace the owner, primary key, Journey, or language.
     // Only explicit progress attributes may be written.
+    const wasCompleted = userCourse.isCompleted === true;
     const allowed = ["lastLessonId", "lastContentId", "lastAccessed", "progress", "isCompleted"];
     for (const key of allowed) {
       if (Object.prototype.hasOwnProperty.call(userCourseData, key)) {
@@ -165,9 +166,7 @@ const updateUserCourse = errorUtilities.withServiceErrorHandling(
       }
     }
     // Never demote completed Journey state due to a later lesson visit.
-    if (userCourseData.isCompleted === false && userCourse.isCompleted === true) {
-      userCourse.isCompleted = true;
-    }
+    if (wasCompleted) userCourse.isCompleted = true;
     userCourse.userId = userId;
     const updatedUserCourse = await userCourseRepositories.updateUserCourse(
       userCourse,
