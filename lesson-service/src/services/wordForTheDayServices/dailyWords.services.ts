@@ -4,13 +4,9 @@ import { v4 } from 'uuid';
 import languageRepositories from "../../repositories/language.repository";
 import { StatusCodes } from "../../../../shared/statusCodes/statusCodes.responses";
 import { DailyWordResponses, LanguageResponses } from "../../responses/responses";
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
 import { Op } from "sequelize";
+import { dailyWordDateAndReuseCutoff } from "./dailyWordDates";
 import { fetchSingleUser } from "../../utilities/axiosCalls";
-
-
-dayjs.extend(utc);
 
 
 const createWordForTheDayService = errorUtilities.withServiceErrorHandling(
@@ -142,7 +138,7 @@ const createManyWordsForTheDayService = errorUtilities.withServiceErrorHandling(
 
 const getTodayWordService = errorUtilities.withServiceErrorHandling(
     async (languageId: string, userId?: string, authorization?: string) => {
-        let today;
+        let userTimezone = "UTC";
 
         if (userId) {
 
@@ -151,17 +147,12 @@ const getTodayWordService = errorUtilities.withServiceErrorHandling(
             if (!userDetails.success || !userDetails.data) throw new Error('Unable to retrieve authenticated user timezone');
             const user = userDetails.data
 
-            const userTimezone = user.timeZone || 'UTC';
-
-            const now = new Date();
-
-            today = new Intl.DateTimeFormat('en-CA', {
-                timeZone: userTimezone
-            }).format(now);
-
-        } else {
-            today = dayjs().utc().startOf('day').toDate();
+            userTimezone = user.timeZone || "UTC";
         }
+
+        // The requested DATEONLY and its 30-day reuse cutoff must share the
+        // same calendar date, even when the learner is ahead of UTC.
+        const { today, reuseCutoff } = dailyWordDateAndReuseCutoff(new Date(), userTimezone);
 
         const filter = {
             languageId,
@@ -183,7 +174,7 @@ const getTodayWordService = errorUtilities.withServiceErrorHandling(
             if (!availableWord) {
                 console.log("No unused words found. Checking for words older than 30 days...");
 
-                const thirtyDaysAgo = dayjs().utc().subtract(30, 'days').startOf('day').toDate();
+                const thirtyDaysAgo = reuseCutoff;
 
                 const oldWordFilter = {
                     languageId,
