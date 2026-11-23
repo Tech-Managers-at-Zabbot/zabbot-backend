@@ -51,3 +51,5 @@ jobs:
         run: npx ts-node --transpile-only shared/subscription-gating/apiEnforcement.integration.test.ts
       - name: Journey-progress service and repository regression tests (mocked DB constraint)
         run: npx ts-node --transpile-only lesson-service/test/user-course-progress.regression.test.ts
+      - name: Daily Word local-date and reuse cutoff regression tests
+        run: npx ts-node --transpile-only lesson-service/test/daily-word-date.regression.test.ts
