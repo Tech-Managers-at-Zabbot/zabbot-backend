@@ -2,9 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import { getUserEntitlement } from "./getUserEntitlement";
 
 /**
- * A deliberately narrow exception for five curated STAGING flashcards.
+ * A deliberately narrow exception for three curated STAGING flashcards.
  * Both the feature switch and the paid-content enforcement switch must be ON.
- * Exactly five distinct, valid database UUIDs must be configured. Never select
+ * Exactly three distinct, valid database UUIDs must be configured. Never select
  * preview cards by array order or accept card IDs from the client as policy.
  */
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -16,7 +16,7 @@ export function configuredFlashcardPreviewIds(): string[] | null {
   const ids = (process.env.ZABBOT_FLASHCARDS_FREE_PREVIEW_IDS ?? "")
     .split(",").map(value => value.trim().toLowerCase()).filter(Boolean);
 
-  if (ids.length !== 5 || new Set(ids).size !== 5 || !ids.every(id => UUID.test(id))) {
+  if (ids.length !== 3 || new Set(ids).size !== 3 || !ids.every(id => UUID.test(id))) {
     return null; // Fail closed: missing/incomplete configuration never grants free access.
   }
   return ids;
