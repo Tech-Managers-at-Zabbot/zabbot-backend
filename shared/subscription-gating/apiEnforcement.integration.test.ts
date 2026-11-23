@@ -230,3 +230,33 @@ test("real Phase 2 lesson, content, quiz and flashcard routes enforce HTTP decis
     else process.env.ZABBOT_SUBSCRIPTION_GATING_ENFORCE = originalFlag;
   }
 });
+
+test("feature flag OFF preserves existing route behavior without entitlement checks", async () => {
+  const original = process.env.ZABBOT_SUBSCRIPTION_GATING_ENFORCE;
+  process.env.ZABBOT_SUBSCRIPTION_GATING_ENFORCE = "false";
+  try {
+    const app = express();
+    app.use(express.json());
+    app.use("/lesson", loadRoute("../../lesson-service/src/routes/lesson.route"));
+    app.use("/content", loadRoute("../../lesson-service/src/routes/content.route"));
+    app.use("/quiz", loadRoute("../../lesson-service/src/routes/quiz.route"));
+    app.use("/courses", loadRoute("../../lesson-service/src/routes/course.route"));
+    const server = app.listen(0, "127.0.0.1");
+    try {
+      await new Promise<void>(resolve => server.listening ? resolve() : server.once("listening", resolve));
+      const origin = "http://127.0.0.1:" + (server.address() as any).port;
+      const before = calls;
+      assertAllowed(await request(origin, "/lesson/lesson-with-contents/" + paidLesson, "free"));
+      assertAllowed(await request(origin, "/content/premium-content", null));
+      assertAllowed(await request(origin, "/content/", null));
+      assertAllowed(await request(origin, "/quiz/" + premiumJourney, "free"));
+      assertAllowed(await request(origin, "/courses/add-user-course/lang/" + premiumJourney, "free", "POST", {}));
+      assert.equal(calls, before, "OFF-mode routes must not query entitlements");
+    } finally {
+      await new Promise<void>((resolve, reject) => server.close(e => e ? reject(e) : resolve()));
+    }
+  } finally {
+    if (original === undefined) delete process.env.ZABBOT_SUBSCRIPTION_GATING_ENFORCE;
+    else process.env.ZABBOT_SUBSCRIPTION_GATING_ENFORCE = original;
+  }
+});
