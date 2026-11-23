@@ -39,7 +39,12 @@ const fakeModel = (records: Record<string, any>) => ({
   default: { findByPk: async (id: string) => records[id] ?? null },
 });
 const mockControllers = new Proxy({}, {
-  get: (_target, key) => (_req: any, res: any) => res.status(200).json({ controllerReached: String(key) }),
+  get: (_target, key) => (req: any, res: any) => res.status(200).json({
+    controllerReached: String(key),
+    // Assert the REAL middleware passes a server-authorized allowlist, never
+    // client-provided IDs, to the Flashcards controller.
+    ...(String(key).includes("Flashcard") ? { previewIds: req.flashcardPreviewIds ?? null } : {}),
+  }),
 });
 const mockAuth = {
   generalAuthFunction: (req: any, res: any, next: any) => {
@@ -258,5 +263,55 @@ test("feature flag OFF preserves existing route behavior without entitlement che
   } finally {
     if (original === undefined) delete process.env.ZABBOT_SUBSCRIPTION_GATING_ENFORCE;
     else process.env.ZABBOT_SUBSCRIPTION_GATING_ENFORCE = original;
+  }
+});
+
+test("STAGING Flashcards three-card preview authorizes bulk and scoped GET, denies premium IDs", async () => {
+  const envKeys = ["ZABBOT_SUBSCRIPTION_GATING_ENFORCE",
+    "ZABBOT_FLASHCARDS_FREE_PREVIEW_ENABLED",
+    "ZABBOT_FLASHCARDS_FREE_PREVIEW_IDS"] as const;
+  const original = envKeys.map(key => process.env[key]);
+  const ids = [
+    "630b9e21-5be8-461e-898d-00906882662c",
+    "ce7044b5-b645-4f45-b6f2-f28214debcf8",
+    "6f2c197c-3e38-4ce1-919d-9618e5c04239",
+  ];
+  try {
+    process.env.ZABBOT_SUBSCRIPTION_GATING_ENFORCE = "true";
+    process.env.ZABBOT_FLASHCARDS_FREE_PREVIEW_ENABLED = "true";
+    process.env.ZABBOT_FLASHCARDS_FREE_PREVIEW_IDS = ids.join(",");
+    const router = loadRoute("../../lesson-service/src/routes/flashcard.route");
+    await withApp("/flashcards", router, async base => {
+      const freeBulk = await request(base, "/", "free");
+      assertAllowed(freeBulk);
+      assert.deepEqual(freeBulk.json.previewIds, ids, "only curated IDs reach the controller");
+      const freeScoped = await request(base, "/" + ids[1], "free");
+      assertAllowed(freeScoped);
+      assert.deepEqual(freeScoped.json.previewIds, ids);
+      assertDenied(await request(base, "/99999999-9999-4999-8999-999999999999", "free"), 403, "SUBSCRIPTION_REQUIRED");
+      assertDenied(await request(base, "/", null), 401, "LOGIN_REQUIRED");
+      assertDenied(await request(base, "/", "outage"), 503, "ENTITLEMENT_UNAVAILABLE");
+      const paidBulk = await request(base, "/", "paid");
+      assertAllowed(paidBulk);
+      assert.equal(paidBulk.json.previewIds, null, "paid users get unrestricted reads");
+      const paidCard = await request(base, "/99999999-9999-4999-8999-999999999999", "paid");
+      assertAllowed(paidCard);
+      assert.equal(paidCard.json.previewIds, null);
+    });
+    process.env.ZABBOT_FLASHCARDS_FREE_PREVIEW_IDS = ids.slice(0, 2).join(",");
+    await withApp("/flashcards", loadRoute("../../lesson-service/src/routes/flashcard.route"), async base => {
+      assertDenied(await request(base, "/", "free"), 403, "SUBSCRIPTION_REQUIRED");
+      assertAllowed(await request(base, "/", "paid"));
+    });
+    process.env.ZABBOT_FLASHCARDS_FREE_PREVIEW_ENABLED = "false";
+    await withApp("/flashcards", loadRoute("../../lesson-service/src/routes/flashcard.route"), async base => {
+      assertDenied(await request(base, "/", "free"), 403, "SUBSCRIPTION_REQUIRED");
+      assertAllowed(await request(base, "/", "paid"));
+    });
+  } finally {
+    envKeys.forEach((key, index) => {
+      if (original[index] === undefined) delete process.env[key];
+      else process.env[key] = original[index];
+    });
   }
 });
