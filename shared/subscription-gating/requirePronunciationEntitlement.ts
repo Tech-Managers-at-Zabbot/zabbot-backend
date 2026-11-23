@@ -46,6 +46,11 @@ export async function requirePronunciationEntitlement(
             next();
             return;
           }
+          // Valid DB-linked premium lesson audio requires paid entitlement.
+          // Reject arbitrary audio references, but do not reject legitimate
+          // premium exercises simply because they are not the free preview.
+          await requirePremiumEntitlement(req, res, next);
+          return;
         }
       }
       // A claimed in-lesson exercise must have a real DB-linked audio file.

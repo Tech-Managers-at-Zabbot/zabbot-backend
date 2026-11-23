@@ -47,3 +47,5 @@ jobs:
           done
       - name: Run pure entitlement policy unit tests
         run: npx ts-node shared/subscription-gating/entitlementDecision.test.ts
+      - name: Run Express endpoint authorization integration tests (mocked database)
+        run: npx ts-node --transpile-only shared/subscription-gating/apiEnforcement.integration.test.ts
