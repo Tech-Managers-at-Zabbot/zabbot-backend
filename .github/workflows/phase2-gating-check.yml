@@ -49,5 +49,7 @@ jobs:
         run: npx ts-node shared/subscription-gating/entitlementDecision.test.ts
       - name: Run Express endpoint authorization integration tests (mocked database)
         run: npx ts-node --transpile-only shared/subscription-gating/apiEnforcement.integration.test.ts
-      - name: D2 entitlement read-only endpoint HTTP contract tests (mocked auth and database)\n        run: npx ts-node --transpile-only shared/subscription-gating/entitlementRoute.integration.test.ts\n      - name: Journey-progress service and repository regression tests (mocked DB constraint)
+      - name: D2 entitlement read-only endpoint HTTP contract tests (mocked auth and database)
+        run: npx ts-node --transpile-only shared/subscription-gating/entitlementRoute.integration.test.ts
+      - name: Journey-progress service and repository regression tests (mocked DB constraint)
         run: npx ts-node --transpile-only lesson-service/test/user-course-progress.regression.test.ts
