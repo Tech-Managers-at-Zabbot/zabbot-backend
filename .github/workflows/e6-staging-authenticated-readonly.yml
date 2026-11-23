@@ -1,0 +1,27 @@
+name: E6 STAGING authenticated GET-only checks
+on:
+  push:
+    branches:
+      - test/e6-staging-authenticated-readonly
+    paths:
+      - ".github/workflows/e6-staging-authenticated-readonly.yml"
+      - "shared/subscription-gating/e6-staging-authenticated-readonly.cjs"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  staging-authenticated-readonly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: staging-e6-readonly
+    steps:
+      - name: Check out isolated test branch
+        uses: actions/checkout@v4
+      - name: Run E6 authenticated STAGING GET-only checks
+        env:
+          E6_FREE_TEST_ACCESS_TOKEN: ${{ secrets.E6_FREE_TEST_ACCESS_TOKEN }}
+          E6_LIFETIME_TEST_ACCESS_TOKEN: ${{ secrets.E6_LIFETIME_TEST_ACCESS_TOKEN }}
+          E6_PREMIUM_STEP_ID: ${{ vars.E6_PREMIUM_STEP_ID }}
+        run: node shared/subscription-gating/e6-staging-authenticated-readonly.cjs
