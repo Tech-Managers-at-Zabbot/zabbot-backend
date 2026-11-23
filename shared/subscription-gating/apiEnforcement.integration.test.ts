@@ -193,7 +193,35 @@ test("real Phase 2 lesson, content, quiz and flashcard routes enforce HTTP decis
       assertDenied(await request(origin, "/pronunciation/not-real/feedback", "paid", "POST", { isInLesson: "true" }), 400, "INVALID_LESSON_AUDIO");
       assertDenied(await request(origin, "/pronunciation/premium-audio/feedback", "free", "POST", {}), 403, "SUBSCRIPTION_REQUIRED");
       assertAllowed(await request(origin, "/pronunciation/premium-audio/feedback", "paid", "POST", {}));
-      assert.ok(calls > 0, "server entitlement resolver was invoked");
+      // Regression: a client-supplied lesson ID never changes the trusted
+      // content -> lesson -> Journey authorization mapping.
+      assertDenied(await request(origin, "/content/premium-content?lessonId=" + FREE_PREVIEW_LESSON_ID, "free"), 403, "SUBSCRIPTION_REQUIRED");
+      assertDenied(await request(origin, "/content/language-contents/lang", "free"), 403, "SUBSCRIPTION_REQUIRED");
+      assertAllowed(await request(origin, "/content/language-contents/lang", "paid"));
+      // The bulk quiz route is premium; the approved free lesson must instead
+      // render its lesson-scoped embedded quizzes through the allowed detail API.
+      assertDenied(await request(origin, "/quiz/" + FREE_PREVIEW_JOURNEY_ID, "free"), 403, "SUBSCRIPTION_REQUIRED");
+      assertAllowed(await request(origin, "/lesson/lesson-with-contents/" + FREE_PREVIEW_LESSON_ID, "free"));
+      // ADMIN unavailable overrides both free entitlement and paid entitlement.
+      assertDenied(await request(origin, "/lesson/lesson-with-contents/disabled-lesson", "free"), 403, "CURRICULUM_UNAVAILABLE");
+      assertDenied(await request(origin, "/content/disabled-content", "free"), 403, "CURRICULUM_UNAVAILABLE");
+      // Fail closed on expired/failed entitlements and resolver failure.
+      assertDenied(await request(origin, "/flashcards/", "expired"), 403, "SUBSCRIPTION_REQUIRED");
+      assertDenied(await request(origin, "/quiz/" + premiumJourney, "outage"), 503, "ENTITLEMENT_UNAVAILABLE");
+      // Journey-progress payload is FLAT in the actual browser API. Explicitly
+      // reject nested-only and absent IDs rather than silently writing progress.
+      assertDenied(await request(origin, "/courses/add-user-course/lang/" + premiumJourney, "paid", "POST", { userCourseData: { lastLessonId: paidLesson } }), 400, "LESSON_ID_REQUIRED");
+      assertDenied(await request(origin, "/courses/update-user-course/" + premiumJourney, "paid", "PUT", { userCourseData: { lastLessonId: paidLesson } }), 400, "LESSON_ID_REQUIRED");
+      assertDenied(await request(origin, "/courses/add-user-course/lang/" + FREE_PREVIEW_JOURNEY_ID, "free", "POST", { lastLessonId: paidLesson }), 404, "CURRICULUM_NOT_FOUND");
+      assertDenied(await request(origin, "/courses/update-user-course/" + premiumJourney, "free", "PUT", { lastLessonId: FREE_PREVIEW_LESSON_ID }), 404, "CURRICULUM_NOT_FOUND");
+      assertAllowed(await request(origin, "/courses/update-user-course/" + FREE_PREVIEW_JOURNEY_ID, "free", "PUT", { lastLessonId: FREE_PREVIEW_LESSON_ID }));
+      assertDenied(await request(origin, "/courses/update-user-course/" + premiumJourney, "outage", "PUT", { lastLessonId: paidLesson }), 503, "ENTITLEMENT_UNAVAILABLE");
+      // Pronunciation uses the DB audio identifier in the request URL. A
+      // browser-provided free-lesson audio claim must not authorize premium.
+      assertDenied(await request(origin, "/pronunciation/premium-audio/feedback", "free", "POST", { isInLesson: "true", isInLessonAudioId: "free-audio", isInLessonUrl: "https://test.invalid/free.mp3" }), 403, "SUBSCRIPTION_REQUIRED");
+      assertDenied(await request(origin, "/pronunciation/premium-audio/feedback", "outage", "POST", { isInLesson: "true" }), 503, "ENTITLEMENT_UNAVAILABLE");
+      assertDenied(await request(origin, "/pronunciation/missing/feedback", "paid", "POST", { isInLesson: "true", isInLessonUrl: "https://untrusted.invalid/sound.wav" }), 400, "INVALID_LESSON_AUDIO");
+            assert.ok(calls > 0, "server entitlement resolver was invoked");
     } finally {
       await new Promise<void>((resolve, reject) => server.close(e => e ? reject(e) : resolve()));
     }
