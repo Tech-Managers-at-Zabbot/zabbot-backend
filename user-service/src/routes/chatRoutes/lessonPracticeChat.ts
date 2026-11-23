@@ -19,7 +19,8 @@ const DAILY_LIMIT = 30;
  * Reserves the SAME daily quota as standalone Ọ̀rẹ́ atomically.
  */
 export async function lessonPracticeChat(req: Request, res: Response): Promise<void> {
-  const userId = (req as Request & { user?: { userId?: string } }).user?.userId;
+  const user = (req as Request & { user?: { userId?: string; role?: string } }).user;
+  const userId = user?.userId;
   if (!userId) {
     res.status(401).json({ code: "LOGIN_REQUIRED" });
     return;
@@ -52,6 +53,7 @@ export async function lessonPracticeChat(req: Request, res: Response): Promise<v
       return;
     }
     if (process.env.ZABBOT_SUBSCRIPTION_GATING_ENFORCE === "true" &&
+        user?.role !== "admin" &&
         !isFreePreviewLesson(lesson.id)) {
       const entitlement = await getUserEntitlement(userId);
       if (!entitlement.hasAccess) {
