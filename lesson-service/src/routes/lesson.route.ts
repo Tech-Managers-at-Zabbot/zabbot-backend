@@ -16,6 +16,7 @@ import {
   rolePermit,
 } from "../../../shared/middleware/authorization.middleware";
 import multer from "multer";
+import { requireLessonEntitlement } from "../../../shared/subscription-gating/requireLessonEntitlement";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -47,9 +48,15 @@ router.delete(
   rolePermit(["admin"]),
   deleteLessonController,
 );
+// The backend enforcement flag defaults OFF until every alternate lesson,
+// content, quiz, and AI endpoint is independently protected and tested.
+// Never enable this flag in production based on this route alone.
 router.get(
   "/lesson-with-contents/:lessonId",
   generalAuthFunction,
+  ...(process.env.ZABBOT_SUBSCRIPTION_GATING_ENFORCE === "true"
+    ? [requireLessonEntitlement]
+    : []),
   getLessonWithContentsController,
 );
 router.get(

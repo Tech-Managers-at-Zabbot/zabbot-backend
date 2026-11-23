@@ -6,6 +6,10 @@ import {
 } from "../../../shared/middleware/authorization.middleware";
 import { JoiValidators } from "../validations";
 
+import { requirePremiumEntitlement } from "../../../shared/subscription-gating/requirePremiumEntitlement";
+import { requireFlashcardPremiumOrPreview } from "../../../shared/subscription-gating/flashcardPreview";
+const enforce = process.env.ZABBOT_SUBSCRIPTION_GATING_ENFORCE === "true";
+const usePreviewGuard = process.env.ZABBOT_FLASHCARDS_FREE_PREVIEW_ENABLED === "true";
 const router = express.Router();
 
 router.post(
@@ -19,12 +23,14 @@ router.post(
 router.get(
   "/",
   generalAuthFunction,
+  ...(enforce ? [usePreviewGuard ? requireFlashcardPremiumOrPreview : requirePremiumEntitlement] : []),
   flashcardController.getFlashcardsController,
 );
 
 router.get(
   "/:id",
   generalAuthFunction,
+  ...(enforce ? [usePreviewGuard ? requireFlashcardPremiumOrPreview : requirePremiumEntitlement] : []),
   flashcardController.getFlashcardController,
 );
 

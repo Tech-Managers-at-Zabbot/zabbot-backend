@@ -1,4 +1,6 @@
 import { Request, Response } from "express";
+import { Op } from "sequelize";
+import { FlashcardPreviewRequest } from "../../../shared/subscription-gating/flashcardPreview";
 import { errorUtilities, responseUtilities } from "../../../shared/utilities";
 import flashcardService from "../services/flashcardServices/flashcard.service";
 
@@ -19,7 +21,9 @@ const addFlashcardController = errorUtilities.withControllerErrorHandling(
 const getFlashcardsController = errorUtilities.withControllerErrorHandling(
   async (request: Request, response: Response) => {
     const { language } = request.query;
-    const filter = language ? { language } : {};
+    const filter: Record<string, unknown> = language ? { language } : {};
+    const previewIds = (request as FlashcardPreviewRequest).flashcardPreviewIds;
+    if (previewIds) filter.id = { [Op.in]: previewIds };
     const flashcards = await flashcardService.getFlashcardsService(filter);
     return responseUtilities.responseHandler(
       response,

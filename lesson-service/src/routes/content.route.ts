@@ -16,17 +16,31 @@ import {
   rolePermit,
 } from "../../../shared/middleware/authorization.middleware";
 
+import { requireLessonEntitlement } from "../../../shared/subscription-gating/requireLessonEntitlement";
+import { requireContentEntitlement } from "../../../shared/subscription-gating/requireContentEntitlement";
+import { requirePremiumEntitlement } from "../../../shared/subscription-gating/requirePremiumEntitlement";
+
+// All premium-route changes are disabled until the release-wide audit passes.
+const enforce = process.env.ZABBOT_SUBSCRIPTION_GATING_ENFORCE === "true";
 const router = express.Router();
 
-router.get("/", getContentsController);
-router.get("/lesson/:lessonId", getLessonContentsController);
+router.get("/", ...(enforce ? [generalAuthFunction, requirePremiumEntitlement] : []), getContentsController);
+router.get(
+  "/lesson/:lessonId",
+  ...(enforce ? [generalAuthFunction, requireLessonEntitlement] : []),
+  getLessonContentsController,
+);
 router.post(
   "/",
   generalAuthFunction,
   rolePermit(["admin"]),
   addContentController,
 );
-router.get("/language-contents/:languageId", getLanguageContentsController);
+router.get(
+  "/language-contents/:languageId",
+  ...(enforce ? [generalAuthFunction, requirePremiumEntitlement] : []),
+  getLanguageContentsController,
+);
 router.post(
   "/add-file",
   generalAuthFunction,
@@ -45,7 +59,11 @@ router.delete(
   rolePermit(["admin"]),
   deleteContentFileController,
 );
-router.get("/:id", getContentController);
+router.get(
+  "/:id",
+  ...(enforce ? [generalAuthFunction, requireContentEntitlement] : []),
+  getContentController,
+);
 router.put(
   "/:id",
   generalAuthFunction,

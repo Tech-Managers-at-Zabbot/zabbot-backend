@@ -107,7 +107,13 @@ export const deleteCourseController =
 export const getUserCoursesController =
   errorUtilities.withControllerErrorHandling(
     async (req: Request, res: Response) => {
-      const userCourses = await userCourseService.getUserCourses(req.query);
+      const userId = (req as Request & { user?: { userId?: string } }).user?.userId;
+      if (!userId) return res.status(401).json({ code: "LOGIN_REQUIRED" });
+      const userCourses = await userCourseService.getUserCourses(
+        userId,
+        String(req.query.languageId ?? ""),
+        String(req.query.courseId ?? ""),
+      );
       return responseUtilities.responseHandler(
         res,
         userCourses.message,
@@ -230,7 +236,9 @@ export const removeUserCourseController =
   errorUtilities.withControllerErrorHandling(
     async (req: Request, res: Response) => {
       const { id } = req.params;
-      const removeUserFromCourse = await userCourseService.deleteUserCourse(id);
+      const userId = (req as Request & { user?: { userId?: string } }).user?.userId;
+      if (!userId) return res.status(401).json({ code: "LOGIN_REQUIRED" });
+      const removeUserFromCourse = await userCourseService.deleteUserCourse(id, userId);
 
       return responseUtilities.responseHandler(
         res,
