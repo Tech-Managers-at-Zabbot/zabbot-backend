@@ -13,7 +13,8 @@ export async function requireJourneyProgressEntitlement(
   req: Request, res: Response, next: NextFunction,
 ): Promise<void> {
   try {
-    const userId = (req as Request & { user?: { userId?: string } }).user?.userId;
+    const user = (req as Request & { user?: { userId?: string; role?: string } }).user;
+    const userId = user?.userId;
     if (!userId) {
       res.status(401).json({ code: "LOGIN_REQUIRED" }); return;
     }
@@ -31,6 +32,10 @@ export async function requireJourneyProgressEntitlement(
     }
     if (course.isActive !== true || lesson.isActive !== true) {
       res.status(403).json({ code: "CURRICULUM_UNAVAILABLE" }); return;
+    }
+    // Preserve curriculum status checks, but permit ADMIN progress testing.
+    if (user?.role === "admin") {
+      next(); return;
     }
     if (courseId === FREE_PREVIEW_JOURNEY_ID && lessonId === FREE_PREVIEW_LESSON_ID) {
       next(); return;
