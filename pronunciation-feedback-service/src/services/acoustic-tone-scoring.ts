@@ -8,7 +8,7 @@
  * Audio input must be mono PCM, 16 kHz, already trimmed of leading silence.
  */
 const SAMPLE_RATE = 16000;
-const FRAME_LENGTH = 640; // 40 ms: enough cycles for low voices
+const FRAME_LENGTH = 960; // 60 ms: more periods for deep/falling voices, 20 ms hop
 const HOP_LENGTH = 320; // 20 ms
 const MIN_F0 = 75; // supports many baritone voices
 const MAX_F0 = 500; // supports many soprano voices
