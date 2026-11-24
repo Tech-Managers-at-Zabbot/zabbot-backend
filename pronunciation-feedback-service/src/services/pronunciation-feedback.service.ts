@@ -303,19 +303,22 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
       // Legacy and transcript-V2 paths are unchanged when the flag is OFF.
       let selectedSimilarity = combinedSimilarity;
       if (process.env.ZABBOT_PARA_ACOUSTIC_SCORING_V1 === "true") {
-        try {
-          const acoustic = compareAcousticTones(masterRawAudio, userRawAudio);
-          if (acoustic) {
-            // A preliminary, uncalibrated 60/40 blend: tonal-contour evidence
-            // plus lexical transcript match. Requires expert-labeled validation.
-            const lexicalMatch = transcriptScore(userTranscription, masterTranscription);
-            selectedSimilarity = acoustic.score * 0.6 + lexicalMatch * 0.4;
-          } else {
-            console.warn("Pàrà experimental acoustic analysis unavailable; retaining selected transcript score");
-          }
-        } catch (error) {
-          console.error("Pàrà experimental acoustic analysis failed; retaining selected transcript score", error);
+        // Never silently return the transcript-only score when the experiment
+        // is enabled: the same transcript would conceal a failed tone analysis.
+        const acoustic = compareAcousticTones(masterRawAudio, userRawAudio);
+        if (!acoustic) {
+          console.warn("Pàrà acoustic comparison unavailable: inadequate voiced pitch evidence");
+          throw new Error("Acoustic comparison unavailable for this recording");
         }
+        // Provisional blend, pending human-labeled Yorùbá calibration.
+        const lexicalMatch = transcriptScore(userTranscription, masterTranscription);
+        selectedSimilarity = acoustic.score * 0.6 + lexicalMatch * 0.4;
+        console.info("Pàrà acoustic comparison diagnostics", {
+          meanCentsDifference: Math.round(acoustic.meanCentsDifference),
+          acousticScore: acoustic.score,
+          referenceVoicedFrames: acoustic.referenceVoicedFrames,
+          learnerVoicedFrames: acoustic.learnerVoicedFrames,
+        });
       }
 
       const finalScore = Math.round(Math.max(0, Math.min(1, selectedSimilarity)) * 100) / 100;
