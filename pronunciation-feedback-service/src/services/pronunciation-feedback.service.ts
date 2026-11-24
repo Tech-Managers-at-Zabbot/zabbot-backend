@@ -20,6 +20,7 @@ import userPronunciationRepositories from "../repositories/user-pronunciation.re
 import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
 import UserPronunciation from "../../../shared/entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation";
 import config from "../../../config/config";
+import { transcriptScore } from "./transcription-scoring";
 
 Ffmpeg.setFfmpegPath(ffmpegPath as string);
 
@@ -78,7 +79,7 @@ const calculateCosineSimilarity = (
   const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
   const normA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
   const normB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
-  return dotProduct / (normA * normB);
+  return normA > 0 && normB > 0 ? Math.max(-1, Math.min(1, dotProduct / (normA * normB))) : 0;
 };
 
 // Enhanced text similarity function using embeddings
@@ -90,18 +91,6 @@ const getEnhancedTextSimilarity = async (
   textSimilarity: number;
   combinedSimilarity: number;
 }> => {
-  // Get embeddings for both transcriptions
-  const [userEmbedding, masterEmbedding] = await Promise.all([
-    getTextEmbedding(userTranscription),
-    getTextEmbedding(masterTranscription),
-  ]);
-
-  // Calculate cosine similarity between embeddings
-  const embeddingSimilarity = calculateCosineSimilarity(
-    userEmbedding,
-    masterEmbedding,
-  );
-
   // Keep existing text similarity calculation
   const matcher = new SequenceMatcher(
     null,
@@ -118,10 +107,24 @@ const getEnhancedTextSimilarity = async (
   );
   const levSim = 1 - levDist / maxLen;
 
-  const textSimilarity = Math.min(seqSim, levSim);
+  const textSimilarity = Math.max(0, Math.min(1, Math.min(seqSim, levSim)));
 
-  // Combine embedding and text similarities (embedding weighted higher)
-  const combinedSimilarity = embeddingSimilarity * 0.7 + textSimilarity * 0.3;
+  // Preserve the existing 70/30 score when embeddings succeed. If the
+  // external embedding service fails, return a transparent text-only estimate
+  // instead of losing both the score and waveform graph entirely.
+  let embeddingSimilarity = textSimilarity;
+  try {
+    const [userEmbedding, masterEmbedding] = await Promise.all([
+      getTextEmbedding(userTranscription),
+      getTextEmbedding(masterTranscription),
+    ]);
+    embeddingSimilarity = calculateCosineSimilarity(userEmbedding, masterEmbedding);
+  } catch (error) {
+    console.warn("Pàrà legacy embedding unavailable; using transcript similarity fallback", error);
+  }
+
+  // This legacy score measures text meaning, NOT acoustic pronunciation or Yorùbá tones.
+  const combinedSimilarity = Math.max(0, Math.min(1, embeddingSimilarity * 0.7 + textSimilarity * 0.3));
 
   return {
     embeddingSimilarity,
@@ -283,19 +286,24 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
 
       logMemoryUsage("After transcriptions");
 
-      // Use OpenAI embeddings instead of heavy audio embeddings
-      const { embeddingSimilarity, textSimilarity, combinedSimilarity } =
-        await getEnhancedTextSimilarity(userTranscription, masterTranscription);
+      // Opt-in pure transcription comparison avoids semantic embeddings awarding
+      // high scores for different words. No algorithm here measures lexical tones.
+      // Default stays legacy until STAGING recording-based acceptance.
+      const useTranscriptScoringV2 = process.env.ZABBOT_PARA_TRANSCRIPT_SCORING_V2 === "true";
+      const textBased = useTranscriptScoringV2
+        ? { embeddingSimilarity: 0, textSimilarity: transcriptScore(userTranscription, masterTranscription), combinedSimilarity: transcriptScore(userTranscription, masterTranscription) }
+        : await getEnhancedTextSimilarity(userTranscription, masterTranscription);
+      const { embeddingSimilarity, textSimilarity, combinedSimilarity } = textBased;
 
-      logMemoryUsage("After embedding similarity");
+      logMemoryUsage("After transcription comparison");
 
-      // Use the combined similarity as your final score
-      const finalScore = Math.round(combinedSimilarity * 100) / 100;
+      const finalScore = Math.round(Math.max(0, Math.min(1, combinedSimilarity)) * 100) / 100;
 
       // Create waveform plot (keep this lightweight visualization)
       await plotOverlay(masterRawAudio, userRawAudio, plotPath);
       logMemoryUsage("After plot overlay");
 
+      // Preserve the original user-facing feedback for the existing Pàrà experience.
       let remark = "";
       if (finalScore > 0.85) {
         remark =
@@ -401,13 +409,14 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
   },
 );
 
-const getMasterFile = async (url: string, outputPath: string) => {
+const getMasterFile = async (url: string, outputPath: string): Promise<void> => {
   const response = await axios.get(url, { responseType: "stream" });
-  response.data.pipe(fs.createWriteStream(outputPath));
-
-  return new Promise((resolve, reject) => {
-    response.data.on("end", resolve);
+  await new Promise<void>((resolve, reject) => {
+    const output = fs.createWriteStream(outputPath);
     response.data.on("error", reject);
+    output.on("error", reject);
+    output.on("finish", resolve);
+    response.data.pipe(output);
   });
 };
 
@@ -506,7 +515,12 @@ const isInvalid = (
   minDuration = 0.5,
 ): boolean => {
   const isTooShort = audio.length < sampleRate * minDuration;
-  const maxAmplitude = Math.max(...audio.map(Math.abs));
+  // Avoid spreading long audio arrays into function arguments (stack overflow).
+  let maxAmplitude = 0;
+  for (const sample of audio) {
+    if (!Number.isFinite(sample)) return true;
+    maxAmplitude = Math.max(maxAmplitude, Math.abs(sample));
+  }
   const isTooQuiet = maxAmplitude < threshold;
 
   return isTooShort || isTooQuiet;
