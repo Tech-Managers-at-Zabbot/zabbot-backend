@@ -131,6 +131,39 @@ export function contourDistance(reference: number[], learner: number[]): number 
 }
 
 /**
+ * Compare the normalized contour both in absolute relative-pitch position and
+ * in local pitch changes. Unconstrained DTW alone can over-align distinct
+ * speech melodies; a fixed-time comparison preserves genuine rising/falling
+ * timing patterns and distinguishes nearly level vs substantially falling
+ * utterances. Speaker pitch level is already removed by log-F0 centering.
+ */
+function resampleContour(contour: number[], count = 32): number[] {
+  return Array.from({ length: count }, (_, index) => {
+    const position = index * (contour.length - 1) / (count - 1);
+    const start = Math.floor(position);
+    const end = Math.min(contour.length - 1, start + 1);
+    const fraction = position - start;
+    return contour[start] * (1 - fraction) + contour[end] * fraction;
+  });
+}
+
+export function contourShapeDistance(reference: number[], learner: number[]): number {
+  if (reference.length < MIN_VOICED_FRAMES || learner.length < MIN_VOICED_FRAMES) return Infinity;
+  const ref = resampleContour(reference);
+  const user = resampleContour(learner);
+  let positionDifference = 0;
+  let movementDifference = 0;
+  for (let i = 0; i < ref.length; i++) {
+    positionDifference += Math.abs(ref[i] - user[i]);
+    if (i > 0) {
+      movementDifference += Math.abs((ref[i] - ref[i - 1]) - (user[i] - user[i - 1]));
+    }
+  }
+  return 0.7 * positionDifference / ref.length +
+    0.3 * movementDifference / (ref.length - 1);
+}
+
+/**
  * This estimate is not calibrated; only comparative experiments with expert
  * Yorùbá labels can establish valid cutoffs or whether it should be shipped.
  */
@@ -141,10 +174,14 @@ export function compareAcousticTones(
   const referenceContour = normalizedPitchContour(reference);
   const learnerContour = normalizedPitchContour(learner);
   if (!referenceContour || !learnerContour) return null;
-  const meanCentsDifference = contourDistance(referenceContour, learnerContour);
-  if (!Number.isFinite(meanCentsDifference)) return null;
+  const warpedDistance = contourDistance(referenceContour, learnerContour);
+  const shapeDistance = contourShapeDistance(referenceContour, learnerContour);
+  if (!Number.isFinite(warpedDistance) || !Number.isFinite(shapeDistance)) return null;
+  // Weight fixed-time movement patterns higher than warping to avoid hiding
+  // tonal mismatches. These weights still require human Yorùbá calibration.
+  const meanCentsDifference = 0.35 * warpedDistance + 0.65 * shapeDistance;
   return {
-    score: Math.round(clamp01(Math.exp(-meanCentsDifference / 350)) * 100) / 100,
+    score: Math.round(clamp01(Math.exp(-meanCentsDifference / 250)) * 100) / 100,
     meanCentsDifference,
     referenceVoicedFrames: referenceContour.length,
     learnerVoicedFrames: learnerContour.length,
