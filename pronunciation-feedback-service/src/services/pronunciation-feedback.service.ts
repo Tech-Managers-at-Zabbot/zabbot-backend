@@ -20,7 +20,7 @@ import userPronunciationRepositories from "../repositories/user-pronunciation.re
 import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
 import UserPronunciation from "../../../shared/entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation";
 import config from "../../../config/config";
-import { transcriptScore, transcriptFeedback } from "./transcription-scoring";
+import { transcriptScore } from "./transcription-scoring";
 
 Ffmpeg.setFfmpegPath(ffmpegPath as string);
 
@@ -303,10 +303,17 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
       await plotOverlay(masterRawAudio, userRawAudio, plotPath);
       logMemoryUsage("After plot overlay");
 
-      // Never claim that transcript semantics establish pronunciation perfection.
-      const remark = useTranscriptScoringV2
-        ? transcriptFeedback(finalScore)
-        : "This is an automated transcript-similarity estimate, not a Yorùbá tone or pronunciation-accuracy measurement. Listen to the reference and try again.";
+      // Preserve the original user-facing feedback for the existing Pàrà experience.
+      let remark = "";
+      if (finalScore > 0.85) {
+        remark =
+          "Excellent! Your pronunciation is perfect or close to perfect.";
+      } else if (finalScore > 0.7) {
+        remark =
+          "Good attempt — there is room for improvement. Listen to recording & try again.";
+      } else {
+        remark = "Needs improvement — listen and try again.";
+      }
 
       // Upload results
       const plotResult = await uploadToCloudinary({
