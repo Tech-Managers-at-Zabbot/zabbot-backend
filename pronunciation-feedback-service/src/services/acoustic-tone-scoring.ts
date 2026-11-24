@@ -97,6 +97,33 @@ export function normalizedPitchContour(
 }
 
 /**
+ * Time-preserving voiced F0 points for visual feedback. Unlike the legacy
+ * normalizedPitchContour array, unvoiced gaps retain their wall-clock spacing.
+ * The whole recording's log-F0 median is subtracted per speaker.
+ */
+export function timedPitchContour(audio: Float32Array):
+  Array<{ x: number; cents: number }> | null {
+  if (audio.length < FRAME_LENGTH || audio.length > SAMPLE_RATE * 60) return null;
+  const limit = Math.min(audio.length, SAMPLE_RATE * MAX_SECONDS);
+  const samples: Array<{ x: number; logF0: number }> = [];
+  for (let start = 0; start + FRAME_LENGTH <= limit; start += HOP_LENGTH) {
+    const pitch = framePitch(audio, start);
+    if (pitch !== null && Number.isFinite(pitch)) {
+      samples.push({
+        x: (start + FRAME_LENGTH / 2) / Math.max(1, limit),
+        logF0: Math.log2(pitch),
+      });
+    }
+  }
+  if (samples.length < MIN_VOICED_FRAMES) return null;
+  const center = median(samples.map(point => point.logF0));
+  return samples.map(point => ({
+    x: point.x,
+    cents: Math.round(1200 * (point.logF0 - center)),
+  }));
+}
+
+/**
  * Constrained DTW accounts for moderate speaking-rate differences while
  * keeping contours in temporal order; it cannot align unrelated utterances
  * arbitrarily. Compare by mean absolute difference along the best path.
