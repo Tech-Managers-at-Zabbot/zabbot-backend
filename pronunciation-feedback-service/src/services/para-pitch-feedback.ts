@@ -30,6 +30,7 @@ const RATE = 16000;
 const HOP = 320;
 const FRAME = 960;
 const MAX_SECONDS = 10;
+const MIN_ACTIVE_SECONDS = 0.4;
 const solfege: Record<YorubaTone, "DO" | "RE" | "MI"> = { L: "DO", M: "RE", H: "MI" };
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 
@@ -41,13 +42,37 @@ function rms(audio: Float32Array, begin: number): number {
 }
 
 /**
+ * Crop the quiet tail after the spoken word before calculating normalized
+ * syllable boundaries. The existing ffmpeg silence filter removes only the
+ * beginning of a recording, and actual EGG clips can have >1 s trailing silence.
+ * Retain short padding to avoid losing speech endings; do not change the WAV
+ * sent to transcription or the existing overall scoring algorithm.
+ */
+export function isolateActiveSpeech(audio: Float32Array): Float32Array | null {
+  if (audio.length < RATE * MIN_ACTIVE_SECONDS || audio.length > RATE * 60) return null;
+  const energies: Array<{ start: number; energy: number }> = [];
+  const limit = Math.min(audio.length, RATE * MAX_SECONDS);
+  for (let start = 0; start + FRAME <= limit; start += HOP) {
+    energies.push({ start, energy: rms(audio, start) });
+  }
+  if (!energies.length) return null;
+  const maximum = Math.max(...energies.map(frame => frame.energy));
+  const threshold = Math.max(0.012, maximum * 0.12);
+  const active = energies.filter(frame => frame.energy > threshold);
+  if (!active.length) return null;
+  const start = Math.max(0, active[0].start - Math.round(RATE * 0.04));
+  const end = Math.min(limit, active[active.length - 1].start + FRAME + Math.round(RATE * 0.10));
+  return end - start >= RATE * MIN_ACTIVE_SECONDS ? audio.slice(start, end) : null;
+}
+
+/**
  * Boundary candidates are quiet short-time frames in a restricted interval
  * around each proportional syllable break. A weak valley or excessive timing
  * mismatch makes correction uncertain. Boundaries are not authoritative.
  */
 export function estimateSyllableBoundaries(audio: Float32Array, count: number):
   { boundaries: number[]; quality: number } | null {
-  if (count < 2 || count > 6 || audio.length < RATE * 0.6 || audio.length > RATE * MAX_SECONDS) return null;
+  if (count < 2 || count > 6 || audio.length < RATE * MIN_ACTIVE_SECONDS || audio.length > RATE * MAX_SECONDS) return null;
   const frameEnergies: number[] = [];
   for (let i = 0; i + FRAME <= audio.length; i += HOP) frameEnergies.push(rms(audio, i));
   if (frameEnergies.length < count * 8) return null;
@@ -98,19 +123,21 @@ export function buildParaPitchFeedback(word: string | null | undefined, referenc
   learner: Float32Array): ParaPitchFeedback | null {
   const expected = extractVowelTones(word ?? "");
   if (!expected || !word) return null;
-  const analysis = analyzeYorubaTones(word, reference, learner);
-  if (!analysis || analysis.referencePatternScore < 0.75) return null;
-  const ref = timedPitchContour(reference);
-  const user = timedPitchContour(learner);
-  const refBounds = estimateSyllableBoundaries(reference, expected.length);
-  const userBounds = estimateSyllableBoundaries(learner, expected.length);
+  const activeReference = isolateActiveSpeech(reference);
+  const activeLearner = isolateActiveSpeech(learner);
+  if (!activeReference || !activeLearner) return null;
+  const analysis = analyzeYorubaTones(word, activeReference, activeLearner);
+  const ref = timedPitchContour(activeReference);
+  const user = timedPitchContour(activeLearner);
+  const refBounds = estimateSyllableBoundaries(activeReference, expected.length);
+  const userBounds = estimateSyllableBoundaries(activeLearner, expected.length);
   if (!ref || !user || !refBounds || !userBounds) return null;
   const labels = nuclei(word);
   if (labels.length !== expected.length) return null;
   const alignmentQuality = Math.min(refBounds.quality, userBounds.quality);
   // Low-contrast intervals are ambiguous (connected speech with no valleys).
   // Still show the pitch graph, but do not state which syllable is incorrect.
-  const reliable = alignmentQuality >= 0.25;
+  const reliable = alignmentQuality >= 0.25 && !!analysis && analysis.referencePatternScore >= 0.75;
   const referenceCenters = expected.map((_, i) => segmentMedian(ref, refBounds.boundaries[i], refBounds.boundaries[i + 1]));
   const learnerCenters = expected.map((_, i) => segmentMedian(user, userBounds.boundaries[i], userBounds.boundaries[i + 1]));
   // Compare inter-syllable motion, not absolute F0; natural voice range differs.
