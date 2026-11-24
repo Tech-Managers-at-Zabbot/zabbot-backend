@@ -23,6 +23,7 @@ import config from "../../../config/config";
 import { transcriptScore } from "./transcription-scoring";
 import { compareAcousticTones } from "./acoustic-tone-scoring";
 import { analyzeYorubaTones } from "./yoruba-tone-analysis";
+import { buildParaPitchFeedback } from "./para-pitch-feedback";
 
 Ffmpeg.setFfmpegPath(ffmpegPath as string);
 
@@ -305,6 +306,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
       // actual, trimmed reference and learner PCM, not their text transcripts.
       // Legacy and transcript-V2 paths are unchanged when the flag is OFF.
       let selectedSimilarity = combinedSimilarity;
+      let pitchFeedback: ReturnType<typeof buildParaPitchFeedback> = null;
       if (process.env.ZABBOT_PARA_ACOUSTIC_SCORING_V1 === "true") {
         // Never silently return the transcript-only score when the experiment
         // is enabled: the same transcript would conceal a failed tone analysis.
@@ -343,6 +345,11 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
           // Preserve previous behavior for unsafe/unknown/unalignable text,
           // including reference clips inside Bites.
           selectedSimilarity = acoustic.score * 0.6 + lexicalMatch * 0.4;
+        }
+        // API v2 is opt-in and independent of the existing acoustic flag.
+        // Only database-owned text is trusted; lesson clips have no safe alignment.
+        if (process.env.ZABBOT_PARA_PITCH_FEEDBACK_V2 === "true") {
+          pitchFeedback = buildParaPitchFeedback(trustedYorubaWord, masterRawAudio, userRawAudio);
         }
         console.info("Pàrà acoustic comparison diagnostics", {
           meanCentsDifference: Math.round(acoustic.meanCentsDifference),
@@ -420,6 +427,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
           textSimilarity: textSimilarity,
           finalScore,
           plot: plotResult,
+          ...(pitchFeedback ? { pitchFeedback } : {}),
           // Removed dtwPlot to save memory
         },
       );
