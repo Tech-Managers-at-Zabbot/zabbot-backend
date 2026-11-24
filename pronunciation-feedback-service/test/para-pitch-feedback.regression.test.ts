@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import fs from "node:fs";
 import path from "node:path";
-import { buildParaPitchFeedback, estimateSyllableBoundaries } from "../src/services/para-pitch-feedback";
+import { buildParaPitchFeedback, estimateSyllableBoundaries, isolateActiveSpeech } from "../src/services/para-pitch-feedback";
 import { timedPitchContour } from "../src/services/acoustic-tone-scoring";
 
 const RATE = 16000;
@@ -61,4 +61,23 @@ test("API guidance is fully opt-in; legacy response shape remains", () => {
   assert.ok(source.includes('process.env.ZABBOT_PARA_PITCH_FEEDBACK_V2 === "true"'));
   assert.ok(source.includes("...(pitchFeedback ? { pitchFeedback } : {})"));
   assert.ok(source.includes("buildParaPitchFeedback(trustedYorubaWord, masterRawAudio, userRawAudio)"));
+});
+
+test("long trailing silence does not erase the pitch graph for short EGG speech", () => {
+  const shortReference = recording(170, [0, 0], 0.64);
+  const shortLearner = recording(210, [0, 0], 0.74);
+  const reference = new Float32Array(RATE * 2);
+  const learner = new Float32Array(RATE * 2);
+  reference.set(shortReference);
+  learner.set(shortLearner);
+  const clipped = isolateActiveSpeech(reference);
+  assert.ok(clipped && clipped.length < RATE);
+  const feedback = buildParaPitchFeedback("ẹyin", reference, learner);
+  assert.ok(feedback, "should produce time-aligned graph even when syllable verdict is uncertain");
+  assert.equal(feedback.expectedPattern.join(""), "MM");
+  assert.equal(feedback.syllables[0].status, "uncertain");
+});
+
+test("quiet or silent clips never produce invented tone guidance", () => {
+  assert.equal(isolateActiveSpeech(new Float32Array(RATE * 2)), null);
 });
