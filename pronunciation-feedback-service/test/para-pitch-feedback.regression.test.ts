@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import fs from "node:fs";
 import path from "node:path";
-import { buildParaPitchFeedback, estimateSyllableBoundaries, isolateActiveSpeech } from "../src/services/para-pitch-feedback";
+import { buildParaPitchFeedback, estimateSyllableBoundaries, isolateActiveSpeech, referenceSyllableLabels } from "../src/services/para-pitch-feedback";
 import { timedPitchContour } from "../src/services/acoustic-tone-scoring";
 
 const RATE = 16000;
@@ -80,4 +80,12 @@ test("long trailing silence does not erase the pitch graph for short EGG speech"
 
 test("quiet or silent clips never produce invented tone guidance", () => {
   assert.equal(isolateActiveSpeech(new Float32Array(RATE * 2)), null);
+});
+
+test("rendered labels preserve complete trusted Yoruba syllables rather than vowel fragments", () => {
+  assert.deepEqual(referenceSyllableLabels("ẹyin"), ["ẹ", "yin"]);
+  assert.deepEqual(referenceSyllableLabels("ẸYIN"), ["Ẹ", "YIN"]);
+  assert.deepEqual(referenceSyllableLabels("ilé"), ["i", "lé"]);
+  assert.deepEqual(referenceSyllableLabels("ìlú"), ["ì", "lú"]);
+  assert.deepEqual(referenceSyllableLabels("ọ̀rọ̀"), ["ọ̀", "rọ̀"]);
 });
