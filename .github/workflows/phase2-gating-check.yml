@@ -57,3 +57,5 @@ jobs:
         run: npx ts-node --transpile-only pronunciation-feedback-service/test/transcription-scoring.regression.test.ts
       - name: Pàrà experimental acoustic tone comparison unit tests
         run: npx ts-node --transpile-only pronunciation-feedback-service/test/acoustic-tone-scoring.regression.test.ts
+      - name: Pàrà Yoruba vowel-diacritic and syllable-tone regression tests
+        run: npx ts-node --transpile-only pronunciation-feedback-service/test/yoruba-tone-analysis.regression.test.ts
