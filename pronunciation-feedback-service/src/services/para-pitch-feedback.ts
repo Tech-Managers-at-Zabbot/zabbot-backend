@@ -113,10 +113,10 @@ export function estimateSyllableBoundaries(audio: Float32Array, count: number):
  * Consonants preceding a vowel belong to that following syllable.
  */
 export function referenceSyllableLabels(word: string): string[] {
-  const clusters = Array.from(word.normalize("NFC").matchAll(/(\\P{M})(\\p{M}*)/gu),
+  const clusters = Array.from(word.normalize("NFC").matchAll(/(\P{M})(\p{M}*)/gu),
     match => match[0]);
   const isVowel = (cluster: string): boolean =>
-    /^[aeẹioọu]$/iu.test(cluster.normalize("NFD").replace(/\\p{M}/gu, "").replace(/^e$/iu, "e")) ||
+    /^[aeẹioọu]$/iu.test(cluster.normalize("NFD").replace(/\p{M}/gu, "").replace(/^e$/iu, "e")) ||
     /^[aáàeéèẹíìiọoóòuúù]/iu.test(cluster);
   const labels: string[] = [];
   let pending = "";
