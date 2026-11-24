@@ -105,12 +105,30 @@ export function estimateSyllableBoundaries(audio: Float32Array, count: number):
   return { boundaries, quality };
 }
 
-function nuclei(word: string): string[] {
-  const result: string[] = [];
-  for (const character of Array.from(word.normalize("NFC"))) {
-    if (/[aeẹioọuáàéèẹ́ẹ̀íìóòọ́ọ̀úù]/iu.test(character)) result.push(character);
+/**
+ * Derive readable syllable spans from the trusted, tone-marked reference word.
+ * Preserve the complete supplied spelling (including diacritics and consonants).
+ * This orthographic segmentation is only used for display; it does not claim
+ * that the audio's syllable boundaries have been phonetically verified.
+ * Consonants preceding a vowel belong to that following syllable.
+ */
+export function referenceSyllableLabels(word: string): string[] {
+  const clusters = Array.from(word.normalize("NFC").matchAll(/(\\P{M})(\\p{M}*)/gu),
+    match => match[0]);
+  const isVowel = (cluster: string): boolean =>
+    /^[aeẹioọu]$/iu.test(cluster.normalize("NFD").replace(/\\p{M}/gu, "").replace(/^e$/iu, "e")) ||
+    /^[aáàeéèẹíìiọoóòuúù]/iu.test(cluster);
+  const labels: string[] = [];
+  let pending = "";
+  for (const cluster of clusters) {
+    pending += cluster;
+    if (isVowel(cluster)) {
+      labels.push(pending);
+      pending = "";
+    }
   }
-  return result;
+  if (pending && labels.length) labels[labels.length - 1] += pending;
+  return labels;
 }
 
 function segmentMedian(points: Array<{ x: number; cents: number }>, start: number, end: number): number | null {
@@ -132,7 +150,7 @@ export function buildParaPitchFeedback(word: string | null | undefined, referenc
   const refBounds = estimateSyllableBoundaries(activeReference, expected.length);
   const userBounds = estimateSyllableBoundaries(activeLearner, expected.length);
   if (!ref || !user || !refBounds || !userBounds) return null;
-  const labels = nuclei(word);
+  const labels = referenceSyllableLabels(word);
   if (labels.length !== expected.length) return null;
   const alignmentQuality = Math.min(refBounds.quality, userBounds.quality);
   // Low-contrast intervals are ambiguous (connected speech with no valleys).
@@ -163,7 +181,7 @@ export function buildParaPitchFeedback(word: string | null | undefined, referenc
     ? `Practice syllable ${practice.index} (${practice.label}): aim for ${practice.solfege}. Listen to the reference and repeat the tone movement.`
     : reliable && syllables.slice(1).every(s => s.status === "close")
       ? "Your relative tone movement is close to the reference. Listen and repeat to refine it."
-      : "We cannot reliably locate an individual syllable in this recording. Listen to the reference and try again.";
+      : "Listen to the reference pronunciation and try again.";
   return {
     version: 2,
     alignment: "estimated-energy-boundaries",
