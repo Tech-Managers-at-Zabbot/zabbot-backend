@@ -93,3 +93,24 @@ test("acoustic experiment does not modify existing learner-facing copy or entitl
   assert.match(source, /Good attempt — there is room for improvement\./);
   assert.match(source, /Needs improvement — listen and try again\./);
 });
+
+
+test("same recognized syllables but distinctly level versus falling pitch are not scored alike", () => {
+  // Synthetic two-syllable test: both signals correspond to the same text.
+  // Pitch difference must arise in acoustic comparison, not transcript matching.
+  const steady = generateSpeechLikeSignal(220, flat, 1.3);
+  const falling = generateSpeechLikeSignal(180, t => -5 * t, 1.3);
+  const same = compareAcousticTones(steady, steady);
+  const mismatched = compareAcousticTones(steady, falling);
+  assert.ok(same && mismatched);
+  assert.ok(same.score - mismatched.score >= 0.12,
+    "level vs falling pitch should differ: " + same.score + " versus " + mismatched.score);
+});
+
+test("different natural voice pitch with identical falling shape remains a good match", () => {
+  const low = generateSpeechLikeSignal(110, t => -4 * t, 1.3);
+  const high = generateSpeechLikeSignal(225, t => -4 * t, 1.3);
+  const result = compareAcousticTones(low, high);
+  assert.ok(result);
+  assert.ok(result.score > 0.65);
+});
