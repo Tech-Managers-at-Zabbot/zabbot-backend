@@ -3,7 +3,7 @@
  * Boundary search uses short-time energy valleys near estimated nucleus positions.
  * This is NOT phonetic forced alignment. Missing evidence never creates a verdict.
  */
-import { normalizedPitchContour } from "./acoustic-tone-scoring";
+import { timedPitchContour } from "./acoustic-tone-scoring";
 import { analyzeYorubaTones, extractVowelTones, type YorubaTone } from "./yoruba-tone-analysis";
 
 export type ParaPitchFeedback = {
@@ -33,15 +33,6 @@ const MAX_SECONDS = 10;
 const solfege: Record<YorubaTone, "DO" | "RE" | "MI"> = { L: "DO", M: "RE", H: "MI" };
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 
-function pitchPoints(audio: Float32Array): Array<{ x: number; cents: number }> | null {
-  const contour = normalizedPitchContour(audio);
-  if (!contour) return null;
-  // This representation is voiced-frame time, explicitly NOT wall-clock timing.
-  return contour.filter(Number.isFinite).map((cents, index, values) => ({
-    x: values.length === 1 ? 0 : index / (values.length - 1),
-    cents: Math.round(cents),
-  }));
-}
 
 function rms(audio: Float32Array, begin: number): number {
   let total = 0;
@@ -109,8 +100,8 @@ export function buildParaPitchFeedback(word: string | null | undefined, referenc
   if (!expected || !word) return null;
   const analysis = analyzeYorubaTones(word, reference, learner);
   if (!analysis || analysis.referencePatternScore < 0.75) return null;
-  const ref = pitchPoints(reference);
-  const user = pitchPoints(learner);
+  const ref = timedPitchContour(reference);
+  const user = timedPitchContour(learner);
   const refBounds = estimateSyllableBoundaries(reference, expected.length);
   const userBounds = estimateSyllableBoundaries(learner, expected.length);
   if (!ref || !user || !refBounds || !userBounds) return null;
