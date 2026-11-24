@@ -112,5 +112,5 @@ test("different natural voice pitch with identical falling shape remains a good 
   const high = generateSpeechLikeSignal(225, t => -4 * t, 1.3);
   const result = compareAcousticTones(low, high);
   assert.ok(result);
-  assert.ok(result.score > 0.65);
+  assert.ok(result.score > 0.65, "matching contours across voice range scored " + result.score + ", distance " + result.meanCentsDifference);
 });
