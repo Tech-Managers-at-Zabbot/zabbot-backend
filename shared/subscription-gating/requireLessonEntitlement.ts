@@ -20,7 +20,8 @@ export async function requireLessonEntitlement(
 ): Promise<void> {
   try {
     const lessonId = req.params.lessonId;
-    const userId = (req as Request & { user?: { userId?: string } }).user?.userId;
+    const user = (req as Request & { user?: { userId?: string; role?: string } }).user;
+    const userId = user?.userId;
     if (!userId) {
       res.status(401).json({ status: "error", code: "LOGIN_REQUIRED" });
       return;
@@ -44,6 +45,13 @@ export async function requireLessonEntitlement(
     // ADMIN controls always win, even over paid or free-preview access.
     if (course.isActive !== true || lesson.isActive !== true) {
       res.status(403).json({ status: "error", code: "CURRICULUM_UNAVAILABLE" });
+      return;
+    }
+
+    // Administrators may inspect and test active curriculum without purchasing a plan.
+    // Disabled lessons and Journeys remain unavailable to everyone.
+    if (user?.role === "admin") {
+      next();
       return;
     }
 

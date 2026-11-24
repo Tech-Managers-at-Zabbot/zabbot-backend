@@ -118,9 +118,10 @@ async function withApp(route: string, router: any, run: (url: string) => Promise
     await new Promise<void>((resolve, reject) => server.close(err => err ? reject(err) : resolve()));
   }
 }
-async function request(base: string, path: string, identity: string | null, method = "GET", body?: any) {
+async function request(base: string, path: string, identity: string | null, method = "GET", body?: any, role?: string) {
   const headers: Record<string, string> = {};
   if (identity) headers["x-test-identity"] = identity;
+  if (role) headers["x-test-role"] = role;
   if (body !== undefined) headers["content-type"] = "application/json";
   const response = await fetch(base + path, {
     method, headers, body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -159,6 +160,13 @@ test("real Phase 2 lesson, content, quiz and flashcard routes enforce HTTP decis
       assertDenied(await request(origin, "/lesson/lesson-with-contents/" + paidLesson, null), 401, "LOGIN_REQUIRED");
       assertDenied(await request(origin, "/lesson/lesson-with-contents/" + paidLesson, "free"), 403, "SUBSCRIPTION_REQUIRED");
       assertAllowed(await request(origin, "/lesson/lesson-with-contents/" + paidLesson, "paid"));
+      assertAllowed(await request(origin, "/lesson/lesson-with-contents/" + paidLesson, "admin-user", "GET", undefined, "admin"));
+      assertAllowed(await request(origin, "/content/premium-content", "admin-user", "GET", undefined, "admin"));
+      assertAllowed(await request(origin, "/content/lesson/" + paidLesson, "admin-user", "GET", undefined, "admin"));
+      assertDenied(await request(origin, "/lesson/lesson-with-contents/disabled-lesson", "admin-user", "GET", undefined, "admin"), 403, "CURRICULUM_UNAVAILABLE");
+      assertDenied(await request(origin, "/lesson/lesson-with-contents/disabled-parent-lesson", "admin-user", "GET", undefined, "admin"), 403, "CURRICULUM_UNAVAILABLE");
+      assertAllowed(await request(origin, "/courses/update-user-course/" + premiumJourney, "admin-user", "PUT", { lastLessonId: paidLesson }, "admin"));
+      assertDenied(await request(origin, "/courses/update-user-course/" + premiumJourney, "admin-user", "PUT", { lastLessonId: "disabled-lesson" }, "admin"), 403, "CURRICULUM_UNAVAILABLE");
       assertAllowed(await request(origin, "/lesson/lesson-with-contents/" + FREE_PREVIEW_LESSON_ID, "free"));
       assertDenied(await request(origin, "/lesson/lesson-with-contents/disabled-lesson", "paid"), 403, "CURRICULUM_UNAVAILABLE");
       assertDenied(await request(origin, "/lesson/lesson-with-contents/disabled-parent-lesson", "paid"), 403, "CURRICULUM_UNAVAILABLE");
