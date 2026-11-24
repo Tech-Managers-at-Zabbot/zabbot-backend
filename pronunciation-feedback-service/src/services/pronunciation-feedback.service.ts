@@ -20,6 +20,7 @@ import userPronunciationRepositories from "../repositories/user-pronunciation.re
 import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
 import UserPronunciation from "../../../shared/entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation";
 import config from "../../../config/config";
+import { transcriptScore, transcriptFeedback } from "./transcription-scoring";
 
 Ffmpeg.setFfmpegPath(ffmpegPath as string);
 
@@ -78,7 +79,7 @@ const calculateCosineSimilarity = (
   const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
   const normA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
   const normB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
-  return dotProduct / (normA * normB);
+  return normA > 0 && normB > 0 ? Math.max(-1, Math.min(1, dotProduct / (normA * normB))) : 0;
 };
 
 // Enhanced text similarity function using embeddings
@@ -120,8 +121,8 @@ const getEnhancedTextSimilarity = async (
 
   const textSimilarity = Math.min(seqSim, levSim);
 
-  // Combine embedding and text similarities (embedding weighted higher)
-  const combinedSimilarity = embeddingSimilarity * 0.7 + textSimilarity * 0.3;
+  // This legacy score measures text meaning, NOT acoustic pronunciation or Yorùbá tones.
+  const combinedSimilarity = Math.max(0, Math.min(1, embeddingSimilarity * 0.7 + textSimilarity * 0.3));
 
   return {
     embeddingSimilarity,
@@ -283,29 +284,27 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
 
       logMemoryUsage("After transcriptions");
 
-      // Use OpenAI embeddings instead of heavy audio embeddings
-      const { embeddingSimilarity, textSimilarity, combinedSimilarity } =
-        await getEnhancedTextSimilarity(userTranscription, masterTranscription);
+      // Opt-in pure transcription comparison avoids semantic embeddings awarding
+      // high scores for different words. No algorithm here measures lexical tones.
+      // Default stays legacy until STAGING recording-based acceptance.
+      const useTranscriptScoringV2 = process.env.ZABBOT_PARA_TRANSCRIPT_SCORING_V2 === "true";
+      const textBased = useTranscriptScoringV2
+        ? { embeddingSimilarity: 0, textSimilarity: transcriptScore(userTranscription, masterTranscription), combinedSimilarity: transcriptScore(userTranscription, masterTranscription) }
+        : await getEnhancedTextSimilarity(userTranscription, masterTranscription);
+      const { embeddingSimilarity, textSimilarity, combinedSimilarity } = textBased;
 
-      logMemoryUsage("After embedding similarity");
+      logMemoryUsage("After transcription comparison");
 
-      // Use the combined similarity as your final score
-      const finalScore = Math.round(combinedSimilarity * 100) / 100;
+      const finalScore = Math.round(Math.max(0, Math.min(1, combinedSimilarity)) * 100) / 100;
 
       // Create waveform plot (keep this lightweight visualization)
       await plotOverlay(masterRawAudio, userRawAudio, plotPath);
       logMemoryUsage("After plot overlay");
 
-      let remark = "";
-      if (finalScore > 0.85) {
-        remark =
-          "Excellent! Your pronunciation is perfect or close to perfect.";
-      } else if (finalScore > 0.7) {
-        remark =
-          "Good attempt — there is room for improvement. Listen to recording & try again.";
-      } else {
-        remark = "Needs improvement — listen and try again.";
-      }
+      // Never claim that transcript semantics establish pronunciation perfection.
+      const remark = useTranscriptScoringV2
+        ? transcriptFeedback(finalScore)
+        : "This is an automated transcript-similarity estimate, not a Yorùbá tone or pronunciation-accuracy measurement. Listen to the reference and try again.";
 
       // Upload results
       const plotResult = await uploadToCloudinary({
@@ -401,13 +400,14 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
   },
 );
 
-const getMasterFile = async (url: string, outputPath: string) => {
+const getMasterFile = async (url: string, outputPath: string): Promise<void> => {
   const response = await axios.get(url, { responseType: "stream" });
-  response.data.pipe(fs.createWriteStream(outputPath));
-
-  return new Promise((resolve, reject) => {
-    response.data.on("end", resolve);
+  await new Promise<void>((resolve, reject) => {
+    const output = fs.createWriteStream(outputPath);
     response.data.on("error", reject);
+    output.on("error", reject);
+    output.on("finish", resolve);
+    response.data.pipe(output);
   });
 };
 
@@ -506,7 +506,12 @@ const isInvalid = (
   minDuration = 0.5,
 ): boolean => {
   const isTooShort = audio.length < sampleRate * minDuration;
-  const maxAmplitude = Math.max(...audio.map(Math.abs));
+  // Avoid spreading long audio arrays into function arguments (stack overflow).
+  let maxAmplitude = 0;
+  for (const sample of audio) {
+    if (!Number.isFinite(sample)) return true;
+    maxAmplitude = Math.max(maxAmplitude, Math.abs(sample));
+  }
   const isTooQuiet = maxAmplitude < threshold;
 
   return isTooShort || isTooQuiet;
