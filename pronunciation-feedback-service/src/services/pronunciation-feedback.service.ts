@@ -91,18 +91,6 @@ const getEnhancedTextSimilarity = async (
   textSimilarity: number;
   combinedSimilarity: number;
 }> => {
-  // Get embeddings for both transcriptions
-  const [userEmbedding, masterEmbedding] = await Promise.all([
-    getTextEmbedding(userTranscription),
-    getTextEmbedding(masterTranscription),
-  ]);
-
-  // Calculate cosine similarity between embeddings
-  const embeddingSimilarity = calculateCosineSimilarity(
-    userEmbedding,
-    masterEmbedding,
-  );
-
   // Keep existing text similarity calculation
   const matcher = new SequenceMatcher(
     null,
@@ -119,7 +107,21 @@ const getEnhancedTextSimilarity = async (
   );
   const levSim = 1 - levDist / maxLen;
 
-  const textSimilarity = Math.min(seqSim, levSim);
+  const textSimilarity = Math.max(0, Math.min(1, Math.min(seqSim, levSim)));
+
+  // Preserve the existing 70/30 score when embeddings succeed. If the
+  // external embedding service fails, return a transparent text-only estimate
+  // instead of losing both the score and waveform graph entirely.
+  let embeddingSimilarity = textSimilarity;
+  try {
+    const [userEmbedding, masterEmbedding] = await Promise.all([
+      getTextEmbedding(userTranscription),
+      getTextEmbedding(masterTranscription),
+    ]);
+    embeddingSimilarity = calculateCosineSimilarity(userEmbedding, masterEmbedding);
+  } catch (error) {
+    console.warn("Pàrà legacy embedding unavailable; using transcript similarity fallback", error);
+  }
 
   // This legacy score measures text meaning, NOT acoustic pronunciation or Yorùbá tones.
   const combinedSimilarity = Math.max(0, Math.min(1, embeddingSimilarity * 0.7 + textSimilarity * 0.3));

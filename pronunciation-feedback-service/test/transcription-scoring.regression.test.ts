@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import fs from "node:fs";
+import path from "node:path";
 import { normalizeTranscript, transcriptSimilarity, transcriptScore, transcriptFeedback } from "../src/services/transcription-scoring";
 
 test("exact recognized phrase is 100% identical, ignoring punctuation and case", () => {
@@ -37,4 +39,14 @@ test("feedback does not claim measured Yorùbá tones or perfect pronunciation",
     assert.match(feedback, /tone/i);
     assert.doesNotMatch(feedback, /pronunciation is perfect/i);
   }
+});
+
+
+test("default-off Pàrà scoring retains the legacy path and tolerates embedding outages", () => {
+  const source = fs.readFileSync(path.join(__dirname, "../src/services/pronunciation-feedback.service.ts"), "utf8");
+  assert.match(source, /process\.env\.ZABBOT_PARA_TRANSCRIPT_SCORING_V2 === "true"/);
+  assert.match(source, /: await getEnhancedTextSimilarity\(userTranscription, masterTranscription\)/);
+  assert.match(source, /let embeddingSimilarity = textSimilarity;/);
+  assert.match(source, /catch \(error\) \{\s*console\.warn\("Pàrà legacy embedding unavailable;/);
+  assert.match(source, /embeddingSimilarity \* 0\.7 \+ textSimilarity \* 0\.3/);
 });
