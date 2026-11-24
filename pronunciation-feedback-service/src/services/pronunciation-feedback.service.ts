@@ -22,6 +22,7 @@ import UserPronunciation from "../../../shared/entities/pronunciation-feedback-s
 import config from "../../../config/config";
 import { transcriptScore } from "./transcription-scoring";
 import { compareAcousticTones } from "./acoustic-tone-scoring";
+import { analyzeYorubaTones } from "./yoruba-tone-analysis";
 
 Ffmpeg.setFfmpegPath(ffmpegPath as string);
 
@@ -198,6 +199,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
     try {
       let url: string;
       let audioId: string;
+      let trustedYorubaWord: string | null = null;
 
       if (!isInLesson) {
         const masterPronunciation =
@@ -208,6 +210,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
           throw errorUtilities.createError("Reference file not found", 404);
         }
         url = masterPronunciation.get(voice) as string;
+        trustedYorubaWord = masterPronunciation.get("yorubaWord") as string;
 
         await getMasterFile(url, masterRawFilePath);
 
@@ -312,7 +315,35 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         }
         // Provisional blend, pending human-labeled Yorùbá calibration.
         const lexicalMatch = transcriptScore(userTranscription, masterTranscription);
-        selectedSimilarity = acoustic.score * 0.6 + lexicalMatch * 0.4;
+        // Only trusted reference pronunciation metadata is eligible. Lesson
+        // audio lacks validated syllable text in this request, so retain the
+        // previous acoustic scoring rather than guessing text from Whisper.
+        const toneEvidence = analyzeYorubaTones(
+          trustedYorubaWord,
+          masterRawAudio,
+          userRawAudio,
+        );
+        if (toneEvidence) {
+          // Use syllable-relative motion alongside the whole-word acoustic
+          // contour and recognized text. Uncalibrated weights, STAGING only.
+          const syllableScore =
+            0.65 * toneEvidence.interSyllableScore +
+            0.35 * toneEvidence.learnerPatternScore;
+          selectedSimilarity =
+            0.55 * acoustic.score + 0.25 * syllableScore + 0.20 * lexicalMatch;
+          console.info("Pàrà experimental syllable tone diagnostics", {
+            expectedPattern: toneEvidence.expectedPattern.join(""),
+            referencePatternScore: toneEvidence.referencePatternScore,
+            learnerPatternScore: toneEvidence.learnerPatternScore,
+            interSyllableScore: toneEvidence.interSyllableScore,
+            syllableScore: Math.round(syllableScore * 100) / 100,
+            syllableCount: toneEvidence.evidence.length,
+          });
+        } else {
+          // Preserve previous behavior for unsafe/unknown/unalignable text,
+          // including reference clips inside Bites.
+          selectedSimilarity = acoustic.score * 0.6 + lexicalMatch * 0.4;
+        }
         console.info("Pàrà acoustic comparison diagnostics", {
           meanCentsDifference: Math.round(acoustic.meanCentsDifference),
           acousticScore: acoustic.score,
