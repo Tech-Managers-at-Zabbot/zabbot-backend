@@ -13,7 +13,7 @@ Do not enable this on PRODUCTION. `ZABBOT_PARA_TRANSCRIPT_SCORING_V2` remains se
 4. Convert F0 into log pitch (cents) and subtract **each speaker's median log F0 independently**, to reduce systematic baritone/soprano pitch offsets while preserving local pitch changes.
 5. Time-align the two relative contours by constrained dynamic time warping (DTW).
 6. Compute an **uncalibrated** contour similarity as `exp(-meanAbsoluteCentsDifference / 350)`.
-7. Blend 60% acoustic contour similarity and 40% normalized transcript edit-distance similarity as an experiment. Existing remark text, API fields, graph, recording storage, authorization checks and UI remain unchanged. If pitch evidence is insufficient, preserve existing transcript scoring rather than invent an acoustic score.
+7. Blend 60% acoustic contour similarity and 40% normalized transcript edit-distance similarity as an experiment. Existing remark text, API fields, graph, recording storage, authorization checks and UI remain unchanged. If pitch evidence is insufficient with the experimental flag ON, fail the comparison rather than silently returning a misleading transcript-only score. The legacy behavior remains unchanged when the flag is OFF.
 
 ## Known limitations (not a validated pronunciation checker)
 - **No syllable segmentation, phoneme assessment or independent Yorùbá tone classification yet.** Pitch contours are an acoustic proxy. A non-tonal language word or synthetic sine wave can match a tone contour without matching Yorùbá pronunciation.
@@ -44,3 +44,8 @@ Synthetic PCM tests examine:
 
 ## Rollback
 Unset or set `ZABBOT_PARA_ACOUSTIC_SCORING_V1=false` on the **STAGING backend**, then redeploy the STAGING backend. Existing legacy scoring continues. Do not modify PRODUCTION variables.
+
+## November 24 real-sample regression finding
+Two user-submitted ~2–3-second recordings labelled `.wav` were inspected and found to contain **WebM media** rather than RIFF WAV. A preliminary independent pitch analysis showed one relatively flat voiced section and a markedly different contour in the other. The recordings must **not** be committed to this repository without explicit consent. Synthetic regressions now test level-versus-falling contours and speaker pitch differences; the real samples remain acceptance fixtures provided separately by the user. This work does not establish correctness of the two speakers' lexical Yorùbá tones relative to a separately stored reference recording.
+
+When the acoustic flag is enabled, diagnostic logs include acousticScore, meanCentsDifference and voiced-frame counts. Check these metrics when two attempts receive identical displayed scores. If the flag is absent or OFF, identical transcript-derived scores are entirely possible.
