@@ -53,3 +53,5 @@ jobs:
         run: npx ts-node --transpile-only lesson-service/test/user-course-progress.regression.test.ts
       - name: Daily Word local-date and reuse cutoff regression tests
         run: npx ts-node --transpile-only lesson-service/test/daily-word-date.regression.test.ts
+      - name: Pàrà evidence-limited transcript scoring regression tests
+        run: npx ts-node --transpile-only pronunciation-feedback-service/test/transcription-scoring.regression.test.ts
