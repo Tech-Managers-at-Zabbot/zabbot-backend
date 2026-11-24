@@ -21,6 +21,7 @@ import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
 import UserPronunciation from "../../../shared/entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation";
 import config from "../../../config/config";
 import { transcriptScore } from "./transcription-scoring";
+import { compareAcousticTones } from "./acoustic-tone-scoring";
 
 Ffmpeg.setFfmpegPath(ffmpegPath as string);
 
@@ -297,7 +298,27 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
 
       logMemoryUsage("After transcription comparison");
 
-      const finalScore = Math.round(Math.max(0, Math.min(1, combinedSimilarity)) * 100) / 100;
+      // Experimental acoustic score is separately gated. Both inputs are the
+      // actual, trimmed reference and learner PCM, not their text transcripts.
+      // Legacy and transcript-V2 paths are unchanged when the flag is OFF.
+      let selectedSimilarity = combinedSimilarity;
+      if (process.env.ZABBOT_PARA_ACOUSTIC_SCORING_V1 === "true") {
+        try {
+          const acoustic = compareAcousticTones(masterRawAudio, userRawAudio);
+          if (acoustic) {
+            // A preliminary, uncalibrated 60/40 blend: tonal-contour evidence
+            // plus lexical transcript match. Requires expert-labeled validation.
+            const lexicalMatch = transcriptScore(userTranscription, masterTranscription);
+            selectedSimilarity = acoustic.score * 0.6 + lexicalMatch * 0.4;
+          } else {
+            console.warn("Pàrà experimental acoustic analysis unavailable; retaining selected transcript score");
+          }
+        } catch (error) {
+          console.error("Pàrà experimental acoustic analysis failed; retaining selected transcript score", error);
+        }
+      }
+
+      const finalScore = Math.round(Math.max(0, Math.min(1, selectedSimilarity)) * 100) / 100;
 
       // Create waveform plot (keep this lightweight visualization)
       await plotOverlay(masterRawAudio, userRawAudio, plotPath);
