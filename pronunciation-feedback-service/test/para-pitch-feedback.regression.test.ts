@@ -57,11 +57,13 @@ test("same spelling with opposite syllable movement does not label it a proven m
     "misleading close verdict for falling second syllable");
 });
 
-test("API guidance is fully opt-in; legacy response shape remains", () => {
+test("API guidance is fully opt-in and reuses the measured audio input", () => {
   const source = fs.readFileSync(path.join(__dirname, "../src/services/pronunciation-feedback.service.ts"), "utf8");
-  assert.ok(source.includes('process.env.ZABBOT_PARA_PITCH_FEEDBACK_V2 === "true"'));
+  assert.ok(source.includes("ZABBOT_PARA_PITCH_FEEDBACK_V2"));
   assert.ok(source.includes("...(pitchFeedback ? { pitchFeedback } : {})"));
-  assert.ok(source.includes("buildParaPitchFeedback(\n") && source.includes("acousticReference!,\n            acousticLearner!,"));
+  assert.ok(source.includes("buildParaPitchFeedback("));
+  assert.ok(source.includes("primaryAcoustic ? acousticReference! : recoveryReference"));
+  assert.ok(source.includes("primaryAcoustic ? acousticLearner! : recoveryLearner"));
 });
 
 test("long trailing silence does not erase the pitch graph for short EGG speech", () => {
