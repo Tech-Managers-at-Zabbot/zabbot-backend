@@ -350,11 +350,30 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
             referenceSamples: acousticReference?.length ?? 0,
             learnerSamples: acousticLearner?.length ?? 0,
           });
-          // A recording with insufficient pitch evidence is not a server fault.
-          // Never disguise transcript similarity as pronunciation accuracy.
-          throw errorUtilities.createError(
-            "We could not measure enough clear voiced speech. Please record the word again in a quiet place.",
-            422,
+          // A missing reference is an operator/catalog issue, not a learner error.
+          if (!acousticReference) {
+            throw errorUtilities.createError(
+              "This word's reference audio needs review. Please try another word.",
+              422,
+            );
+          }
+          // Speech was present (checked above). If F0 is not recoverable,
+          // return a clear ungraded result; never invent a score.
+          await cleanupFiles([
+            userRawFilePath, userTrimmedFilePath, userWavFilePath,
+            normalisedUserWavPath, masterRawFilePath, masterWavFilePath,
+            masterTrimmedFilePath, normalisedMasterWavPath, plotPath,
+          ]);
+          return responseUtilities.handleServicesResponse(
+            StatusCodes.Created,
+            "Pronunciation analyzed without a reliable grade",
+            {
+              graded: false,
+              assessmentStatus: "ungraded",
+              message: "We heard your attempt, but couldn't measure enough reliable pitch to grade it. Listen to the reference and practice again.",
+              finalScore: null,
+              ...(!isInLesson ? { referenceVoice: voice, referencePronunciationId: audioId } : {}),
+            },
           );
         }
         // Provisional blend, pending human-labeled Yorùbá calibration.
