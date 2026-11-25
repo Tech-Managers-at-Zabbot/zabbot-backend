@@ -141,3 +141,15 @@ test("API uses active speech consistently; unscorable audio returns 422 rather t
   assert.match(source, /422,/);
   assert.match(source, /if \(error\?\.isOperational && error\?\.statusCode\) throw error/);
 });
+
+test("standalone Pàrà requires an explicit reference voice and echoes the selected baseline", () => {
+  const source = fs.readFileSync(path.join(__dirname, "../src/services/pronunciation-feedback.service.ts"), "utf8");
+  assert.doesNotMatch(source, /voice\s*=\s*"femaleVoice"/);
+  assert.match(source, /voice !== "maleVoice" && voice !== "femaleVoice"/);
+  assert.match(source, /url = masterPronunciation\.get\(voice\) as string/);
+  assert.match(source, /referenceVoice: voice, referencePronunciationId: audioId/);
+  assert.match(source, /"Reference voice selection is required \(maleVoice or femaleVoice\)\."/);
+  const controller = fs.readFileSync(path.join(__dirname, "../src/controllers/referencePronunciation.controller.ts"), "utf8");
+  assert.match(controller, /const \{ voice, isInLesson/);
+  assert.match(controller, /referencePronunciationId,\s*voice,/);
+});
