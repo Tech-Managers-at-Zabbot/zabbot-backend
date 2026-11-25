@@ -25,6 +25,7 @@ import { compareAcousticTones } from "./acoustic-tone-scoring";
 import { analyzeYorubaTones } from "./yoruba-tone-analysis";
 import { buildParaPitchFeedback, isolateActiveSpeech } from "./para-pitch-feedback";
 import { buildParaScoringDiagnostics, type ParaScorePath } from "./para-scoring-diagnostics";
+import { decideParaAsrEvidence } from "./para-asr-evidence-gating";
 
 Ffmpeg.setFfmpegPath(ffmpegPath as string);
 
@@ -330,6 +331,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
       let diagnosticReferenceAudio: Float32Array | null = null;
       let diagnosticLearnerAudio: Float32Array | null = null;
       let diagnosticTranscriptComponent = combinedSimilarity;
+      let asrEvidenceDecision: "retain" | "withhold" | null = null;
       if (process.env.ZABBOT_PARA_ACOUSTIC_SCORING_V1 === "true") {
         // Never silently return the transcript-only score when the experiment
         // is enabled: the same transcript would conceal a failed tone analysis.
@@ -393,6 +395,35 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
           scorePath = "acoustic-transcript-fallback";
           selectedSimilarity = acoustic.score * 0.6 + lexicalMatch * 0.4;
         }
+        // The conservative ASR evidence gate is separately enabled only
+        // for standalone predefined-word Pàrà in STAGING. In-lesson clips
+        // have no trusted word mapping, so their existing scoring is unchanged.
+        const conditionalAsrEnabled = !isInLesson &&
+          process.env.ZABBOT_PARA_CONDITIONAL_ASR_SCORING_V1 === "true";
+        if (conditionalAsrEnabled) {
+          // Get estimated syllable alignment even if optional graph rendering
+          // is disabled: scoring must not depend on a UI feature flag.
+          const qualityFeedback = buildParaPitchFeedback(
+            trustedYorubaWord, acousticReference!, acousticLearner!,
+            process.env.ZABBOT_PARA_PITCH_GRAPH_OCTAVE_REPAIR_V1 === "true",
+          );
+          const decision = decideParaAsrEvidence({
+            expectedWord: trustedYorubaWord,
+            referenceTranscript: masterTranscription,
+            learnerTranscript: userTranscription,
+            acousticScore: acoustic.score,
+            acousticReferenceVoicedFrames: acoustic.referenceVoicedFrames,
+            acousticLearnerVoicedFrames: acoustic.learnerVoicedFrames,
+            syllableToneScore: diagnosticSyllable,
+            referencePatternScore: toneEvidence?.referencePatternScore ?? null,
+            alignmentConfidence: qualityFeedback?.confidence ?? null,
+          });
+          if (decision.kind === "retry") {
+            throw errorUtilities.createError(decision.reason, 422);
+          }
+          selectedSimilarity = decision.score;
+          asrEvidenceDecision = decision.kind;
+        }
         // API v2 is opt-in and independent of the existing acoustic flag.
         // Only database-owned text is trusted; lesson clips have no safe alignment.
         if (process.env.ZABBOT_PARA_PITCH_FEEDBACK_V2 === "true") {
@@ -432,6 +463,24 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
             learnerAudio: diagnosticLearnerAudio,
           })
         : null;
+
+      // The effective scoring choice is exposed only within existing
+      // authenticated STAGING diagnostics, without altering its contract.
+      if (scoringDiagnostics && asrEvidenceDecision) {
+        (scoringDiagnostics.scoring as typeof scoringDiagnostics.scoring & {
+          effectiveAsrDecision?: "retain" | "withhold";
+          effectiveWeights?: { acoustic: number; syllableTone: number; transcript: number };
+          effectiveScore?: number;
+        }).effectiveAsrDecision = asrEvidenceDecision;
+        (scoringDiagnostics.scoring as typeof scoringDiagnostics.scoring & {
+          effectiveWeights?: { acoustic: number; syllableTone: number; transcript: number };
+        }).effectiveWeights = asrEvidenceDecision === "withhold"
+          ? { acoustic: 0.55 / 0.8, syllableTone: 0.25 / 0.8, transcript: 0 }
+          : { acoustic: 0.55, syllableTone: 0.25, transcript: 0.20 };
+        (scoringDiagnostics.scoring as typeof scoringDiagnostics.scoring & {
+          effectiveScore?: number;
+        }).effectiveScore = finalScore;
+      }
 
       // Create waveform plot (keep this lightweight visualization)
       await plotOverlay(masterRawAudio, userRawAudio, plotPath);
