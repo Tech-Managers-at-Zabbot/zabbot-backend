@@ -21,7 +21,7 @@ import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
 import UserPronunciation from "../../../shared/entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation";
 import config from "../../../config/config";
 import { transcriptScore } from "./transcription-scoring";
-import { compareAcousticTones } from "./acoustic-tone-scoring";
+import { compareAcousticTones, compareShortWordAcousticTones } from "./acoustic-tone-scoring";
 import { analyzeYorubaTones } from "./yoruba-tone-analysis";
 import { buildParaPitchFeedback, isolateActiveSpeech } from "./para-pitch-feedback";
 import { buildParaScoringDiagnostics, type ParaScorePath } from "./para-scoring-diagnostics";
@@ -331,7 +331,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
       let diagnosticReferenceAudio: Float32Array | null = null;
       let diagnosticLearnerAudio: Float32Array | null = null;
       let diagnosticTranscriptComponent = combinedSimilarity;
-      let asrEvidenceDecision: "retain" | "withhold" | null = null;
+      let asrEvidenceDecision: "retain" | "withhold" | "retainFallback" | null = null;
       let ungradedReason: string | null = null;
       let ungradedPitchFeedback: ReturnType<typeof buildParaPitchFeedback> = null;
       if (process.env.ZABBOT_PARA_ACOUSTIC_SCORING_V1 === "true") {
@@ -342,9 +342,15 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         // silence; long trailing gaps can distort voiced-frame duration ratios.
         const acousticReference = isolateActiveSpeech(masterRawAudio);
         const acousticLearner = isolateActiveSpeech(userRawAudio);
-        const acoustic = acousticReference && acousticLearner
+        const standardAcoustic = acousticReference && acousticLearner
           ? compareAcousticTones(acousticReference, acousticLearner)
           : null;
+        // Strict short-word recovery is attempted only when the standard
+        // algorithm cannot score. It uses higher correlation confidence and
+        // exactly the same contour scoring formula.
+        const acoustic = standardAcoustic ?? (acousticReference && acousticLearner
+          ? compareShortWordAcousticTones(acousticReference, acousticLearner)
+          : null);
         if (!acoustic) {
           console.warn("Pàrà acoustic comparison unavailable after speech isolation", {
             referenceSamples: acousticReference?.length ?? 0,
@@ -449,6 +455,10 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
           } else {
             selectedSimilarity = decision.score;
             asrEvidenceDecision = decision.kind;
+            if (decision.kind === "retainFallback") {
+              scorePath = "acoustic-transcript-fallback";
+              diagnosticSyllable = null;
+            }
           }
         }
         // API v2 is opt-in and independent of the existing acoustic flag.
@@ -466,6 +476,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
           acousticScore: acoustic.score,
           referenceVoicedFrames: acoustic.referenceVoicedFrames,
           learnerVoicedFrames: acoustic.learnerVoicedFrames,
+          extractionMethod: acoustic.extractionMethod ?? "standard",
         });
       }
 
@@ -518,7 +529,9 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         scoringDiagnostics.scoring.effectiveAsrDecision = asrEvidenceDecision;
         scoringDiagnostics.scoring.effectiveWeights = asrEvidenceDecision === "withhold"
           ? { acoustic: 0.55 / 0.8, syllableTone: 0.25 / 0.8, transcript: 0 }
-          : { acoustic: 0.55, syllableTone: 0.25, transcript: 0.20 };
+          : asrEvidenceDecision === "retainFallback"
+            ? { acoustic: 0.60, syllableTone: 0, transcript: 0.40 }
+            : { acoustic: 0.55, syllableTone: 0.25, transcript: 0.20 };
         scoringDiagnostics.scoring.effectiveScore = finalScore;
       }
 
