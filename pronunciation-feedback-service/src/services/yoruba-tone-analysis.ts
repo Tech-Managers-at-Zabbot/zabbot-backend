@@ -40,7 +40,9 @@ const TONE_LOW = "\u0300";
  */
 export function extractVowelTones(word: string): YorubaTone[] | null {
   if (!word || word.trim() !== word || /\s|[0-9]/u.test(word)) return null;
-  const graphemes = Array.from(word.normalize("NFD").toLocaleLowerCase("yo").matchAll(/(\P{M})(\p{M}*)/gu));
+  // Orthographic hyphens do not represent additional tone-bearing vowels.
+  const normalizedWord = word.replace(/[-‐‑–—]/gu, "");
+  const graphemes = Array.from(normalizedWord.normalize("NFD").toLocaleLowerCase("yo").matchAll(/(\P{M})(\p{M}*)/gu));
   const result: YorubaTone[] = [];
   for (const match of graphemes) {
     const base = match[1];
