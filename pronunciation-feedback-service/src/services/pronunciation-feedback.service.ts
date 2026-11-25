@@ -155,7 +155,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
     referencePronunciationId,
     file,
     userId,
-    voice = "femaleVoice",
+    voice,
     isInLesson = false,
     isInLessonUrl,
     isInLessonAudioId,
@@ -210,7 +210,21 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         if (!masterPronunciation) {
           throw errorUtilities.createError("Reference file not found", 404);
         }
+        // Never silently select a different recording from the one the learner
+        // heard. A missing/unknown selection must not produce a misleading score.
+        if (voice !== "maleVoice" && voice !== "femaleVoice") {
+          throw errorUtilities.createError(
+            "Reference voice selection is required (maleVoice or femaleVoice).",
+            400,
+          );
+        }
         url = masterPronunciation.get(voice) as string;
+        if (!url || typeof url !== "string") {
+          throw errorUtilities.createError(
+            "The selected reference recording is unavailable.",
+            422,
+          );
+        }
         trustedYorubaWord = masterPronunciation.get("yorubaWord") as string;
 
         await getMasterFile(url, masterRawFilePath);
@@ -442,6 +456,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
           textSimilarity: textSimilarity,
           finalScore,
           plot: plotResult,
+          ...(!isInLesson ? { referenceVoice: voice, referencePronunciationId: audioId } : {}),
           ...(pitchFeedback ? { pitchFeedback } : {}),
           // Removed dtwPlot to save memory
         },
