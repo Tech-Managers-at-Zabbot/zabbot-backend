@@ -35,12 +35,12 @@ test("unreliable reference ASR is excluded, preserving 55:25 evidence ratio", ()
   }
 });
 
-test("unreliable learner word with trusted reference requests retry, never unearned credit", () => {
+test("unreliable learner word with trusted reference yields ungraded evidence, never unearned credit", () => {
   const result = decideParaAsrEvidence({ ...good, learnerTranscript: "different word" });
-  assert.equal(result.kind, "retry");
+  assert.equal(result.kind, "ungraded");
 });
 
-test("missing, limited, or inconsistent tonal evidence returns retry rather than a number", () => {
+test("missing, limited, or inconsistent tonal evidence yields an ungraded practice result", () => {
   const variants = [
     { ...good, acousticScore: null },
     { ...good, acousticScore: Number.NaN },
@@ -62,7 +62,8 @@ test("STAGING standalone scoring uses decision only after acoustic and syllable 
   assert.ok(source.includes('process.env.ZABBOT_PARA_ACOUSTIC_SCORING_V1 === "true"'));
   assert.ok(source.includes('const conditionalAsrEnabled = !isInLesson'));
   assert.ok(source.includes("decideParaAsrEvidence({"));
-  assert.ok(source.includes('throw errorUtilities.createError(decision.reason, 422)'));
+  assert.ok(source.includes('if (decision.kind === "ungraded")'));
+  assert.ok(source.includes('assessmentStatus: "ungraded"'));
   assert.ok(source.includes("selectedSimilarity = decision.score"));
   assert.ok(source.includes('scorePath = "acoustic-syllable-transcript"'));
   assert.ok(source.includes('scorePath = "acoustic-transcript-fallback"'));
@@ -72,4 +73,16 @@ test("genuine tonal mismatch produces a low score, not a false unavailable-evide
   const result = decideParaAsrEvidence({ ...good, acousticScore: 0.1, syllableToneScore: 0.15 });
   assert.equal(result.kind, "retain");
   if(result.kind === "retain") assert.ok(result.score < 0.4);
+});
+
+test("supported short words and hyphenated words are not rejected as broken recordings", () => {
+  for (const word of ["BÀTÀ", "Ẹ̀JẸ̀", "ÌLÙ", "OMI", "GBOGBO", "MẸ́Ẹ̀-D-ÓGÚN"]) {
+    const result = decideParaAsrEvidence({
+      ...good, expectedWord: word,
+      syllableToneScore: null, referencePatternScore: null, alignmentConfidence: "limited",
+      referenceTranscript: "", learnerTranscript: "",
+    });
+    assert.equal(result.kind, "ungraded", word);
+    assert.ok(!("score" in result));
+  }
 });
