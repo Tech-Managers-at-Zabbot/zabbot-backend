@@ -62,3 +62,5 @@ jobs:
 
       - name: Pàrà Phase 2 pitch guidance and alignment regression tests
         run: npx ts-node --transpile-only pronunciation-feedback-service/test/para-pitch-feedback.regression.test.ts
+      - name: Pàrà STAGING scoring diagnostics and shadow calibration regression tests
+        run: npx ts-node --transpile-only pronunciation-feedback-service/test/para-scoring-diagnostics.regression.test.ts
