@@ -159,8 +159,6 @@ export function buildParaScoringDiagnostics(input: {
       (useTranscript ? transcriptWeight * transcriptComponent : 0)
     ) / remaining);
   }
-  const rawRefJumps = octaveJumpCandidates(input.referenceAudio);
-  const rawLearnerJumps = octaveJumpCandidates(input.learnerAudio);
   const correctedReferencePoints = input.referenceAudio ? timedPitchContour(input.referenceAudio, true) : null;
   const correctedLearnerPoints = input.learnerAudio ? timedPitchContour(input.learnerAudio, true) : null;
   const countJumpCandidates = (points: Array<{x:number;cents:number}> | null): number | null => {
