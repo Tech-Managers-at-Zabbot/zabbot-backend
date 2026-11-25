@@ -30,7 +30,7 @@ const RATE = 16000;
 const HOP = 320;
 const FRAME = 960;
 const MAX_SECONDS = 10;
-const MIN_ACTIVE_SECONDS = 0.4;
+const MIN_ACTIVE_SECONDS = 0.3;
 const solfege: Record<YorubaTone, "DO" | "RE" | "MI"> = { L: "DO", M: "RE", H: "MI" };
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 
