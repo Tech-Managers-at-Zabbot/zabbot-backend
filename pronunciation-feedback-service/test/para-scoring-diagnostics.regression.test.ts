@@ -69,3 +69,38 @@ test("the scoring diagnostic is gated, not involved in grading or feedback", () 
   assert.ok(source.indexOf("const scoringDiagnostics") > source.indexOf("const finalScore ="));
   assert.ok(source.indexOf("const scoringDiagnostics") < source.indexOf("let remark ="));
 });
+
+test("bad ASR of trusted reference is withheld in shadow, not treated as learner error", () => {
+  const rate = 16000;
+  const audio = new Float32Array(rate);
+  for (let i=0;i<audio.length;i++) audio[i] = 0.22 * Math.sin(2 * Math.PI * 180 * i/rate);
+  const diag = buildParaScoringDiagnostics({
+    ...base,
+    expectedWord: "GBOGBO",
+    referenceTranscript: "Buh-bye.",
+    learnerTranscript: "Blah, blah.",
+    path: "acoustic-syllable-transcript",
+    transcriptComponent: 0.44,
+    acousticScore: 0.69,
+    syllableScore: 0.882,
+    liveScore: 0.69,
+    referenceAudio: audio,
+    learnerAudio: audio,
+  });
+  assert.equal(diag.evidenceQualityCalibration.referenceAsrReliable, false);
+  assert.equal(diag.evidenceQualityCalibration.asrDecision, "withhold-unreliable-reference");
+  assert.equal(diag.evidenceQualityCalibration.transcriptUsedInCandidate, false);
+  assert.equal(diag.evidenceQualityCalibration.changesLiveScore, false);
+  assert.ok(diag.evidenceQualityCalibration.correctedAcousticScore !== null);
+  assert.ok(diag.evidenceQualityCalibration.correctedRelativeScore !== null);
+  assert.equal(diag.scoring.liveScore, 0.69);
+});
+
+test("no trusted expected word yields unknown ASR reliability, not a false failure", () => {
+  const d = buildParaScoringDiagnostics({
+    ...base, expectedWord: null, path: "acoustic-transcript-fallback",
+    liveScore: 0.69,
+  });
+  assert.equal(d.evidenceQualityCalibration.referenceAsrReliable, null);
+  assert.equal(d.evidenceQualityCalibration.asrDecision, "unknown");
+});
