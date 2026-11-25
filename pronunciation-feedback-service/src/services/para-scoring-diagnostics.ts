@@ -32,7 +32,7 @@ export type ParaScoringDiagnostics = {
     };
     liveScore: number;
     reconstruction: number;
-    effectiveAsrDecision?: "retain" | "withhold";
+    effectiveAsrDecision?: "retain" | "withhold" | "retainFallback";
     effectiveWeights?: { acoustic: number; syllableTone: number; transcript: number };
     effectiveScore?: number;
   };
