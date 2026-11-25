@@ -23,7 +23,7 @@ import config from "../../../config/config";
 import { transcriptScore } from "./transcription-scoring";
 import { compareAcousticTones } from "./acoustic-tone-scoring";
 import { analyzeYorubaTones } from "./yoruba-tone-analysis";
-import { buildParaPitchFeedback } from "./para-pitch-feedback";
+import { buildParaPitchFeedback, isolateActiveSpeech } from "./para-pitch-feedback";
 
 Ffmpeg.setFfmpegPath(ffmpegPath as string);
 
@@ -310,10 +310,25 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
       if (process.env.ZABBOT_PARA_ACOUSTIC_SCORING_V1 === "true") {
         // Never silently return the transcript-only score when the experiment
         // is enabled: the same transcript would conceal a failed tone analysis.
-        const acoustic = compareAcousticTones(masterRawAudio, userRawAudio);
+        // Both the acoustic score and syllable feedback must use the same
+        // speech-only interval. ffmpeg's existing filter only removes leading
+        // silence; long trailing gaps can distort voiced-frame duration ratios.
+        const acousticReference = isolateActiveSpeech(masterRawAudio);
+        const acousticLearner = isolateActiveSpeech(userRawAudio);
+        const acoustic = acousticReference && acousticLearner
+          ? compareAcousticTones(acousticReference, acousticLearner)
+          : null;
         if (!acoustic) {
-          console.warn("Pàrà acoustic comparison unavailable: inadequate voiced pitch evidence");
-          throw new Error("Acoustic comparison unavailable for this recording");
+          console.warn("Pàrà acoustic comparison unavailable after speech isolation", {
+            referenceSamples: acousticReference?.length ?? 0,
+            learnerSamples: acousticLearner?.length ?? 0,
+          });
+          // A recording with insufficient pitch evidence is not a server fault.
+          // Never disguise transcript similarity as pronunciation accuracy.
+          throw errorUtilities.createError(
+            "We could not measure enough clear voiced speech. Please record the word again in a quiet place.",
+            422,
+          );
         }
         // Provisional blend, pending human-labeled Yorùbá calibration.
         const lexicalMatch = transcriptScore(userTranscription, masterTranscription);
@@ -322,8 +337,8 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         // previous acoustic scoring rather than guessing text from Whisper.
         const toneEvidence = analyzeYorubaTones(
           trustedYorubaWord,
-          masterRawAudio,
-          userRawAudio,
+          acousticReference!,
+          acousticLearner!,
         );
         if (toneEvidence) {
           // Use syllable-relative motion alongside the whole-word acoustic
@@ -349,7 +364,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         // API v2 is opt-in and independent of the existing acoustic flag.
         // Only database-owned text is trusted; lesson clips have no safe alignment.
         if (process.env.ZABBOT_PARA_PITCH_FEEDBACK_V2 === "true") {
-          pitchFeedback = buildParaPitchFeedback(trustedYorubaWord, masterRawAudio, userRawAudio);
+          pitchFeedback = buildParaPitchFeedback(trustedYorubaWord, acousticReference!, acousticLearner!);
         }
         console.info("Pàrà acoustic comparison diagnostics", {
           meanCentsDifference: Math.round(acoustic.meanCentsDifference),
@@ -447,6 +462,9 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
 
       logMemoryUsage("End of comparePronounciation - error");
 
+      // Preserve intentional client-error statuses (e.g., unscorable audio)
+      // instead of incorrectly wrapping them as an internal HTTP 500.
+      if (error?.isOperational && error?.statusCode) throw error;
       throw errorUtilities.createError(
         `Error comparing pronunciation: ${error.message}`,
         500,
