@@ -331,7 +331,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
       let diagnosticReferenceAudio: Float32Array | null = null;
       let diagnosticLearnerAudio: Float32Array | null = null;
       let diagnosticTranscriptComponent = combinedSimilarity;
-      let asrEvidenceDecision: "retain" | "withhold" | null = null;
+      let asrEvidenceDecision: "retain" | "withhold" | "fallback" | null = null;
       if (process.env.ZABBOT_PARA_ACOUSTIC_SCORING_V1 === "true") {
         // Never silently return the transcript-only score when the experiment
         // is enabled: the same transcript would conceal a failed tone analysis.
@@ -424,6 +424,10 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
           }
           selectedSimilarity = decision.score;
           asrEvidenceDecision = decision.kind;
+          if (decision.kind === "fallback") {
+            scorePath = "acoustic-transcript-fallback";
+            diagnosticSyllable = null;
+          }
         }
         // API v2 is opt-in and independent of the existing acoustic flag.
         // Only database-owned text is trusted; lesson clips have no safe alignment.
@@ -469,7 +473,9 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         scoringDiagnostics.scoring.effectiveAsrDecision = asrEvidenceDecision;
         scoringDiagnostics.scoring.effectiveWeights = asrEvidenceDecision === "withhold"
           ? { acoustic: 0.55 / 0.8, syllableTone: 0.25 / 0.8, transcript: 0 }
-          : { acoustic: 0.55, syllableTone: 0.25, transcript: 0.20 };
+          : asrEvidenceDecision === "fallback"
+            ? { acoustic: 0.60, syllableTone: 0, transcript: 0.40 }
+            : { acoustic: 0.55, syllableTone: 0.25, transcript: 0.20 };
         scoringDiagnostics.scoring.effectiveScore = finalScore;
       }
 
