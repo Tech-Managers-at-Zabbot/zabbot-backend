@@ -464,22 +464,12 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
           })
         : null;
 
-      // The effective scoring choice is exposed only within existing
-      // authenticated STAGING diagnostics, without altering its contract.
       if (scoringDiagnostics && asrEvidenceDecision) {
-        (scoringDiagnostics.scoring as typeof scoringDiagnostics.scoring & {
-          effectiveAsrDecision?: "retain" | "withhold";
-          effectiveWeights?: { acoustic: number; syllableTone: number; transcript: number };
-          effectiveScore?: number;
-        }).effectiveAsrDecision = asrEvidenceDecision;
-        (scoringDiagnostics.scoring as typeof scoringDiagnostics.scoring & {
-          effectiveWeights?: { acoustic: number; syllableTone: number; transcript: number };
-        }).effectiveWeights = asrEvidenceDecision === "withhold"
+        scoringDiagnostics.scoring.effectiveAsrDecision = asrEvidenceDecision;
+        scoringDiagnostics.scoring.effectiveWeights = asrEvidenceDecision === "withhold"
           ? { acoustic: 0.55 / 0.8, syllableTone: 0.25 / 0.8, transcript: 0 }
           : { acoustic: 0.55, syllableTone: 0.25, transcript: 0.20 };
-        (scoringDiagnostics.scoring as typeof scoringDiagnostics.scoring & {
-          effectiveScore?: number;
-        }).effectiveScore = finalScore;
+        scoringDiagnostics.scoring.effectiveScore = finalScore;
       }
 
       // Create waveform plot (keep this lightweight visualization)
