@@ -61,11 +61,17 @@ export function decideParaAsrEvidence(input: {
     };
   }
   if (!toneGood) {
-    // Restore the proven pre-#278 acoustic/text fallback when the independent
-    // syllable-tone analyzer is unable to supply usable evidence. Never
-    // substitute 100% ASR or invent a tone score. An empty/misrecognized
-    // reference yields a low lexical score rather than a high false grade.
-    const asrScore = transcriptScore(input.learnerTranscript, input.referenceTranscript);
+    // Restore the pre-#278 acoustic/text fallback when independent syllable
+    // evidence is unavailable. Only TRUSTED recognized word matches can
+    // contribute text points. Repeated hallucinations ("Buh-bye" etc.) must
+    // never award a high score just because two bad ASR strings agree.
+    const referenceRecognized = normalizeTranscript(input.referenceTranscript).length > 0 &&
+      refAgreement !== null && refAgreement >= ASR_MATCH_THRESHOLD;
+    const learnerRecognized = normalizeTranscript(input.learnerTranscript).length > 0 &&
+      learnerAgreement !== null && learnerAgreement >= ASR_MATCH_THRESHOLD;
+    const asrScore = referenceRecognized && learnerRecognized
+      ? transcriptScore(input.learnerTranscript, input.referenceTranscript)
+      : 0;
     return {
       kind: "fallback",
       score: 0.60 * input.acousticScore! + 0.40 * asrScore,
