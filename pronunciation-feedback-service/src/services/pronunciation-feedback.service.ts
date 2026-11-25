@@ -396,7 +396,12 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         // API v2 is opt-in and independent of the existing acoustic flag.
         // Only database-owned text is trusted; lesson clips have no safe alignment.
         if (process.env.ZABBOT_PARA_PITCH_FEEDBACK_V2 === "true") {
-          pitchFeedback = buildParaPitchFeedback(trustedYorubaWord, acousticReference!, acousticLearner!);
+          pitchFeedback = buildParaPitchFeedback(
+            trustedYorubaWord,
+            acousticReference!,
+            acousticLearner!,
+            process.env.ZABBOT_PARA_PITCH_GRAPH_OCTAVE_REPAIR_V1 === "true",
+          );
         }
         console.info("Pàrà acoustic comparison diagnostics", {
           meanCentsDifference: Math.round(acoustic.meanCentsDifference),
