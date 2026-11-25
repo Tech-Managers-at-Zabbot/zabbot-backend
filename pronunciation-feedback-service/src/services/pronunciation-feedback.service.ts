@@ -398,8 +398,9 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         // The conservative ASR evidence gate is separately enabled only
         // for standalone predefined-word Pàrà in STAGING. In-lesson clips
         // have no trusted word mapping, so their existing scoring is unchanged.
-        const conditionalAsrEnabled = !isInLesson &&
-          process.env.ZABBOT_PARA_CONDITIONAL_ASR_SCORING_V1 === "true";
+        // Active for standalone Pàrà on the STAGING branch under the existing
+        // acoustic-scoring gate. No extra environment flag is required.
+        const conditionalAsrEnabled = !isInLesson;
         if (conditionalAsrEnabled) {
           // Get estimated syllable alignment even if optional graph rendering
           // is disabled: scoring must not depend on a UI feature flag.
