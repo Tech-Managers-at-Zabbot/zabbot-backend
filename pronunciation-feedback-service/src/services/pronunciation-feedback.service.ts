@@ -24,6 +24,7 @@ import { transcriptScore } from "./transcription-scoring";
 import { compareAcousticTones } from "./acoustic-tone-scoring";
 import { analyzeYorubaTones } from "./yoruba-tone-analysis";
 import { buildParaPitchFeedback, isolateActiveSpeech } from "./para-pitch-feedback";
+import { buildParaScoringDiagnostics, type ParaScorePath } from "./para-scoring-diagnostics";
 
 Ffmpeg.setFfmpegPath(ffmpegPath as string);
 
@@ -321,6 +322,14 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
       // Legacy and transcript-V2 paths are unchanged when the flag is OFF.
       let selectedSimilarity = combinedSimilarity;
       let pitchFeedback: ReturnType<typeof buildParaPitchFeedback> = null;
+      let scorePath: ParaScorePath = "legacy-text-only";
+      let diagnosticAcoustic: number | null = null;
+      let diagnosticSyllable: number | null = null;
+      let diagnosticSyllablePattern: number | null = null;
+      let diagnosticInterSyllable: number | null = null;
+      let diagnosticReferenceAudio: Float32Array | null = null;
+      let diagnosticLearnerAudio: Float32Array | null = null;
+      let diagnosticTranscriptComponent = combinedSimilarity;
       if (process.env.ZABBOT_PARA_ACOUSTIC_SCORING_V1 === "true") {
         // Never silently return the transcript-only score when the experiment
         // is enabled: the same transcript would conceal a failed tone analysis.
@@ -345,7 +354,11 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
           );
         }
         // Provisional blend, pending human-labeled Yorùbá calibration.
+        diagnosticAcoustic = acoustic.score;
+        diagnosticReferenceAudio = acousticReference;
+        diagnosticLearnerAudio = acousticLearner;
         const lexicalMatch = transcriptScore(userTranscription, masterTranscription);
+        diagnosticTranscriptComponent = lexicalMatch;
         // Only trusted reference pronunciation metadata is eligible. Lesson
         // audio lacks validated syllable text in this request, so retain the
         // previous acoustic scoring rather than guessing text from Whisper.
@@ -360,6 +373,10 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
           const syllableScore =
             0.65 * toneEvidence.interSyllableScore +
             0.35 * toneEvidence.learnerPatternScore;
+          scorePath = "acoustic-syllable-transcript";
+          diagnosticSyllable = syllableScore;
+          diagnosticSyllablePattern = toneEvidence.learnerPatternScore;
+          diagnosticInterSyllable = toneEvidence.interSyllableScore;
           selectedSimilarity =
             0.55 * acoustic.score + 0.25 * syllableScore + 0.20 * lexicalMatch;
           console.info("Pàrà experimental syllable tone diagnostics", {
@@ -373,6 +390,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         } else {
           // Preserve previous behavior for unsafe/unknown/unalignable text,
           // including reference clips inside Bites.
+          scorePath = "acoustic-transcript-fallback";
           selectedSimilarity = acoustic.score * 0.6 + lexicalMatch * 0.4;
         }
         // API v2 is opt-in and independent of the existing acoustic flag.
@@ -389,6 +407,26 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
       }
 
       const finalScore = Math.round(Math.max(0, Math.min(1, selectedSimilarity)) * 100) / 100;
+      // Diagnostic mode changes neither the live score nor the feedback copy.
+      // It is opt-in and intended only for the dedicated STAGING backend.
+      const scoringDiagnostics = process.env.ZABBOT_PARA_SCORING_DIAGNOSTICS_V1 === "true"
+        ? buildParaScoringDiagnostics({
+            referenceId: !isInLesson ? audioId : null,
+            voice: !isInLesson ? voice : null,
+            expectedWord: trustedYorubaWord,
+            referenceTranscript: masterTranscription,
+            learnerTranscript: userTranscription,
+            path: scorePath,
+            acousticScore: diagnosticAcoustic,
+            syllableScore: diagnosticSyllable,
+            syllablePatternScore: diagnosticSyllablePattern,
+            interSyllableScore: diagnosticInterSyllable,
+            transcriptComponent: diagnosticTranscriptComponent,
+            liveScore: finalScore,
+            referenceAudio: diagnosticReferenceAudio,
+            learnerAudio: diagnosticLearnerAudio,
+          })
+        : null;
 
       // Create waveform plot (keep this lightweight visualization)
       await plotOverlay(masterRawAudio, userRawAudio, plotPath);
@@ -456,6 +494,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
           textSimilarity: textSimilarity,
           finalScore,
           plot: plotResult,
+          ...(scoringDiagnostics ? { scoringDiagnostics } : {}),
           ...(!isInLesson ? { referenceVoice: voice, referencePronunciationId: audioId } : {}),
           ...(pitchFeedback ? { pitchFeedback } : {}),
           // Removed dtwPlot to save memory
