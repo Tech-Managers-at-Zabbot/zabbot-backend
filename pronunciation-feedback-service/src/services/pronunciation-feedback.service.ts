@@ -260,14 +260,14 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
 
       if (isInvalid(userRawAudio)) {
         throw errorUtilities.createError(
-          `Your recording was too short or too quiet`,
-          500,
+          "No usable speech was detected. Please record the word again, speaking clearly into your microphone.",
+          422,
         );
       }
       if (isInvalid(masterRawAudio)) {
         throw errorUtilities.createError(
-          "Reference audio is too short or too quiet",
-          500,
+          "This word's reference recording is unavailable for reliable comparison. Please choose another word while we review its reference audio.",
+          422,
         );
       }
 
@@ -332,6 +332,8 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
       let diagnosticLearnerAudio: Float32Array | null = null;
       let diagnosticTranscriptComponent = combinedSimilarity;
       let asrEvidenceDecision: "retain" | "withhold" | null = null;
+      let ungradedReason: string | null = null;
+      let ungradedPitchFeedback: ReturnType<typeof buildParaPitchFeedback> = null;
       if (process.env.ZABBOT_PARA_ACOUSTIC_SCORING_V1 === "true") {
         // Never silently return the transcript-only score when the experiment
         // is enabled: the same transcript would conceal a failed tone analysis.
@@ -348,11 +350,30 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
             referenceSamples: acousticReference?.length ?? 0,
             learnerSamples: acousticLearner?.length ?? 0,
           });
-          // A recording with insufficient pitch evidence is not a server fault.
-          // Never disguise transcript similarity as pronunciation accuracy.
-          throw errorUtilities.createError(
-            "We could not measure enough clear voiced speech. Please record the word again in a quiet place.",
-            422,
+          // A missing reference is an operator/catalog issue, not a learner error.
+          if (!acousticReference) {
+            throw errorUtilities.createError(
+              "This word's reference audio needs review. Please try another word.",
+              422,
+            );
+          }
+          // Speech was present (checked above). If F0 is not recoverable,
+          // return a clear ungraded result; never invent a score.
+          await cleanupFiles([
+            userRawFilePath, userTrimmedFilePath, userWavFilePath,
+            normalisedUserWavPath, masterRawFilePath, masterWavFilePath,
+            masterTrimmedFilePath, normalisedMasterWavPath, plotPath,
+          ]);
+          return responseUtilities.handleServicesResponse(
+            StatusCodes.Created,
+            "Pronunciation analyzed without a reliable grade",
+            {
+              graded: false,
+              assessmentStatus: "ungraded",
+              message: "We heard your attempt, but couldn't measure enough reliable pitch to grade it. Listen to the reference and practice again.",
+              finalScore: null,
+              ...(!isInLesson ? { referenceVoice: voice, referencePronunciationId: audioId } : {}),
+            },
           );
         }
         // Provisional blend, pending human-labeled Yorùbá calibration.
@@ -419,11 +440,16 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
             referencePatternScore: toneEvidence?.referencePatternScore ?? null,
             alignmentConfidence: qualityFeedback?.confidence ?? null,
           });
-          if (decision.kind === "retry") {
-            throw errorUtilities.createError(decision.reason, 422);
+          if (decision.kind === "ungraded") {
+            // Recording contains usable speech. Missing alignment/recognition
+            // evidence is not a microphone error and must not cause a retry
+            // loop or fabricate a percent. Do not persist an ungraded grade.
+            ungradedReason = decision.reason;
+            ungradedPitchFeedback = qualityFeedback;
+          } else {
+            selectedSimilarity = decision.score;
+            asrEvidenceDecision = decision.kind;
           }
-          selectedSimilarity = decision.score;
-          asrEvidenceDecision = decision.kind;
         }
         // API v2 is opt-in and independent of the existing acoustic flag.
         // Only database-owned text is trusted; lesson clips have no safe alignment.
@@ -441,6 +467,29 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
           referenceVoicedFrames: acoustic.referenceVoicedFrames,
           learnerVoicedFrames: acoustic.learnerVoicedFrames,
         });
+      }
+
+      if (ungradedReason) {
+        // Successful processing, but no trustworthy composite score. The
+        // frontend may show the recording, known target and cautious graph,
+        // but must never display a percentage or record graded progress.
+        await cleanupFiles([
+          userRawFilePath, userTrimmedFilePath, userWavFilePath,
+          normalisedUserWavPath, masterRawFilePath, masterWavFilePath,
+          masterTrimmedFilePath, normalisedMasterWavPath, plotPath,
+        ]);
+        return responseUtilities.handleServicesResponse(
+          StatusCodes.Created,
+          "Pronunciation analyzed without a reliable grade",
+          {
+            graded: false,
+            assessmentStatus: "ungraded",
+            message: ungradedReason,
+            finalScore: null,
+            ...(ungradedPitchFeedback ? { pitchFeedback: ungradedPitchFeedback } : {}),
+            ...(!isInLesson ? { referenceVoice: voice, referencePronunciationId: audioId } : {}),
+          },
+        );
       }
 
       const finalScore = Math.round(Math.max(0, Math.min(1, selectedSimilarity)) * 100) / 100;
@@ -692,7 +741,7 @@ export const loadAndTrimAudio = async ({
 const isInvalid = (
   audio: Float32Array | any,
   threshold = 0.01,
-  minDuration = 0.5,
+  minDuration = 0.3,
 ): boolean => {
   const isTooShort = audio.length < sampleRate * minDuration;
   // Avoid spreading long audio arrays into function arguments (stack overflow).

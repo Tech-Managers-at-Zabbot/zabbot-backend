@@ -30,7 +30,7 @@ const RATE = 16000;
 const HOP = 320;
 const FRAME = 960;
 const MAX_SECONDS = 10;
-const MIN_ACTIVE_SECONDS = 0.4;
+const MIN_ACTIVE_SECONDS = 0.3;
 const solfege: Record<YorubaTone, "DO" | "RE" | "MI"> = { L: "DO", M: "RE", H: "MI" };
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 
@@ -113,7 +113,7 @@ export function estimateSyllableBoundaries(audio: Float32Array, count: number):
  * Consonants preceding a vowel belong to that following syllable.
  */
 export function referenceSyllableLabels(word: string): string[] {
-  const clusters = Array.from(word.normalize("NFC").matchAll(/(\P{M})(\p{M}*)/gu),
+  const clusters = Array.from(word.replace(/[-‐‑–—]/gu, "").normalize("NFC").matchAll(/(\P{M})(\p{M}*)/gu),
     match => match[0]);
   const isVowel = (cluster: string): boolean =>
     /^[aeẹioọu]$/iu.test(cluster.normalize("NFD").replace(/\p{M}/gu, "").replace(/^e$/iu, "e")) ||
