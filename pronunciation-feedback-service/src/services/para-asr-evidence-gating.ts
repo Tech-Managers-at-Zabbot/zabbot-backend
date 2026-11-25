@@ -10,7 +10,7 @@
  * and the existing acoustic and syllable weights are renormalized (55:25).
  *
  * A reliably recognized reference but unclear learner transcription cannot
- * safely be treated as correct (wrong word vs ASR failure): request a retry.
+ * safely be treated as correct (wrong word vs ASR failure): return ungraded.
  */
 import { normalizeTranscript, transcriptScore } from "./transcription-scoring";
 import { wordIdentityAgreement } from "./para-scoring-diagnostics";
@@ -18,6 +18,7 @@ import { wordIdentityAgreement } from "./para-scoring-diagnostics";
 export type AsrEvidenceDecision =
   | { kind: "retain"; score: number; asrScore: number; referenceAgreement: number; learnerAgreement: number }
   | { kind: "withhold"; score: number; asrScore: null; referenceAgreement: number; learnerAgreement: number | null }
+  | { kind: "retainFallback"; score: number; asrScore: number; referenceAgreement: number; learnerAgreement: number }
   | { kind: "ungraded"; reason: string; referenceAgreement: number | null; learnerAgreement: number | null };
 
 const ASR_MATCH_THRESHOLD = 0.65;
@@ -57,20 +58,28 @@ export function decideParaAsrEvidence(input: {
   const toneGood = input.syllableToneScore !== null &&
     Number.isFinite(input.syllableToneScore) &&
     input.syllableToneScore >= 0 && input.syllableToneScore <= 1 &&
-    input.referencePatternScore !== null && input.referencePatternScore >= 0.65 &&
-    input.alignmentConfidence === "moderate";
-  // We may show available acoustic evidence, but never substitute it for a
-  // missing syllable-tone component or silently assign a high final grade.
-  if (!toneGood) {
-    return { kind: "ungraded",
-      reason: "We heard your recording, but couldn't confidently align its syllables. You can practice with the reference; no grade was assigned.",
-      referenceAgreement: refAgreement, learnerAgreement };
-  }
+    input.referencePatternScore !== null && input.referencePatternScore >= 0.65;
+  // The energy-valley graph is a visualization and NOT an independent
+  // prerequisite for grading. The syllable-tone analyzer uses its own
+  // proportional voiced windows with reference-pattern quality checks.
   const refReliable = normalizeTranscript(input.referenceTranscript).length > 0 &&
     refAgreement !== null && refAgreement >= ASR_MATCH_THRESHOLD;
   const learnerReliable = normalizeTranscript(input.learnerTranscript).length > 0 &&
     learnerAgreement !== null && learnerAgreement >= ASR_MATCH_THRESHOLD;
 
+  if (!toneGood) {
+    // Existing acoustic+text fallback is safe only when BOTH ASR outputs
+    // independently identify the known expected word. An unreliable reference
+    // must NEVER lead to an acoustic-only invented high grade.
+    if (refReliable && learnerReliable) {
+      const asrScore = transcriptScore(input.learnerTranscript, input.referenceTranscript);
+      return { kind: "retainFallback", score: 0.60 * input.acousticScore! + 0.40 * asrScore,
+        asrScore, referenceAgreement: refAgreement!, learnerAgreement: learnerAgreement! };
+    }
+    return { kind: "ungraded",
+      reason: "We heard your recording, but couldn't verify both the syllable tones and the expected word reliably. No score was assigned.",
+      referenceAgreement: refAgreement, learnerAgreement };
+  }
   if (!refReliable) {
     // Reference-ASR disagreement is not evidence against a learner. Retain
     // only the verified acoustic and syllable evidence (same relative weights).

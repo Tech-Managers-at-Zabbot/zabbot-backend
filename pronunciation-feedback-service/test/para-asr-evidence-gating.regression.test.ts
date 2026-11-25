@@ -40,20 +40,42 @@ test("unreliable learner word with trusted reference yields ungraded evidence, n
   assert.equal(result.kind, "ungraded");
 });
 
-test("missing, limited, or inconsistent tonal evidence yields an ungraded practice result", () => {
-  const variants = [
+test("missing acoustic evidence never produces a fabricated score", () => {
+  for (const attempt of [
     { ...good, acousticScore: null },
     { ...good, acousticScore: Number.NaN },
     { ...good, acousticReferenceVoicedFrames: 2 },
-    { ...good, syllableToneScore: null },
-    { ...good, referencePatternScore: 0.3 },
-    { ...good, alignmentConfidence: "limited" as const },
     { ...good, expectedWord: null },
-  ];
-  for (const attempt of variants) {
+  ]) {
     const result = decideParaAsrEvidence(attempt);
     assert.equal(result.kind, "ungraded");
     assert.ok(!("score" in result));
+  }
+});
+
+test("limited graph alignment does NOT veto independent valid syllable analysis", () => {
+  for (const confidence of ["limited", null] as const) {
+    const result = decideParaAsrEvidence({ ...good, alignmentConfidence: confidence });
+    assert.equal(result.kind, "retain");
+    if (result.kind === "retain") assert.ok(result.score > 0.7);
+  }
+});
+
+test("missing syllable evidence only falls back to 60/40 when both words are reliably recognized", () => {
+  for (const override of [
+    { syllableToneScore: null, referencePatternScore: null },
+    { syllableToneScore: 0.82, referencePatternScore: 0.3 },
+  ]) {
+    const result = decideParaAsrEvidence({ ...good, ...override, alignmentConfidence: "limited" });
+    assert.equal(result.kind, "retainFallback");
+    if (result.kind === "retainFallback") {
+      assert.ok(Math.abs(result.score - (0.6 * good.acousticScore + 0.4 * result.asrScore)) < 1e-10);
+    }
+    for (const referenceTranscript of ["", "Buh-bye"]) {
+      const uncertain = decideParaAsrEvidence({ ...good, ...override, referenceTranscript });
+      assert.equal(uncertain.kind, "ungraded");
+      assert.ok(!("score" in uncertain));
+    }
   }
 });
 
@@ -67,6 +89,7 @@ test("STAGING standalone scoring uses decision only after acoustic and syllable 
   assert.ok(source.includes("selectedSimilarity = decision.score"));
   assert.ok(source.includes('scorePath = "acoustic-syllable-transcript"'));
   assert.ok(source.includes('scorePath = "acoustic-transcript-fallback"'));
+  assert.ok(source.includes("compareShortWordAcousticTones("));
 });
 
 test("genuine tonal mismatch produces a low score, not a false unavailable-evidence retry", () => {
