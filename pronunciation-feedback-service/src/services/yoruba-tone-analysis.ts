@@ -39,8 +39,11 @@ const TONE_LOW = "\u0300";
  * for automated syllable scoring and is refused.
  */
 export function extractVowelTones(word: string): YorubaTone[] | null {
-  if (!word || word.trim() !== word || /\s|[0-9]/u.test(word)) return null;
-  const graphemes = Array.from(word.normalize("NFD").toLocaleLowerCase("yo").matchAll(/(\P{M})(\p{M}*)/gu));
+  if (!word || word.trim() !== word || /\\s|[0-9]/u.test(word)) return null;
+  // Hyphens are orthographic separators, not sound nuclei. Preserve trusted
+  // spelling elsewhere while ignoring only these separators for tone extraction.
+  const normalized = word.replace(/[-‐‑–—]/gu, "");
+  const graphemes = Array.from(normalized.normalize("NFD").toLocaleLowerCase("yo").matchAll(/(\\P{M})(\\p{M}*)/gu));
   const result: YorubaTone[] = [];
   for (const match of graphemes) {
     const base = match[1];
