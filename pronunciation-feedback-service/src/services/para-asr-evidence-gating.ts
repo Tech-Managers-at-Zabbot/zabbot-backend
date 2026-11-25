@@ -57,7 +57,7 @@ export function decideParaAsrEvidence(input: {
   const toneGood = input.syllableToneScore !== null &&
     Number.isFinite(input.syllableToneScore) &&
     input.syllableToneScore >= 0 && input.syllableToneScore <= 1 &&
-    input.referencePatternScore !== null &&
+    input.referencePatternScore !== null && input.referencePatternScore >= 0.65 &&
     input.alignmentConfidence === "moderate";
   // We may show available acoustic evidence, but never substitute it for a
   // missing syllable-tone component or silently assign a high final grade.
