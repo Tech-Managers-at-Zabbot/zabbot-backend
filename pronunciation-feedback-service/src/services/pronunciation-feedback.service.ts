@@ -21,7 +21,7 @@ import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
 import UserPronunciation from "../../../shared/entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation";
 import config from "../../../config/config";
 import { transcriptScore } from "./transcription-scoring";
-import { compareAcousticTones } from "./acoustic-tone-scoring";
+import { compareAcousticTones, compareRecoveredAcousticTones } from "./acoustic-tone-scoring";
 import { analyzeYorubaTones } from "./yoruba-tone-analysis";
 import { buildParaPitchFeedback, isolateActiveSpeech } from "./para-pitch-feedback";
 import { buildParaScoringDiagnostics, type ParaScorePath } from "./para-scoring-diagnostics";
@@ -340,9 +340,17 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         // silence; long trailing gaps can distort voiced-frame duration ratios.
         const acousticReference = isolateActiveSpeech(masterRawAudio);
         const acousticLearner = isolateActiveSpeech(userRawAudio);
-        const acoustic = acousticReference && acousticLearner
+        // Ordinary scoring is unchanged for recordings the standard extractor
+        // can measure. When it fails on short/quiet vowels, retry pitch
+        // extraction with an adaptive amplitude floor and higher periodicity
+        // threshold; do not treat a quiet microphone as an invalid word.
+        const primaryAcoustic = acousticReference && acousticLearner
           ? compareAcousticTones(acousticReference, acousticLearner)
           : null;
+        const recoveryReference = acousticReference ?? masterRawAudio;
+        const recoveryLearner = acousticLearner ?? userRawAudio;
+        const acoustic = primaryAcoustic ??
+          compareRecoveredAcousticTones(recoveryReference, recoveryLearner);
         if (!acoustic) {
           console.warn("Pàrà acoustic comparison unavailable after speech isolation", {
             referenceSamples: acousticReference?.length ?? 0,
@@ -357,8 +365,8 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         }
         // Provisional blend, pending human-labeled Yorùbá calibration.
         diagnosticAcoustic = acoustic.score;
-        diagnosticReferenceAudio = acousticReference;
-        diagnosticLearnerAudio = acousticLearner;
+        diagnosticReferenceAudio = primaryAcoustic ? acousticReference : recoveryReference;
+        diagnosticLearnerAudio = primaryAcoustic ? acousticLearner : recoveryLearner;
         const lexicalMatch = transcriptScore(userTranscription, masterTranscription);
         diagnosticTranscriptComponent = lexicalMatch;
         // Only trusted reference pronunciation metadata is eligible. Lesson
@@ -366,8 +374,8 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         // previous acoustic scoring rather than guessing text from Whisper.
         const toneEvidence = analyzeYorubaTones(
           trustedYorubaWord,
-          acousticReference!,
-          acousticLearner!,
+          primaryAcoustic ? acousticReference! : recoveryReference,
+          primaryAcoustic ? acousticLearner! : recoveryLearner,
         );
         if (toneEvidence) {
           // Use syllable-relative motion alongside the whole-word acoustic
@@ -405,7 +413,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
           // Get estimated syllable alignment even if optional graph rendering
           // is disabled: scoring must not depend on a UI feature flag.
           const qualityFeedback = buildParaPitchFeedback(
-            trustedYorubaWord, acousticReference!, acousticLearner!,
+            trustedYorubaWord, recoveryReference, recoveryLearner,
             process.env.ZABBOT_PARA_PITCH_GRAPH_OCTAVE_REPAIR_V1 === "true",
           );
           const decision = decideParaAsrEvidence({
@@ -434,8 +442,8 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         if (process.env.ZABBOT_PARA_PITCH_FEEDBACK_V2 === "true") {
           pitchFeedback = buildParaPitchFeedback(
             trustedYorubaWord,
-            acousticReference!,
-            acousticLearner!,
+            primaryAcoustic ? acousticReference! : recoveryReference,
+            primaryAcoustic ? acousticLearner! : recoveryLearner,
             process.env.ZABBOT_PARA_PITCH_GRAPH_OCTAVE_REPAIR_V1 === "true",
           );
         }
