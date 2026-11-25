@@ -7,6 +7,7 @@ import {
   normalizedPitchContour,
   contourDistance,
 } from "../src/services/acoustic-tone-scoring";
+import { isolateActiveSpeech } from "../src/services/para-pitch-feedback";
 
 const sampleRate = 16000;
 
@@ -113,4 +114,30 @@ test("different natural voice pitch with identical falling shape remains a good 
   const result = compareAcousticTones(low, high);
   assert.ok(result);
   assert.ok(result.score > 0.65, "matching contours across voice range scored " + result.score + ", distance " + result.meanCentsDifference);
+});
+
+test("short spoken word with long trailing silence is scored using active audio only", () => {
+  const reference = generateSpeechLikeSignal(155, riseFall, 0.6);
+  const learner = generateSpeechLikeSignal(235, riseFall, 0.85);
+  const paddedReference = new Float32Array(sampleRate * 3.6);
+  const paddedLearner = new Float32Array(sampleRate * 4.2);
+  paddedReference.set(reference);
+  paddedLearner.set(learner);
+  const trimmedReference = isolateActiveSpeech(paddedReference);
+  const trimmedLearner = isolateActiveSpeech(paddedLearner);
+  assert.ok(trimmedReference && trimmedLearner);
+  assert.ok(trimmedReference.length < paddedReference.length);
+  const result = compareAcousticTones(trimmedReference, trimmedLearner);
+  assert.ok(result, "valid speech should be compared despite unrelated trailing silence");
+  assert.ok(result.score >= 0 && result.score <= 1);
+});
+
+test("API uses active speech consistently; unscorable audio returns 422 rather than 500", () => {
+  const source = fs.readFileSync(path.join(__dirname, "../src/services/pronunciation-feedback.service.ts"), "utf8");
+  assert.match(source, /isolateActiveSpeech\(masterRawAudio\)/);
+  assert.match(source, /isolateActiveSpeech\(userRawAudio\)/);
+  assert.match(source, /compareAcousticTones\(acousticReference, acousticLearner\)/);
+  assert.match(source, /"We could not measure enough clear voiced speech/);
+  assert.match(source, /422,/);
+  assert.match(source, /if \(error\?\.isOperational && error\?\.statusCode\) throw error/);
 });
