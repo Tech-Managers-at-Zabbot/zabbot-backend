@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { buildParaPitchFeedback, estimateSyllableBoundaries, isolateActiveSpeech, referenceSyllableLabels } from "../src/services/para-pitch-feedback";
 import { timedPitchContour } from "../src/services/acoustic-tone-scoring";
+import { extractVowelTones } from "../src/services/yoruba-tone-analysis";
 
 const RATE = 16000;
 function recording(hz: number, semitones: number[], duration = 1.6): Float32Array {
