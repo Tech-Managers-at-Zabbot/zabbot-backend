@@ -138,15 +138,15 @@ function segmentMedian(points: Array<{ x: number; cents: number }>, start: numbe
 }
 
 export function buildParaPitchFeedback(word: string | null | undefined, reference: Float32Array,
-  learner: Float32Array): ParaPitchFeedback | null {
+  learner: Float32Array, correctPitchDisplay = false): ParaPitchFeedback | null {
   const expected = extractVowelTones(word ?? "");
   if (!expected || !word) return null;
   const activeReference = isolateActiveSpeech(reference);
   const activeLearner = isolateActiveSpeech(learner);
   if (!activeReference || !activeLearner) return null;
   const analysis = analyzeYorubaTones(word, activeReference, activeLearner);
-  const ref = timedPitchContour(activeReference);
-  const user = timedPitchContour(activeLearner);
+  const ref = timedPitchContour(activeReference, correctPitchDisplay);
+  const user = timedPitchContour(activeLearner, correctPitchDisplay);
   const refBounds = estimateSyllableBoundaries(activeReference, expected.length);
   const userBounds = estimateSyllableBoundaries(activeLearner, expected.length);
   if (!ref || !user || !refBounds || !userBounds) return null;

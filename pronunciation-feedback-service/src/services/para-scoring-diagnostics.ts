@@ -4,7 +4,7 @@
  * Live scoring does not change when diagnostic mode is enabled.
  */
 import { normalizeTranscript, transcriptScore } from "./transcription-scoring";
-import { timedPitchContour } from "./acoustic-tone-scoring";
+import { timedPitchContour, compareAcousticTones } from "./acoustic-tone-scoring";
 
 export type ParaScorePath = "acoustic-syllable-transcript" | "acoustic-transcript-fallback" | "legacy-text-only";
 export type ParaScoringDiagnostics = {
@@ -36,6 +36,19 @@ export type ParaScoringDiagnostics = {
   pitchQuality: {
     referenceOctaveJumpCandidates: number | null;
     learnerOctaveJumpCandidates: number | null;
+  };
+  evidenceQualityCalibration: {
+    referenceAsrReliable: boolean | null;
+    asrDecision: "withhold-unreliable-reference" | "retain-provisional" | "unknown";
+    rawAcousticScore: number | null;
+    correctedAcousticScore: number | null;
+    correctedRelativeScore: number | null;
+    correctedAcousticDelta: number | null;
+    correctedReferenceOctaveJumpCandidates: number | null;
+    correctedLearnerOctaveJumpCandidates: number | null;
+    transcriptUsedInCandidate: boolean;
+    changesLiveScore: false;
+    explanation: string;
   };
   shadowCalibration: {
     score: number | null;
@@ -117,6 +130,48 @@ export function buildParaScoringDiagnostics(input: {
       shadowWeights.transcript * transcriptComponent) : null;
   const wordAgreement = wordIdentityAgreement(input.learnerTranscript, input.expectedWord ?? null);
   const agreement = transcriptScore(input.learnerTranscript, input.referenceTranscript);
+  // Reference ASR quality is measurable only if a trusted stored reference
+  // word exists. A learner mismatch alone can be a real mistake and must
+  // never be automatically forgiven as an ASR failure.
+  const referenceWordAgreement = wordIdentityAgreement(
+    input.referenceTranscript, input.expectedWord ?? null,
+  );
+  const referenceAsrReliable = referenceWordAgreement === null ? null : referenceWordAgreement >= 0.65;
+  const asrDecision = referenceAsrReliable === null ? "unknown" as const :
+    !referenceAsrReliable ? "withhold-unreliable-reference" as const : "retain-provisional" as const;
+  const correctedAcoustic = input.referenceAudio && input.learnerAudio
+    ? compareAcousticTones(input.referenceAudio, input.learnerAudio, true)
+    : null;
+  // This is a quality-corrected SHADOW estimate, not a learner score.
+  // Use existing raw 55/25/20 or 60/40 weighting if baseline ASR appears
+  // useful. If baseline ASR fails the stored word, withhold its component
+  // and renormalize remaining evidence. Never treat missing ASR as 100%.
+  let correctedRelativeScore: number | null = null;
+  if (correctedAcoustic && path !== "legacy-text-only") {
+    const toneWeight = path === "acoustic-syllable-transcript" && syllableScore !== null ? 0.25 : 0;
+    const rawAcousticWeight = path === "acoustic-syllable-transcript" ? 0.55 : 0.60;
+    const transcriptWeight = path === "acoustic-syllable-transcript" ? 0.20 : 0.40;
+    const useTranscript = referenceAsrReliable !== false;
+    const remaining = rawAcousticWeight + toneWeight + (useTranscript ? transcriptWeight : 0);
+    correctedRelativeScore = clamp((
+      rawAcousticWeight * correctedAcoustic.score +
+      toneWeight * (syllableScore ?? 0) +
+      (useTranscript ? transcriptWeight * transcriptComponent : 0)
+    ) / remaining);
+  }
+  const correctedReferencePoints = input.referenceAudio ? timedPitchContour(input.referenceAudio, true) : null;
+  const correctedLearnerPoints = input.learnerAudio ? timedPitchContour(input.learnerAudio, true) : null;
+  const countJumpCandidates = (points: Array<{x:number;cents:number}> | null): number | null => {
+    if (!points || points.length < 5) return null;
+    let count = 0;
+    for(let i=1;i<points.length-1;i++){
+      if(points[i].x-points[i-1].x>0.055 || points[i+1].x-points[i].x>0.055) continue;
+      const p=points[i-1].cents, c=points[i].cents, n=points[i+1].cents;
+      if(Math.sign(c-p)===Math.sign(c-n) && Math.abs(c-p)>=750 &&
+         Math.abs(c-n)>=750 && Math.abs(p-n)<=280) count++;
+    }
+    return count;
+  };
   return {
     version: 1,
     kind: "experimental-shadow-calibration",
@@ -150,6 +205,20 @@ export function buildParaScoringDiagnostics(input: {
     pitchQuality: {
       referenceOctaveJumpCandidates: octaveJumpCandidates(input.referenceAudio),
       learnerOctaveJumpCandidates: octaveJumpCandidates(input.learnerAudio),
+    },
+    evidenceQualityCalibration: {
+      referenceAsrReliable,
+      asrDecision,
+      rawAcousticScore: acousticScore === null ? null : round(acousticScore),
+      correctedAcousticScore: correctedAcoustic ? round(correctedAcoustic.score) : null,
+      correctedRelativeScore: correctedRelativeScore === null ? null : round(correctedRelativeScore),
+      correctedAcousticDelta: correctedAcoustic && acousticScore !== null
+        ? round(correctedAcoustic.score - acousticScore) : null,
+      correctedReferenceOctaveJumpCandidates: countJumpCandidates(correctedReferencePoints),
+      correctedLearnerOctaveJumpCandidates: countJumpCandidates(correctedLearnerPoints),
+      transcriptUsedInCandidate: referenceAsrReliable !== false,
+      changesLiveScore: false,
+      explanation: "Experimental shadow only. Single-frame octave repair and reference-ASR trust gating; no change to actual scoring or weights.",
     },
     shadowCalibration: {
       score: shadow === null ? null : round(shadow),

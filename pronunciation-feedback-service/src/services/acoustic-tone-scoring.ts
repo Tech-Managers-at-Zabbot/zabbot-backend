@@ -77,20 +77,58 @@ function framePitch(samples: Float32Array, offset: number): number | null {
 }
 
 /**
+ * Correct an isolated, approximately one-octave tracker error only when
+ * BOTH immediate neighboring frames are voiced and mutually consistent.
+ * Sustained movements and unvoiced gaps are never interpolated.
+ * An audio-frame candidate is NOT evidence of an incorrect lexical tone.
+ */
+export function repairIsolatedOctaveFrames(pitches: Array<number | null>): {
+  pitches: Array<number | null>;
+  repaired: number;
+} {
+  const corrected = [...pitches];
+  let repaired = 0;
+  const cents = (a: number, b: number) => 1200 * Math.log2(a / b);
+  for (let i = 1; i < pitches.length - 1; i++) {
+    const left = pitches[i - 1], middle = pitches[i], right = pitches[i + 1];
+    if (left === null || middle === null || right === null ||
+        left <= 0 || middle <= 0 || right <= 0) continue;
+    if (Math.abs(cents(left, right)) > 250) continue;
+    const deltaLeft = cents(middle, left);
+    const deltaRight = cents(middle, right);
+    if (Math.sign(deltaLeft) !== Math.sign(deltaRight) ||
+        Math.abs(deltaLeft) < 900 || Math.abs(deltaLeft) > 1450 ||
+        Math.abs(deltaRight) < 900 || Math.abs(deltaRight) > 1450) continue;
+    corrected[i] = Math.sqrt(left * right);
+    repaired++;
+  }
+  return { pitches: corrected, repaired };
+}
+
+function framePitchTrack(audio: Float32Array, correctIsolatedOctaves: boolean):
+  Array<{ x: number; pitch: number }> {
+  const limit = Math.min(audio.length, SAMPLE_RATE * MAX_SECONDS);
+  const raw: Array<number | null> = [];
+  for (let start = 0; start + FRAME_LENGTH <= limit; start += HOP_LENGTH) {
+    raw.push(framePitch(audio, start));
+  }
+  const values = correctIsolatedOctaves ? repairIsolatedOctaveFrames(raw).pitches : raw;
+  return values.flatMap((pitch, index) => pitch !== null && Number.isFinite(pitch)
+    ? [{ x: (index * HOP_LENGTH + FRAME_LENGTH / 2) / Math.max(1, limit), pitch }]
+    : []);
+}
+
+/**
  * Each recording is independently centered in log pitch (cents).
  * A 110 Hz reference and 220 Hz learner with the same relative contours
  * thus have matching curves; relative rises/falls remain measurable.
  */
 export function normalizedPitchContour(
   audio: Float32Array,
+  correctIsolatedOctaves = false,
 ): number[] | null {
   if (audio.length < FRAME_LENGTH || audio.length > SAMPLE_RATE * 60) return null;
-  const pitches: number[] = [];
-  const limit = Math.min(audio.length, SAMPLE_RATE * MAX_SECONDS);
-  for (let start = 0; start + FRAME_LENGTH <= limit; start += HOP_LENGTH) {
-    const pitch = framePitch(audio, start);
-    if (pitch !== null && Number.isFinite(pitch)) pitches.push(pitch);
-  }
+  const pitches = framePitchTrack(audio, correctIsolatedOctaves).map(point => point.pitch);
   if (pitches.length < MIN_VOICED_FRAMES) return null;
   const center = median(pitches.map(value => Math.log2(value)));
   return pitches.map(value => 1200 * (Math.log2(value) - center));
@@ -101,25 +139,15 @@ export function normalizedPitchContour(
  * normalizedPitchContour array, unvoiced gaps retain their wall-clock spacing.
  * The whole recording's log-F0 median is subtracted per speaker.
  */
-export function timedPitchContour(audio: Float32Array):
+export function timedPitchContour(audio: Float32Array, correctIsolatedOctaves = false):
   Array<{ x: number; cents: number }> | null {
   if (audio.length < FRAME_LENGTH || audio.length > SAMPLE_RATE * 60) return null;
-  const limit = Math.min(audio.length, SAMPLE_RATE * MAX_SECONDS);
-  const samples: Array<{ x: number; logF0: number }> = [];
-  for (let start = 0; start + FRAME_LENGTH <= limit; start += HOP_LENGTH) {
-    const pitch = framePitch(audio, start);
-    if (pitch !== null && Number.isFinite(pitch)) {
-      samples.push({
-        x: (start + FRAME_LENGTH / 2) / Math.max(1, limit),
-        logF0: Math.log2(pitch),
-      });
-    }
-  }
+  const samples = framePitchTrack(audio, correctIsolatedOctaves);
   if (samples.length < MIN_VOICED_FRAMES) return null;
-  const center = median(samples.map(point => point.logF0));
+  const center = median(samples.map(point => Math.log2(point.pitch)));
   return samples.map(point => ({
     x: point.x,
-    cents: Math.round(1200 * (point.logF0 - center)),
+    cents: Math.round(1200 * (Math.log2(point.pitch) - center)),
   }));
 }
 
@@ -197,9 +225,10 @@ export function contourShapeDistance(reference: number[], learner: number[]): nu
 export function compareAcousticTones(
   reference: Float32Array,
   learner: Float32Array,
+  correctIsolatedOctaves = false,
 ): ToneComparison | null {
-  const referenceContour = normalizedPitchContour(reference);
-  const learnerContour = normalizedPitchContour(learner);
+  const referenceContour = normalizedPitchContour(reference, correctIsolatedOctaves);
+  const learnerContour = normalizedPitchContour(learner, correctIsolatedOctaves);
   if (!referenceContour || !learnerContour) return null;
   const warpedDistance = contourDistance(referenceContour, learnerContour);
   const shapeDistance = contourShapeDistance(referenceContour, learnerContour);

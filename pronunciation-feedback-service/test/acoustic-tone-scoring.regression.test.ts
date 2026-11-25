@@ -6,6 +6,7 @@ import {
   compareAcousticTones,
   normalizedPitchContour,
   contourDistance,
+  repairIsolatedOctaveFrames,
 } from "../src/services/acoustic-tone-scoring";
 import { isolateActiveSpeech } from "../src/services/para-pitch-feedback";
 
@@ -152,4 +153,27 @@ test("standalone Pàrà requires an explicit reference voice and echoes the sele
   const controller = fs.readFileSync(path.join(__dirname, "../src/controllers/referencePronunciation.controller.ts"), "utf8");
   assert.match(controller, /const \{ voice, isInLesson/);
   assert.match(controller, /referencePronunciationId,\s*voice,/);
+});
+
+test("isolated octave tracker errors are corrected; true sustained tone changes remain", () => {
+  const original = [180, 184, 364, 181, 182];
+  const fixed = repairIsolatedOctaveFrames(original);
+  assert.equal(fixed.repaired, 1);
+  assert.ok(Math.abs((fixed.pitches[2] ?? 0) - 182) < 4);
+  const prolonged = repairIsolatedOctaveFrames([180, 184, 364, 365, 368, 185]);
+  assert.equal(prolonged.repaired, 0);
+  assert.deepEqual(prolonged.pitches, [180, 184, 364, 365, 368, 185]);
+  const gap = repairIsolatedOctaveFrames([180, null, 364, 181, 182]);
+  assert.equal(gap.repaired, 0);
+});
+
+test("corrected acoustic scoring remains bounded and retains discrimination", () => {
+  const target = generateSpeechLikeSignal(175, riseFall);
+  const close = generateSpeechLikeSignal(230, riseFall);
+  const incorrect = generateSpeechLikeSignal(175, fallRise);
+  const positive = compareAcousticTones(target, close, true);
+  const negative = compareAcousticTones(target, incorrect, true);
+  assert.ok(positive && negative);
+  assert.ok(positive.score > negative.score + 0.12);
+  assert.ok(positive.score <= 1 && negative.score >= 0);
 });
