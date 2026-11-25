@@ -52,8 +52,8 @@ export function wordIdentityAgreement(recognized: string, expected: string | nul
   if (!expected) return null;
   // Word-identity diagnostics only. Whitespace/case/punctuation are not
   // pronunciation evidence. Do not discard tone marks for this diagnostic.
-  const a = normalizeTranscript(recognized).replace(/\\s+/g, "");
-  const b = normalizeTranscript(expected).replace(/\\s+/g, "");
+  const a = normalizeTranscript(recognized).replace(/\s+/g, "");
+  const b = normalizeTranscript(expected).replace(/\s+/g, "");
   return a && b ? transcriptScore(a, b) : 0;
 }
 
