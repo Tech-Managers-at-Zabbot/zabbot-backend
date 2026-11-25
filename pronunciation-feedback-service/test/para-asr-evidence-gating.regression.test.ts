@@ -43,7 +43,7 @@ test("unreliable learner word with trusted reference requests retry, never unear
 test("missing, limited, or inconsistent tonal evidence returns retry rather than a number", () => {
   const variants = [
     { ...good, acousticScore: null },
-    { ...good, acousticScore: 0.1 },
+    { ...good, acousticScore: Number.NaN },
     { ...good, acousticReferenceVoicedFrames: 2 },
     { ...good, syllableToneScore: null },
     { ...good, referencePatternScore: 0.3 },
@@ -66,4 +66,10 @@ test("STAGING standalone scoring uses decision only after acoustic and syllable 
   assert.ok(source.includes("selectedSimilarity = decision.score"));
   assert.ok(source.includes('scorePath = "acoustic-syllable-transcript"'));
   assert.ok(source.includes('scorePath = "acoustic-transcript-fallback"'));
+});
+
+test("genuine tonal mismatch produces a low score, not a false unavailable-evidence retry", () => {
+  const result = decideParaAsrEvidence({ ...good, acousticScore: 0.1, syllableToneScore: 0.15 });
+  assert.equal(result.kind, "retain");
+  if(result.kind === "retain") assert.ok(result.score < 0.4);
 });
