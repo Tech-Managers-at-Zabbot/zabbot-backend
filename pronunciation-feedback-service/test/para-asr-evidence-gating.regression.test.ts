@@ -52,7 +52,7 @@ test("missing, limited, or inconsistent tonal evidence yields an ungraded practi
   ];
   for (const attempt of variants) {
     const result = decideParaAsrEvidence(attempt);
-    assert.equal(result.kind, "retry");
+    assert.equal(result.kind, "ungraded");
     assert.ok(!("score" in result));
   }
 });
