@@ -64,3 +64,6 @@ jobs:
         run: npx ts-node --transpile-only pronunciation-feedback-service/test/para-pitch-feedback.regression.test.ts
       - name: Pàrà STAGING scoring diagnostics and shadow calibration regression tests
         run: npx ts-node --transpile-only pronunciation-feedback-service/test/para-scoring-diagnostics.regression.test.ts
+
+      - name: Pàrà STAGING conditional ASR and tone reliability gate regression
+        run: npx ts-node --transpile-only pronunciation-feedback-service/test/para-asr-evidence-gating.regression.test.ts
