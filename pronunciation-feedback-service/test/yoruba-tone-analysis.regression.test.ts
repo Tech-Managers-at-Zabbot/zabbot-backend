@@ -92,3 +92,11 @@ test("new analysis is gated and does not change existing Pàrà user-facing rema
   assert.match(source, /Good attempt — there is room for improvement\./);
   assert.match(source, /Needs improvement — listen and try again\./);
 });
+
+test("trusted hyphenated Yorùbá compounds retain exact tone pattern", () => {
+  const compound = extractVowelTones("MẸ́Ẹ̀-D-ÓGÚN");
+  assert.deepEqual(compound, extractVowelTones("MẸ́Ẹ̀DÓGÚN"));
+  assert.ok(compound && compound.length >= 2);
+  assert.deepEqual(extractVowelTones("ÌLÙ"), ["L","L"]);
+  assert.deepEqual(extractVowelTones("OMI"), ["M","M"]);
+});

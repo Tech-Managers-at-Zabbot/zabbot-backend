@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   compareAcousticTones,
+  compareRecoveredAcousticTones,
   normalizedPitchContour,
   contourDistance,
   repairIsolatedOctaveFrames,
@@ -176,4 +177,29 @@ test("corrected acoustic scoring remains bounded and retains discrimination", ()
   assert.ok(positive && negative);
   assert.ok(positive.score > negative.score + 0.12);
   assert.ok(positive.score <= 1 && negative.score >= 0);
+});
+
+test("quiet real periodic speech is recoverable when fixed-RMS pitch extraction rejects it", () => {
+  const reference = generateSpeechLikeSignal(170, riseFall, 0.55, 0.004);
+  const learner = generateSpeechLikeSignal(235, riseFall, 0.53, 0.004);
+  assert.equal(compareAcousticTones(reference, learner), null,
+    "standard 0.006 RMS threshold should reject quiet speech");
+  const recovered = compareRecoveredAcousticTones(reference, learner);
+  assert.ok(recovered, "adaptive extraction should recover genuine voiced speech");
+  assert.ok(recovered.referenceVoicedFrames >= 8 && recovered.learnerVoicedFrames >= 8);
+  assert.ok(recovered.score > 0.6 && recovered.score <= 1);
+});
+
+test("adaptive extraction rejects silence, tiny clips and unrelated nonperiodic noise", () => {
+  const voiced = generateSpeechLikeSignal(175, riseFall, 0.52, 0.004);
+  const silence = new Float32Array(voiced.length);
+  assert.equal(compareRecoveredAcousticTones(voiced, silence), null);
+  assert.equal(compareRecoveredAcousticTones(new Float32Array(1200), voiced), null);
+  const noise = new Float32Array(voiced.length);
+  let state = 12345;
+  for (let i = 0; i < noise.length; i++) {
+    state = (Math.imul(state, 1664525) + 1013904223) | 0;
+    noise[i] = (((state >>> 0) / 4294967295) * 2 - 1) * 0.03;
+  }
+  assert.equal(compareRecoveredAcousticTones(voiced, noise), null);
 });

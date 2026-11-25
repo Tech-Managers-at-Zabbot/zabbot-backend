@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { buildParaPitchFeedback, estimateSyllableBoundaries, isolateActiveSpeech, referenceSyllableLabels } from "../src/services/para-pitch-feedback";
 import { timedPitchContour } from "../src/services/acoustic-tone-scoring";
+import { extractVowelTones } from "../src/services/yoruba-tone-analysis";
 
 const RATE = 16000;
 function recording(hz: number, semitones: number[], duration = 1.6): Float32Array {
@@ -56,11 +57,13 @@ test("same spelling with opposite syllable movement does not label it a proven m
     "misleading close verdict for falling second syllable");
 });
 
-test("API guidance is fully opt-in; legacy response shape remains", () => {
+test("API guidance is fully opt-in and reuses the measured audio input", () => {
   const source = fs.readFileSync(path.join(__dirname, "../src/services/pronunciation-feedback.service.ts"), "utf8");
-  assert.ok(source.includes('process.env.ZABBOT_PARA_PITCH_FEEDBACK_V2 === "true"'));
+  assert.ok(source.includes("ZABBOT_PARA_PITCH_FEEDBACK_V2"));
   assert.ok(source.includes("...(pitchFeedback ? { pitchFeedback } : {})"));
-  assert.ok(source.includes("buildParaPitchFeedback(\n") && source.includes("acousticReference!,\n            acousticLearner!,"));
+  assert.ok(source.includes("buildParaPitchFeedback("));
+  assert.ok(source.includes("primaryAcoustic ? acousticReference! : recoveryReference"));
+  assert.ok(source.includes("primaryAcoustic ? acousticLearner! : recoveryLearner"));
 });
 
 test("long trailing silence does not erase the pitch graph for short EGG speech", () => {
@@ -88,4 +91,12 @@ test("rendered labels preserve complete trusted Yoruba syllables rather than vow
   assert.deepEqual(referenceSyllableLabels("ilé"), ["i", "lé"]);
   assert.deepEqual(referenceSyllableLabels("ìlú"), ["ì", "lú"]);
   assert.deepEqual(referenceSyllableLabels("ọ̀rọ̀"), ["ọ̀", "rọ̀"]);
+});
+
+test("hyphenated Yoruba word graph labels align with trusted tone-bearing vowels", () => {
+  const labels = referenceSyllableLabels("MẸ́Ẹ̀-D-ÓGÚN");
+  const tones = extractVowelTones("MẸ́Ẹ̀-D-ÓGÚN");
+  assert.ok(tones && labels.length === tones.length);
+  assert.ok(labels.every(label => !label.includes("-")));
+  assert.equal(labels.join(""), "MẸ́Ẹ̀DÓGÚN");
 });
