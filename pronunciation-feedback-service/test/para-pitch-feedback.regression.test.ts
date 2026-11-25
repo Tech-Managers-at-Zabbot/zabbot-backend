@@ -89,3 +89,10 @@ test("rendered labels preserve complete trusted Yoruba syllables rather than vow
   assert.deepEqual(referenceSyllableLabels("ìlú"), ["ì", "lú"]);
   assert.deepEqual(referenceSyllableLabels("ọ̀rọ̀"), ["ọ̀", "rọ̀"]);
 });
+
+test("hyphenated compound preserves trusted uppercase syllables without treating separators as vowels", () => {
+  const labels = referenceSyllableLabels("MẸ́Ẹ̀-D-ÓGÚN");
+  assert.ok(labels.length >= 3);
+  assert.ok(labels.every(x => !x.includes("-")));
+  assert.equal(labels.join(""), "MẸ́Ẹ̀DÓGÚN");
+});
