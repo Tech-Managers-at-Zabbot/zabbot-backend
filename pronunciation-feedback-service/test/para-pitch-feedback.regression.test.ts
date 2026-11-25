@@ -60,7 +60,7 @@ test("API guidance is fully opt-in; legacy response shape remains", () => {
   const source = fs.readFileSync(path.join(__dirname, "../src/services/pronunciation-feedback.service.ts"), "utf8");
   assert.ok(source.includes('process.env.ZABBOT_PARA_PITCH_FEEDBACK_V2 === "true"'));
   assert.ok(source.includes("...(pitchFeedback ? { pitchFeedback } : {})"));
-  assert.ok(source.includes("buildParaPitchFeedback(trustedYorubaWord, masterRawAudio, userRawAudio)"));
+  assert.ok(source.includes("buildParaPitchFeedback(trustedYorubaWord, acousticReference!, acousticLearner!)"));
 });
 
 test("long trailing silence does not erase the pitch graph for short EGG speech", () => {
