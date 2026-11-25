@@ -21,7 +21,6 @@ export type AsrEvidenceDecision =
   | { kind: "retry"; reason: string; referenceAgreement: number | null; learnerAgreement: number | null };
 
 const ASR_MATCH_THRESHOLD = 0.65;
-const MIN_ACOUSTIC_SCORE = 0.25; // reject unusably low acoustic fit rather than grant an ASR-free grade
 const MIN_VOICED_FRAMES = 8;
 const MIN_REF_PATTERN = 0.75;
 
@@ -44,7 +43,7 @@ export function decideParaAsrEvidence(input: {
   const refAgreement = wordIdentityAgreement(input.referenceTranscript, expected);
   const learnerAgreement = wordIdentityAgreement(input.learnerTranscript, expected);
   const audioGood = input.acousticScore !== null && Number.isFinite(input.acousticScore) &&
-    input.acousticScore >= MIN_ACOUSTIC_SCORE &&
+    input.acousticScore >= 0 && input.acousticScore <= 1 &&
     (input.acousticReferenceVoicedFrames ?? 0) >= MIN_VOICED_FRAMES &&
     (input.acousticLearnerVoicedFrames ?? 0) >= MIN_VOICED_FRAMES;
   const toneGood = input.syllableToneScore !== null &&
