@@ -35,47 +35,25 @@ test("unreliable reference ASR is excluded, preserving 55:25 evidence ratio", ()
   }
 });
 
-test("unreliable learner word with trusted reference yields ungraded evidence, never unearned credit", () => {
+test("unreliable learner word with trusted reference requests retry, never unearned credit", () => {
   const result = decideParaAsrEvidence({ ...good, learnerTranscript: "different word" });
-  assert.equal(result.kind, "ungraded");
+  assert.equal(result.kind, "retry");
 });
 
-test("missing acoustic evidence never produces a fabricated score", () => {
-  for (const attempt of [
+test("missing, limited, or inconsistent tonal evidence returns retry rather than a number", () => {
+  const variants = [
     { ...good, acousticScore: null },
     { ...good, acousticScore: Number.NaN },
     { ...good, acousticReferenceVoicedFrames: 2 },
+    { ...good, syllableToneScore: null },
+    { ...good, referencePatternScore: 0.3 },
+    { ...good, alignmentConfidence: "limited" as const },
     { ...good, expectedWord: null },
-  ]) {
+  ];
+  for (const attempt of variants) {
     const result = decideParaAsrEvidence(attempt);
-    assert.equal(result.kind, "ungraded");
+    assert.equal(result.kind, "retry");
     assert.ok(!("score" in result));
-  }
-});
-
-test("limited graph alignment does NOT veto independent valid syllable analysis", () => {
-  for (const confidence of ["limited", null] as const) {
-    const result = decideParaAsrEvidence({ ...good, alignmentConfidence: confidence });
-    assert.equal(result.kind, "retain");
-    if (result.kind === "retain") assert.ok(result.score > 0.7);
-  }
-});
-
-test("missing syllable evidence only falls back to 60/40 when both words are reliably recognized", () => {
-  for (const override of [
-    { syllableToneScore: null, referencePatternScore: null },
-    { syllableToneScore: 0.82, referencePatternScore: 0.3 },
-  ]) {
-    const result = decideParaAsrEvidence({ ...good, ...override, alignmentConfidence: "limited" });
-    assert.equal(result.kind, "retainFallback");
-    if (result.kind === "retainFallback") {
-      assert.ok(Math.abs(result.score - (0.6 * good.acousticScore + 0.4 * result.asrScore)) < 1e-10);
-    }
-    for (const referenceTranscript of ["", "Buh-bye"]) {
-      const uncertain = decideParaAsrEvidence({ ...good, ...override, referenceTranscript });
-      assert.equal(uncertain.kind, "ungraded");
-      assert.ok(!("score" in uncertain));
-    }
   }
 });
 
@@ -84,28 +62,14 @@ test("STAGING standalone scoring uses decision only after acoustic and syllable 
   assert.ok(source.includes('process.env.ZABBOT_PARA_ACOUSTIC_SCORING_V1 === "true"'));
   assert.ok(source.includes('const conditionalAsrEnabled = !isInLesson'));
   assert.ok(source.includes("decideParaAsrEvidence({"));
-  assert.ok(source.includes('if (decision.kind === "ungraded")'));
-  assert.ok(source.includes('assessmentStatus: "ungraded"'));
+  assert.ok(source.includes('throw errorUtilities.createError(decision.reason, 422)'));
   assert.ok(source.includes("selectedSimilarity = decision.score"));
   assert.ok(source.includes('scorePath = "acoustic-syllable-transcript"'));
   assert.ok(source.includes('scorePath = "acoustic-transcript-fallback"'));
-  assert.ok(source.includes("compareShortWordAcousticTones("));
 });
 
 test("genuine tonal mismatch produces a low score, not a false unavailable-evidence retry", () => {
   const result = decideParaAsrEvidence({ ...good, acousticScore: 0.1, syllableToneScore: 0.15 });
   assert.equal(result.kind, "retain");
   if(result.kind === "retain") assert.ok(result.score < 0.4);
-});
-
-test("supported short words and hyphenated words are not rejected as broken recordings", () => {
-  for (const word of ["BÀTÀ", "Ẹ̀JẸ̀", "ÌLÙ", "OMI", "GBOGBO", "MẸ́Ẹ̀-D-ÓGÚN"]) {
-    const result = decideParaAsrEvidence({
-      ...good, expectedWord: word,
-      syllableToneScore: null, referencePatternScore: null, alignmentConfidence: "limited",
-      referenceTranscript: "", learnerTranscript: "",
-    });
-    assert.equal(result.kind, "ungraded", word);
-    assert.ok(!("score" in result));
-  }
 });

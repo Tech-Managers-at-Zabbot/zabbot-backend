@@ -21,7 +21,7 @@ import { StatusCodes } from "../../../shared/statusCodes/statusCodes.responses";
 import UserPronunciation from "../../../shared/entities/pronunciation-feedback-service-entities/userPronunciation/user-pronunciation";
 import config from "../../../config/config";
 import { transcriptScore } from "./transcription-scoring";
-import { compareAcousticTones, compareShortWordAcousticTones } from "./acoustic-tone-scoring";
+import { compareAcousticTones } from "./acoustic-tone-scoring";
 import { analyzeYorubaTones } from "./yoruba-tone-analysis";
 import { buildParaPitchFeedback, isolateActiveSpeech } from "./para-pitch-feedback";
 import { buildParaScoringDiagnostics, type ParaScorePath } from "./para-scoring-diagnostics";
@@ -260,14 +260,14 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
 
       if (isInvalid(userRawAudio)) {
         throw errorUtilities.createError(
-          "No usable speech was detected. Please record the word again, speaking clearly into your microphone.",
-          422,
+          `Your recording was too short or too quiet`,
+          500,
         );
       }
       if (isInvalid(masterRawAudio)) {
         throw errorUtilities.createError(
-          "This word's reference recording is unavailable for reliable comparison. Please choose another word while we review its reference audio.",
-          422,
+          "Reference audio is too short or too quiet",
+          500,
         );
       }
 
@@ -331,9 +331,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
       let diagnosticReferenceAudio: Float32Array | null = null;
       let diagnosticLearnerAudio: Float32Array | null = null;
       let diagnosticTranscriptComponent = combinedSimilarity;
-      let asrEvidenceDecision: "retain" | "withhold" | "retainFallback" | null = null;
-      let ungradedReason: string | null = null;
-      let ungradedPitchFeedback: ReturnType<typeof buildParaPitchFeedback> = null;
+      let asrEvidenceDecision: "retain" | "withhold" | null = null;
       if (process.env.ZABBOT_PARA_ACOUSTIC_SCORING_V1 === "true") {
         // Never silently return the transcript-only score when the experiment
         // is enabled: the same transcript would conceal a failed tone analysis.
@@ -342,44 +340,19 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         // silence; long trailing gaps can distort voiced-frame duration ratios.
         const acousticReference = isolateActiveSpeech(masterRawAudio);
         const acousticLearner = isolateActiveSpeech(userRawAudio);
-        const standardAcoustic = acousticReference && acousticLearner
+        const acoustic = acousticReference && acousticLearner
           ? compareAcousticTones(acousticReference, acousticLearner)
           : null;
-        // Strict short-word recovery is attempted only when the standard
-        // algorithm cannot score. It uses higher correlation confidence and
-        // exactly the same contour scoring formula.
-        const acoustic = standardAcoustic ?? (acousticReference && acousticLearner
-          ? compareShortWordAcousticTones(acousticReference, acousticLearner)
-          : null);
         if (!acoustic) {
           console.warn("Pàrà acoustic comparison unavailable after speech isolation", {
             referenceSamples: acousticReference?.length ?? 0,
             learnerSamples: acousticLearner?.length ?? 0,
           });
-          // A missing reference is an operator/catalog issue, not a learner error.
-          if (!acousticReference) {
-            throw errorUtilities.createError(
-              "This word's reference audio needs review. Please try another word.",
-              422,
-            );
-          }
-          // Speech was present (checked above). If F0 is not recoverable,
-          // return a clear ungraded result; never invent a score.
-          await cleanupFiles([
-            userRawFilePath, userTrimmedFilePath, userWavFilePath,
-            normalisedUserWavPath, masterRawFilePath, masterWavFilePath,
-            masterTrimmedFilePath, normalisedMasterWavPath, plotPath,
-          ]);
-          return responseUtilities.handleServicesResponse(
-            StatusCodes.Created,
-            "Pronunciation analyzed without a reliable grade",
-            {
-              graded: false,
-              assessmentStatus: "ungraded",
-              message: "We heard your attempt, but couldn't measure enough reliable pitch to grade it. Listen to the reference and practice again.",
-              finalScore: null,
-              ...(!isInLesson ? { referenceVoice: voice, referencePronunciationId: audioId } : {}),
-            },
+          // A recording with insufficient pitch evidence is not a server fault.
+          // Never disguise transcript similarity as pronunciation accuracy.
+          throw errorUtilities.createError(
+            "We could not measure enough clear voiced speech. Please record the word again in a quiet place.",
+            422,
           );
         }
         // Provisional blend, pending human-labeled Yorùbá calibration.
@@ -446,20 +419,11 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
             referencePatternScore: toneEvidence?.referencePatternScore ?? null,
             alignmentConfidence: qualityFeedback?.confidence ?? null,
           });
-          if (decision.kind === "ungraded") {
-            // Recording contains usable speech. Missing alignment/recognition
-            // evidence is not a microphone error and must not cause a retry
-            // loop or fabricate a percent. Do not persist an ungraded grade.
-            ungradedReason = decision.reason;
-            ungradedPitchFeedback = qualityFeedback;
-          } else {
-            selectedSimilarity = decision.score;
-            asrEvidenceDecision = decision.kind;
-            if (decision.kind === "retainFallback") {
-              scorePath = "acoustic-transcript-fallback";
-              diagnosticSyllable = null;
-            }
+          if (decision.kind === "retry") {
+            throw errorUtilities.createError(decision.reason, 422);
           }
+          selectedSimilarity = decision.score;
+          asrEvidenceDecision = decision.kind;
         }
         // API v2 is opt-in and independent of the existing acoustic flag.
         // Only database-owned text is trusted; lesson clips have no safe alignment.
@@ -476,31 +440,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
           acousticScore: acoustic.score,
           referenceVoicedFrames: acoustic.referenceVoicedFrames,
           learnerVoicedFrames: acoustic.learnerVoicedFrames,
-          extractionMethod: acoustic.extractionMethod ?? "standard",
         });
-      }
-
-      if (ungradedReason) {
-        // Successful processing, but no trustworthy composite score. The
-        // frontend may show the recording, known target and cautious graph,
-        // but must never display a percentage or record graded progress.
-        await cleanupFiles([
-          userRawFilePath, userTrimmedFilePath, userWavFilePath,
-          normalisedUserWavPath, masterRawFilePath, masterWavFilePath,
-          masterTrimmedFilePath, normalisedMasterWavPath, plotPath,
-        ]);
-        return responseUtilities.handleServicesResponse(
-          StatusCodes.Created,
-          "Pronunciation analyzed without a reliable grade",
-          {
-            graded: false,
-            assessmentStatus: "ungraded",
-            message: ungradedReason,
-            finalScore: null,
-            ...(ungradedPitchFeedback ? { pitchFeedback: ungradedPitchFeedback } : {}),
-            ...(!isInLesson ? { referenceVoice: voice, referencePronunciationId: audioId } : {}),
-          },
-        );
       }
 
       const finalScore = Math.round(Math.max(0, Math.min(1, selectedSimilarity)) * 100) / 100;
@@ -529,9 +469,7 @@ const comparePronounciation = errorUtilities.withServiceErrorHandling(
         scoringDiagnostics.scoring.effectiveAsrDecision = asrEvidenceDecision;
         scoringDiagnostics.scoring.effectiveWeights = asrEvidenceDecision === "withhold"
           ? { acoustic: 0.55 / 0.8, syllableTone: 0.25 / 0.8, transcript: 0 }
-          : asrEvidenceDecision === "retainFallback"
-            ? { acoustic: 0.60, syllableTone: 0, transcript: 0.40 }
-            : { acoustic: 0.55, syllableTone: 0.25, transcript: 0.20 };
+          : { acoustic: 0.55, syllableTone: 0.25, transcript: 0.20 };
         scoringDiagnostics.scoring.effectiveScore = finalScore;
       }
 
@@ -754,7 +692,7 @@ export const loadAndTrimAudio = async ({
 const isInvalid = (
   audio: Float32Array | any,
   threshold = 0.01,
-  minDuration = 0.3,
+  minDuration = 0.5,
 ): boolean => {
   const isTooShort = audio.length < sampleRate * minDuration;
   // Avoid spreading long audio arrays into function arguments (stack overflow).

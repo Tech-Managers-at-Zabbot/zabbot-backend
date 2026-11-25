@@ -4,7 +4,6 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   compareAcousticTones,
-  compareShortWordAcousticTones,
   normalizedPitchContour,
   contourDistance,
   repairIsolatedOctaveFrames,
@@ -134,13 +133,12 @@ test("short spoken word with long trailing silence is scored using active audio 
   assert.ok(result.score >= 0 && result.score <= 1);
 });
 
-test("API uses active speech consistently; unscorable audio is ungraded instead of a false 500", () => {
+test("API uses active speech consistently; unscorable audio returns 422 rather than 500", () => {
   const source = fs.readFileSync(path.join(__dirname, "../src/services/pronunciation-feedback.service.ts"), "utf8");
   assert.match(source, /isolateActiveSpeech\(masterRawAudio\)/);
   assert.match(source, /isolateActiveSpeech\(userRawAudio\)/);
   assert.match(source, /compareAcousticTones\(acousticReference, acousticLearner\)/);
-  assert.match(source, /Pronunciation analyzed without a reliable grade/);
-  assert.match(source, /assessmentStatus: "ungraded"/);
+  assert.match(source, /"We could not measure enough clear voiced speech/);
   assert.match(source, /422,/);
   assert.match(source, /if \(error\?\.isOperational && error\?\.statusCode\) throw error/);
 });
@@ -178,28 +176,4 @@ test("corrected acoustic scoring remains bounded and retains discrimination", ()
   assert.ok(positive && negative);
   assert.ok(positive.score > negative.score + 0.12);
   assert.ok(positive.score <= 1 && negative.score >= 0);
-});
-
-test("short-word recovery measures a clear 450ms utterance without relaxing pitch confidence", () => {
-  const reference = generateSpeechLikeSignal(170, riseFall, 0.45);
-  const learner = generateSpeechLikeSignal(235, riseFall, 0.46);
-  const result = compareShortWordAcousticTones(reference, learner);
-  assert.ok(result, "short voiced recordings should be measured when periodicity is reliable");
-  assert.equal(result.extractionMethod, "short-word");
-  assert.ok(result.referenceVoicedFrames >= 12);
-  assert.ok(result.learnerVoicedFrames >= 12);
-  assert.ok(result.score > 0.65);
-});
-
-test("short-word recovery never fabricates a grade from silence or unrelated wrong tones", () => {
-  const reference = generateSpeechLikeSignal(180, riseFall, 0.52);
-  const matching = generateSpeechLikeSignal(210, riseFall, 0.52);
-  const incorrect = generateSpeechLikeSignal(210, fallRise, 0.52);
-  const match = compareShortWordAcousticTones(reference, matching);
-  const mismatch = compareShortWordAcousticTones(reference, incorrect);
-  assert.ok(match && mismatch);
-  assert.ok(match.score > mismatch.score, "genuinely different contours must still be penalized");
-  assert.equal(compareShortWordAcousticTones(reference, new Float32Array(reference.length)), null);
-  assert.equal(compareShortWordAcousticTones(new Float32Array(reference.length), matching), null);
-  assert.equal(compareShortWordAcousticTones(reference, generateSpeechLikeSignal(210, riseFall, 3.0)), null);
 });

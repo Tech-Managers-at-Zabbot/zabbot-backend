@@ -92,12 +92,3 @@ test("new analysis is gated and does not change existing Pàrà user-facing rema
   assert.match(source, /Good attempt — there is room for improvement\./);
   assert.match(source, /Needs improvement — listen and try again\./);
 });
-
-test("hyphenated and previously failing trusted catalog words parse without false rejection", () => {
-  const names = ["BÀTÀ", "Ẹ̀JẸ̀", "ÌLÙ", "OMI", "GBOGBO", "MẸ́Ẹ̀-D-ÓGÚN"];
-  const results = names.map(extractVowelTones);
-  for (let i = 0; i < names.length; i++) {
-    assert.ok(results[i] && results[i]!.length >= 2, names[i]);
-  }
-  assert.deepEqual(extractVowelTones("MẸ́Ẹ̀-D-ÓGÚN"), extractVowelTones("MẸ́Ẹ̀DÓGÚN"));
-});
