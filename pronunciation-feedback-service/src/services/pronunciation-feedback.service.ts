@@ -741,7 +741,7 @@ export const loadAndTrimAudio = async ({
 const isInvalid = (
   audio: Float32Array | any,
   threshold = 0.01,
-  minDuration = 0.5,
+  minDuration = 0.3,
 ): boolean => {
   const isTooShort = audio.length < sampleRate * minDuration;
   // Avoid spreading long audio arrays into function arguments (stack overflow).
