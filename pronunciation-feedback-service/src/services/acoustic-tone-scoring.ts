@@ -22,6 +22,7 @@ export type ToneComparison = {
   meanCentsDifference: number;
   referenceVoicedFrames: number;
   learnerVoicedFrames: number;
+  extractionMethod?: "standard" | "short-word";
 };
 
 const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
@@ -37,19 +38,19 @@ function median(input: number[]): number {
  * Center the samples to avoid DC bias; Hann-window to reduce edge effects.
  * Discard frames that are quiet or have unreliable periodicity.
  */
-function framePitch(samples: Float32Array, offset: number): number | null {
+function framePitch(samples: Float32Array, offset: number, frameLength = FRAME_LENGTH, minimumCorrelation = MIN_CORRELATION): number | null {
   let mean = 0;
-  for (let i = 0; i < FRAME_LENGTH; i++) mean += samples[offset + i];
-  mean /= FRAME_LENGTH;
-  const frame = new Float64Array(FRAME_LENGTH);
+  for (let i = 0; i < frameLength; i++) mean += samples[offset + i];
+  mean /= frameLength;
+  const frame = new Float64Array(frameLength);
   let energy = 0;
-  for (let i = 0; i < FRAME_LENGTH; i++) {
-    const taper = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (FRAME_LENGTH - 1));
+  for (let i = 0; i < frameLength; i++) {
+    const taper = 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / (frameLength - 1));
     const value = (samples[offset + i] - mean) * taper;
     frame[i] = value;
     energy += value * value;
   }
-  if (Math.sqrt(energy / FRAME_LENGTH) < 0.006) return null;
+  if (Math.sqrt(energy / frameLength) < 0.006) return null;
 
   const minLag = Math.floor(SAMPLE_RATE / MAX_F0);
   const maxLag = Math.ceil(SAMPLE_RATE / MIN_F0);
@@ -59,7 +60,7 @@ function framePitch(samples: Float32Array, offset: number): number | null {
     let dot = 0;
     let leftEnergy = 0;
     let rightEnergy = 0;
-    for (let i = 0; i < FRAME_LENGTH - lag; i++) {
+    for (let i = 0; i < frameLength - lag; i++) {
       const left = frame[i];
       const right = frame[i + lag];
       dot += left * right;
@@ -72,7 +73,7 @@ function framePitch(samples: Float32Array, offset: number): number | null {
       bestLag = lag;
     }
   }
-  if (bestLag < 0 || best < MIN_CORRELATION) return null;
+  if (bestLag < 0 || best < minimumCorrelation) return null;
   return SAMPLE_RATE / bestLag;
 }
 
@@ -105,16 +106,20 @@ export function repairIsolatedOctaveFrames(pitches: Array<number | null>): {
   return { pitches: corrected, repaired };
 }
 
-function framePitchTrack(audio: Float32Array, correctIsolatedOctaves: boolean):
+function framePitchTrack(audio: Float32Array, correctIsolatedOctaves: boolean, shortWord = false):
   Array<{ x: number; pitch: number }> {
   const limit = Math.min(audio.length, SAMPLE_RATE * MAX_SECONDS);
+  const window = shortWord ? 640 : FRAME_LENGTH; // 40 ms if short-word fallback
+  const hop = shortWord ? 160 : HOP_LENGTH; // 10 ms if short-word fallback
+  // Short-word recovery requires HIGHER periodicity, not lower confidence.
+  const minimumCorrelation = shortWord ? 0.82 : MIN_CORRELATION;
   const raw: Array<number | null> = [];
-  for (let start = 0; start + FRAME_LENGTH <= limit; start += HOP_LENGTH) {
-    raw.push(framePitch(audio, start));
+  for (let start = 0; start + window <= limit; start += hop) {
+    raw.push(framePitch(audio, start, window, minimumCorrelation));
   }
   const values = correctIsolatedOctaves ? repairIsolatedOctaveFrames(raw).pitches : raw;
   return values.flatMap((pitch, index) => pitch !== null && Number.isFinite(pitch)
-    ? [{ x: (index * HOP_LENGTH + FRAME_LENGTH / 2) / Math.max(1, limit), pitch }]
+    ? [{ x: (index * hop + window / 2) / Math.max(1, limit), pitch }]
     : []);
 }
 
@@ -126,9 +131,10 @@ function framePitchTrack(audio: Float32Array, correctIsolatedOctaves: boolean):
 export function normalizedPitchContour(
   audio: Float32Array,
   correctIsolatedOctaves = false,
+  shortWord = false,
 ): number[] | null {
   if (audio.length < FRAME_LENGTH || audio.length > SAMPLE_RATE * 60) return null;
-  const pitches = framePitchTrack(audio, correctIsolatedOctaves).map(point => point.pitch);
+  const pitches = framePitchTrack(audio, correctIsolatedOctaves, shortWord).map(point => point.pitch);
   if (pitches.length < MIN_VOICED_FRAMES) return null;
   const center = median(pitches.map(value => Math.log2(value)));
   return pitches.map(value => 1200 * (Math.log2(value) - center));
@@ -222,6 +228,41 @@ export function contourShapeDistance(reference: number[], learner: number[]): nu
  * This estimate is not calibrated; only comparative experiments with expert
  * Yorùbá labels can establish valid cutoffs or whether it should be shipped.
  */
+/**
+ * Strict short-word recovery path. Used ONLY if the standard comparison
+ * cannot produce a score, for verified short speech (both <= 2.2 seconds).
+ * Increased sampling resolution (10 ms hops, 40 ms frames) is coupled to a
+ * higher periodicity threshold. It is not used as an arbitrary score bonus.
+ * Reuse the exact comparison formula and DTW/duration constraints.
+ */
+export function compareShortWordAcousticTones(
+  reference: Float32Array,
+  learner: Float32Array,
+): ToneComparison | null {
+  if (reference.length < SAMPLE_RATE * 0.3 || learner.length < SAMPLE_RATE * 0.3 ||
+      reference.length > SAMPLE_RATE * 2.2 || learner.length > SAMPLE_RATE * 2.2) return null;
+  const referenceContour = normalizedPitchContour(reference, true, true);
+  const learnerContour = normalizedPitchContour(learner, true, true);
+  if (!referenceContour || !learnerContour ||
+      referenceContour.length < 12 || learnerContour.length < 12) return null;
+  // Do not award high scores on a tiny fraction of voiced samples.
+  const possibleReferenceFrames = Math.floor((reference.length - 640) / 160) + 1;
+  const possibleLearnerFrames = Math.floor((learner.length - 640) / 160) + 1;
+  if (referenceContour.length / possibleReferenceFrames < 0.22 ||
+      learnerContour.length / possibleLearnerFrames < 0.22) return null;
+  const warpedDistance = contourDistance(referenceContour, learnerContour);
+  const shapeDistance = contourShapeDistance(referenceContour, learnerContour);
+  if (!Number.isFinite(warpedDistance) || !Number.isFinite(shapeDistance)) return null;
+  const meanCentsDifference = 0.35 * warpedDistance + 0.65 * shapeDistance;
+  return {
+    score: Math.round(clamp01(Math.exp(-meanCentsDifference / 250)) * 100) / 100,
+    meanCentsDifference,
+    referenceVoicedFrames: referenceContour.length,
+    learnerVoicedFrames: learnerContour.length,
+    extractionMethod: "short-word",
+  };
+}
+
 export function compareAcousticTones(
   reference: Float32Array,
   learner: Float32Array,
@@ -241,5 +282,6 @@ export function compareAcousticTones(
     meanCentsDifference,
     referenceVoicedFrames: referenceContour.length,
     learnerVoicedFrames: learnerContour.length,
+    extractionMethod: "standard",
   };
 }
