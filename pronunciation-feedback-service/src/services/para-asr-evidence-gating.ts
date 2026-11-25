@@ -18,11 +18,10 @@ import { wordIdentityAgreement } from "./para-scoring-diagnostics";
 export type AsrEvidenceDecision =
   | { kind: "retain"; score: number; asrScore: number; referenceAgreement: number; learnerAgreement: number }
   | { kind: "withhold"; score: number; asrScore: null; referenceAgreement: number; learnerAgreement: number | null }
-  | { kind: "retry"; reason: string; referenceAgreement: number | null; learnerAgreement: number | null };
+  | { kind: "ungraded"; reason: string; referenceAgreement: number | null; learnerAgreement: number | null };
 
 const ASR_MATCH_THRESHOLD = 0.65;
 const MIN_VOICED_FRAMES = 8;
-const MIN_REF_PATTERN = 0.75;
 
 export function decideParaAsrEvidence(input: {
   expectedWord: string | null | undefined;
@@ -38,7 +37,7 @@ export function decideParaAsrEvidence(input: {
   const expected = input.expectedWord?.trim() ?? "";
   // Gating is defined only for trusted single-word Pàrà references.
   if (!expected || /\s/u.test(expected)) {
-    return { kind: "retry", reason: "This word cannot currently be checked reliably. Please try again.", referenceAgreement: null, learnerAgreement: null };
+    return { kind: "ungraded", reason: "This word needs a reviewed syllable pattern before Pàrà can assign a reliable grade.", referenceAgreement: null, learnerAgreement: null };
   }
   const refAgreement = wordIdentityAgreement(input.referenceTranscript, expected);
   const learnerAgreement = wordIdentityAgreement(input.learnerTranscript, expected);
@@ -46,19 +45,26 @@ export function decideParaAsrEvidence(input: {
     input.acousticScore >= 0 && input.acousticScore <= 1 &&
     (input.acousticReferenceVoicedFrames ?? 0) >= MIN_VOICED_FRAMES &&
     (input.acousticLearnerVoicedFrames ?? 0) >= MIN_VOICED_FRAMES;
+  // Acoustic evidence must exist for an evidence-based comparison.
+  // This function is reached only after the speech detector has accepted
+  // both recordings. A missing score therefore means analysis unavailable,
+  // NOT proof the learner's microphone recording is bad.
+  if (!audioGood) {
+    return { kind: "ungraded",
+      reason: "We detected speech, but the acoustic comparison could not establish a reliable result. Your attempt is ungraded.",
+      referenceAgreement: refAgreement, learnerAgreement };
+  }
   const toneGood = input.syllableToneScore !== null &&
     Number.isFinite(input.syllableToneScore) &&
     input.syllableToneScore >= 0 && input.syllableToneScore <= 1 &&
     input.referencePatternScore !== null &&
-    input.referencePatternScore >= MIN_REF_PATTERN &&
     input.alignmentConfidence === "moderate";
-  if (!audioGood || !toneGood) {
-    return {
-      kind: "retry",
-      reason: "We couldn't reliably compare your recording's tones and syllables. Please record the word again in a quiet place.",
-      referenceAgreement: refAgreement,
-      learnerAgreement,
-    };
+  // We may show available acoustic evidence, but never substitute it for a
+  // missing syllable-tone component or silently assign a high final grade.
+  if (!toneGood) {
+    return { kind: "ungraded",
+      reason: "We heard your recording, but couldn't confidently align its syllables. You can practice with the reference; no grade was assigned.",
+      referenceAgreement: refAgreement, learnerAgreement };
   }
   const refReliable = normalizeTranscript(input.referenceTranscript).length > 0 &&
     refAgreement !== null && refAgreement >= ASR_MATCH_THRESHOLD;
@@ -75,8 +81,8 @@ export function decideParaAsrEvidence(input: {
     // A failed learner transcription may signal a different word OR bad ASR.
     // Do not silently remove the penalty or grant an unearned high score.
     return {
-      kind: "retry",
-      reason: "We couldn't reliably recognize your recording as the expected word. Please listen and record it again.",
+      kind: "ungraded",
+      reason: "Speech recognition could not confirm the expected word. Your attempt is ungraded; listen to the reference and practice again.",
       referenceAgreement: refAgreement,
       learnerAgreement,
     };
