@@ -133,12 +133,13 @@ test("short spoken word with long trailing silence is scored using active audio 
   assert.ok(result.score >= 0 && result.score <= 1);
 });
 
-test("API uses active speech consistently; unscorable audio returns 422 rather than 500", () => {
+test("API uses active speech consistently; unscorable audio is ungraded instead of a false 500", () => {
   const source = fs.readFileSync(path.join(__dirname, "../src/services/pronunciation-feedback.service.ts"), "utf8");
   assert.match(source, /isolateActiveSpeech\(masterRawAudio\)/);
   assert.match(source, /isolateActiveSpeech\(userRawAudio\)/);
   assert.match(source, /compareAcousticTones\(acousticReference, acousticLearner\)/);
-  assert.match(source, /"We could not measure enough clear voiced speech/);
+  assert.match(source, /Pronunciation analyzed without a reliable grade/);
+  assert.match(source, /assessmentStatus: "ungraded"/);
   assert.match(source, /422,/);
   assert.match(source, /if \(error\?\.isOperational && error\?\.statusCode\) throw error/);
 });
