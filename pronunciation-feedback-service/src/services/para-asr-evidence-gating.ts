@@ -18,6 +18,7 @@ import { wordIdentityAgreement } from "./para-scoring-diagnostics";
 export type AsrEvidenceDecision =
   | { kind: "retain"; score: number; asrScore: number; referenceAgreement: number; learnerAgreement: number }
   | { kind: "withhold"; score: number; asrScore: null; referenceAgreement: number; learnerAgreement: number | null }
+  | { kind: "fallback"; score: number; asrScore: number; referenceAgreement: number | null; learnerAgreement: number | null }
   | { kind: "retry"; reason: string; referenceAgreement: number | null; learnerAgreement: number | null };
 
 const ASR_MATCH_THRESHOLD = 0.65;
@@ -50,12 +51,25 @@ export function decideParaAsrEvidence(input: {
     Number.isFinite(input.syllableToneScore) &&
     input.syllableToneScore >= 0 && input.syllableToneScore <= 1 &&
     input.referencePatternScore !== null &&
-    input.referencePatternScore >= MIN_REF_PATTERN &&
-    input.alignmentConfidence === "moderate";
-  if (!audioGood || !toneGood) {
+    input.referencePatternScore >= MIN_REF_PATTERN;
+  if (!audioGood) {
     return {
       kind: "retry",
-      reason: "We couldn't reliably compare your recording's tones and syllables. Please record the word again in a quiet place.",
+      reason: "We could not extract enough reliable acoustic evidence from this recording. Please record the word again.",
+      referenceAgreement: refAgreement,
+      learnerAgreement,
+    };
+  }
+  if (!toneGood) {
+    // Restore the proven pre-#278 acoustic/text fallback when the independent
+    // syllable-tone analyzer is unable to supply usable evidence. Never
+    // substitute 100% ASR or invent a tone score. An empty/misrecognized
+    // reference yields a low lexical score rather than a high false grade.
+    const asrScore = transcriptScore(input.learnerTranscript, input.referenceTranscript);
+    return {
+      kind: "fallback",
+      score: 0.60 * input.acousticScore! + 0.40 * asrScore,
+      asrScore,
       referenceAgreement: refAgreement,
       learnerAgreement,
     };
